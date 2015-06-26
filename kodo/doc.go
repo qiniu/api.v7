@@ -1,13 +1,14 @@
 /*
 包 qiniupkg.com/api.v7/kodo 提供了在您的业务服务器（服务端）调用七牛云存储服务的能力
 
-首先，我们要创建一个 Client 对象：
+首先，我们要配置下 AccessKey/SecretKey，这可以在七牛 Portal 中查到：
+
+	kodo.SetMac("your-access-key", "your-secret-key")
+
+然后我们创建一个 Client 对象：
 
 	zone := 0 // 您空间(Bucket)所在的区域
-	c := kodo.New(zone, &kodo.Config{
-		AccessKey: "your-access-key",
-		SecretKey: "your-secret-key", // AccessKey/SecretKey 可以在七牛 Portal 中查到
-	})
+	c := kodo.New(zone, nil) // 用默认配置创建 Client
 
 有了 Client，你就可以操作您的空间(Bucket)了，比如我们要上传一个文件：
 
