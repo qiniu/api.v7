@@ -12,16 +12,19 @@
 
 	import "qiniupkg.com/api.v7/kodo"
 
+	kodo.SetMac("your-access-key", "your-secret-key") // 配置 AccessKey/SecretKey
+
 	zone := 0
-	c := kodo.New(zone, nil)
+	c := kodo.New(zone, nil) // 创建一个 Client 对象
+
 	bucket := "your-bucket-name"
 	key := "foo/bar.jpg"
 	policy := &kodo.PutPolicy{
-		Scope: bucket + ":" + key, // 上传文件的限制条件，这里是限制客户端只能上传一个名为 "foo/bar.jpg" 的文件
+		Scope: bucket + ":" + key, // 上传文件的限制条件，这里限制只能上传一个名为 "foo/bar.jpg" 的文件
 		Expires: 3600, // 这是限制上传凭证(uptoken)的过期时长，3600 是一小时
 		...
 	}
-	uptoken := c.MakeUptoken(policy)
+	uptoken := c.MakeUptoken(policy) // 生成上传凭证
 
 生成上传凭证之后，通过某种方式将 uptoken 发送到客户端。这样客户端就可以上传文件了：
 
