@@ -19,7 +19,8 @@
 		... // 上传文件失败处理
 		return
 	}
-	... // 上传文件成功，这时登录七牛Portal，在 your-bucket-name 这个空间里面就可以看到一个 foo/bar.jpg 的文件了
+	// 上传文件成功
+	// 这时登录七牛Portal，在 your-bucket-name 空间就可以看到一个 foo/bar.jpg 的文件了
 
 当然，除了上传文件，各种空间(Bucket)相关的操作都可以有，最常见自然是增删改查了：
 
@@ -33,14 +34,14 @@
 
 	import "net/http"
 
-	domain := "domain-of-your-bucket.com" // 您的空间(Bucket)绑定的域名，这个可以在七牛的Portal中查到
-	baseUrl := kodo.MakeBaseUrl(domain, "foo/bar.jpg") // 得到下载的url，这样我们就可以去下载了，比如用 http.Get
+	domain := "domain-of-your-bucket.com" // 您的空间绑定的域名，这个可以在七牛的Portal中查到
+	baseUrl := kodo.MakeBaseUrl(domain, "foo/bar.jpg") // 得到下载 url
 	resp, err := http.Get(baseUrl)
 	...
 
 但是对于私有空间，事情要复杂一些，访问上面的 baseUrl 会被拒绝。我们需要多做一步：
 
-	privateUrl := c.MakePrivateUrl(baseUrl, nil) // 用默认的下载策略去生成私有下载的url
+	privateUrl := c.MakePrivateUrl(baseUrl, nil) // 用默认的下载策略去生成私有下载的 url
 	resp, err := http.Get(privateUrl)
 	...
 */
