@@ -84,7 +84,16 @@ func New(zone int, cfg *Config) (p *Client) {
 
 // ----------------------------------------------------------
 
-// userApp should be [A-Za-z0-9_\ \-\.]*
+// 设置全局默认的 ACCESS_KEY, SECRET_KEY 变量。
+//
+func SetMac(accessKey, secretKey string) {
+
+	conf.ACCESS_KEY, conf.SECRET_KEY = accessKey, secretKey
+}
+
+// ----------------------------------------------------------
+
+// 设置所用这个SDK的应用程序名。userApp 必须满足 [A-Za-z0-9_\ \-\.]*
 //
 func SetAppName(userApp string) error {
 
