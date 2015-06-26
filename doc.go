@@ -1,5 +1,5 @@
 /*
-包 qiniupkg.com/api.v7 是七牛 Go 语言 SDK v7.x (Qiniu Go SDK v7.x) 版本
+包 qiniupkg.com/api.v7 是七牛 Go 语言 SDK v7.x 版本
 
 七牛对象存储，我们取了一个好听的名字，叫 KODO Blob Storage。要使用它，你主要和以下两个包打交道：
 
