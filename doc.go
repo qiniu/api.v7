@@ -3,8 +3,8 @@
 
 七牛对象存储，我们取了一个好听的名字，叫 KODO Blob Storage。要使用它，你主要和以下两个包打交道：
 
-  import "qiniupkg.com/api.v7/kodo"
-  import "qiniupkg.com/api.v7/kodocli"
+	import "qiniupkg.com/api.v7/kodo"
+	import "qiniupkg.com/api.v7/kodocli"
 
 如果您是在业务服务器（服务器端）调用七牛云存储的服务，请使用 qiniupkg.com/api.v7/kodo。
 

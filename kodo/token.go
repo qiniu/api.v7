@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	gourl "net/url"
-
 	"qiniupkg.com/api.v7/auth/qbox"
 	"qiniupkg.com/x/url.v7"
 )
@@ -18,13 +16,15 @@ type GetPolicy struct {
 	Expires uint32
 }
 
-func (r GetPolicy) MakeRequest(baseUrl string, mac *qbox.Mac) (privateUrl string) {
+func (p *Client) MakePrivateUrl(baseUrl string, policy *GetPolicy) (privateUrl string) {
 
-	expires := r.Expires
-	if expires == 0 {
+	var expires int64
+	if policy == nil || policy.Expires == 0 {
 		expires = 3600
+	} else {
+		expires = int64(policy.Expires)
 	}
-	deadline := time.Now().Unix() + int64(expires)
+	deadline := time.Now().Unix() + expires
 
 	if strings.Contains(baseUrl, "?") {
 		baseUrl += "&e="
@@ -33,31 +33,8 @@ func (r GetPolicy) MakeRequest(baseUrl string, mac *qbox.Mac) (privateUrl string
 	}
 	baseUrl += strconv.FormatInt(deadline, 10)
 
-	token := qbox.Sign(mac, []byte(baseUrl))
+	token := qbox.Sign(p.mac, []byte(baseUrl))
 	return baseUrl + "&token=" + token
-}
-
-func (r GetPolicy) MakeRequestUrl(baseUrl *gourl.URL, mac *qbox.Mac) (privateUrl *gourl.URL) {
-
-	copy := *baseUrl
-	privateUrl = &copy
-
-	expires := r.Expires
-	if expires == 0 {
-		expires = 3600
-	}
-	deadline := time.Now().Unix() + int64(expires)
-
-	if privateUrl.RawQuery != "" {
-		privateUrl.RawQuery += "&e="
-	} else {
-		privateUrl.RawQuery = "e="
-	}
-	privateUrl.RawQuery += strconv.FormatInt(deadline, 10)
-
-	token := qbox.Sign(mac, []byte(privateUrl.String()))
-	privateUrl.RawQuery += "&token=" + token
-	return
 }
 
 func MakeBaseUrl(domain, key string) (baseUrl string) {
@@ -84,15 +61,15 @@ type PutPolicy struct {
 	EndUser             string `json:"endUser,omitempty"`
 }
 
-func (r *PutPolicy) Token(mac *qbox.Mac) string {
+func (p *Client) MakeUptoken(policy *PutPolicy) string {
 
-	var rr = *r
+	var rr = *policy
 	if rr.Expires == 0 {
 		rr.Expires = 3600
 	}
 	rr.Expires += uint32(time.Now().Unix())
 	b, _ := json.Marshal(&rr)
-	return qbox.SignWithData(mac, b)
+	return qbox.SignWithData(p.mac, b)
 }
 
 // ----------------------------------------------------------
