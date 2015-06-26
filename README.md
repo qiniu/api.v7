@@ -1,6 +1,8 @@
 qiniupkg.com/api.v7 (Qiniu Go SDK v7.x)
 ===============
 
+[![GoDoc](https://godoc.org/qiniupkg.com/api.v7?status.svg)](https://godoc.org/qiniupkg.com/api.v7)
+
 # 下载
 
 ```
