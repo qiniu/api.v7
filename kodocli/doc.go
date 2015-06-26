@@ -1,5 +1,5 @@
 /*
-包 qiniupkg.com/api.v7/kodocli 提供了在客户端（比如：Android/iOS 设备、Windows/Mac/Linux 桌面环境）调用七牛云存储部分服务的能力
+包 qiniupkg.com/api.v7/kodocli 提供了在客户端调用七牛云存储部分服务的能力
 
 客户端，严谨说是非可信环境，主要是指在用户端执行的环境，比如：Android/iOS 设备、Windows/Mac/Linux 桌面环境、也包括浏览器（如果浏览器能够执行 Go 语
 言代码的话）。
