@@ -9,7 +9,7 @@ go get qiniupkg.com/api.v7
 
 # 使用文档
 
-## KODO Storage (七牛对象存储)
+## KODO Blob Storage (七牛对象存储)
 
 * [qiniupkg.com/api.v7/kodo](http://godoc.org/qiniupkg.com/api.v7/kodo)
 * [qiniupkg.com/api.v7/kodocli](http://godoc.org/qiniupkg.com/api.v7/kodocli)
