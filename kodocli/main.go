@@ -9,11 +9,11 @@ import (
 
 // ----------------------------------------------------------
 
-type ZoneConfig struct {
+type zoneConfig struct {
 	UpHosts []string
 }
 
-var zones = []ZoneConfig{
+var zones = []zoneConfig{
 	// z0:
 	{
 		UpHosts: []string{
@@ -37,7 +37,6 @@ var zones = []ZoneConfig{
 type UploadConfig struct {
 	UpHosts   []string
 	Transport http.RoundTripper
-	Zone      int
 }
 
 type Uploader struct {
@@ -45,17 +44,17 @@ type Uploader struct {
 	UpHosts []string
 }
 
-func NewUploader(cfg *UploadConfig) (p Uploader) {
+func NewUploader(zone int, cfg *UploadConfig) (p Uploader) {
 
 	var uc UploadConfig
 	if cfg != nil {
 		uc = *cfg
 	}
 	if len(uc.UpHosts) == 0 {
-		if uc.Zone >= len(zones) {
+		if zone < 0 || zone >= len(zones) {
 			panic("invalid upload config: invalid zone")
 		}
-		uc.UpHosts = zones[uc.Zone].UpHosts
+		uc.UpHosts = zones[zone].UpHosts
 	}
 
 	p.UpHosts = uc.UpHosts

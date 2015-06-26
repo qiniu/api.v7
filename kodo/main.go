@@ -15,11 +15,11 @@ var (
 
 // ----------------------------------------------------------
 
-type ZoneConfig struct {
+type zoneConfig struct {
 	UpHosts []string
 }
 
-var zones = []ZoneConfig{
+var zones = []zoneConfig{
 	// z0:
 	{
 		UpHosts: []string{
@@ -47,7 +47,6 @@ type Config struct {
 	RSFHost   string
 	UpHosts   []string
 	Transport http.RoundTripper
-	Zone      int
 }
 
 // ----------------------------------------------------------
@@ -58,7 +57,7 @@ type Client struct {
 	Config
 }
 
-func New(cfg *Config) (p *Client) {
+func New(zone int, cfg *Config) (p *Client) {
 
 	p = new(Client)
 	if cfg != nil {
@@ -75,10 +74,10 @@ func New(cfg *Config) (p *Client) {
 		p.RSFHost = RSF_HOST
 	}
 	if len(p.UpHosts) == 0 {
-		if p.Zone >= len(zones) {
+		if zone < 0 || zone >= len(zones) {
 			panic("invalid config: invalid zone")
 		}
-		p.UpHosts = zones[p.Zone].UpHosts
+		p.UpHosts = zones[zone].UpHosts
 	}
 	return
 }
