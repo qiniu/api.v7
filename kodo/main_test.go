@@ -50,7 +50,6 @@ func newBucket() (bucket Bucket) {
 	}
 	client = New(0, nil)
 
-	// 删除 可能存在的 key
 	return client.Bucket(bucketName)
 }
 

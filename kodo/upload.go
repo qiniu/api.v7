@@ -8,6 +8,7 @@ import (
 )
 
 type PutExtra kodocli.PutExtra
+type RputExtra kodocli.RputExtra
 
 // ----------------------------------------------------------
 
@@ -47,8 +48,6 @@ func (p Bucket) PutWithoutKey(
 	return uploader.PutWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.PutExtra)(extra))
 }
 
-// ----------------------------------------------------------
-
 func (p Bucket) PutFile(
 	ctx Context, ret interface{}, key, localFile string, extra *PutExtra) (err error) {
 
@@ -63,6 +62,40 @@ func (p Bucket) PutFileWithoutKey(
 	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
 	uptoken := p.makeUptokenWithoutKey()
 	return uploader.PutFileWithoutKey(ctx, ret, uptoken, localFile, (*kodocli.PutExtra)(extra))
+}
+
+// ----------------------------------------------------------
+
+func (p Bucket) Rput(
+	ctx Context, ret interface{}, key string, data io.ReaderAt, size int64, extra *RputExtra) error {
+
+	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uptoken := p.makeUptoken(key)
+	return uploader.Rput(ctx, ret, uptoken, key, data, size, (*kodocli.RputExtra)(extra))
+}
+
+func (p Bucket) RputWithoutKey(
+	ctx Context, ret interface{}, data io.ReaderAt, size int64, extra *RputExtra) error {
+
+	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uptoken := p.makeUptokenWithoutKey()
+	return uploader.RputWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.RputExtra)(extra))
+}
+
+func (p Bucket) RputFile(
+	ctx Context, ret interface{}, key, localFile string, extra *RputExtra) (err error) {
+
+	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uptoken := p.makeUptoken(key)
+	return uploader.RputFile(ctx, ret, uptoken, key, localFile, (*kodocli.RputExtra)(extra))
+}
+
+func (p Bucket) RputFileWithoutKey(
+	ctx Context, ret interface{}, localFile string, extra *RputExtra) (err error) {
+
+	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uptoken := p.makeUptokenWithoutKey()
+	return uploader.RputFileWithoutKey(ctx, ret, uptoken, localFile, (*kodocli.RputExtra)(extra))
 }
 
 // ----------------------------------------------------------
