@@ -16,12 +16,14 @@ var (
 // ----------------------------------------------------------
 
 type zoneConfig struct {
+	IoHost  string
 	UpHosts []string
 }
 
 var zones = []zoneConfig{
 	// z0:
 	{
+		IoHost: "http://iovip.qbox.me",
 		UpHosts: []string{
 			"http://up.qiniu.com",
 			"http://upload.qiniu.com",
@@ -30,6 +32,7 @@ var zones = []zoneConfig{
 	},
 	// z1:
 	{
+		IoHost: "http://iovip-z1.qbox.me",
 		UpHosts: []string{
 			"http://up-z1.qiniu.com",
 			"http://upload-z1.qiniu.com",
@@ -45,6 +48,7 @@ type Config struct {
 	SecretKey string
 	RSHost    string
 	RSFHost   string
+	IoHost    string
 	UpHosts   []string
 	Transport http.RoundTripper
 }
@@ -73,11 +77,15 @@ func New(zone int, cfg *Config) (p *Client) {
 	if p.RSFHost == "" {
 		p.RSFHost = RSF_HOST
 	}
+
+	if zone < 0 || zone >= len(zones) {
+		panic("invalid config: invalid zone")
+	}
 	if len(p.UpHosts) == 0 {
-		if zone < 0 || zone >= len(zones) {
-			panic("invalid config: invalid zone")
-		}
 		p.UpHosts = zones[zone].UpHosts
+	}
+	if p.IoHost == "" {
+		p.IoHost = zones[zone].IoHost
 	}
 	return
 }

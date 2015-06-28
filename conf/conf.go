@@ -23,7 +23,7 @@ const (
 // userApp should be [A-Za-z0-9_\ \-\.]*
 //
 func SetAppName(userApp string) error {
-	if !ctype.IsType(ctypeAppName, userApp) {
+	if userApp != "" && !ctype.IsType(ctypeAppName, userApp) {
 		return syscall.EINVAL
 	}
 	rpc.UserAgent = fmt.Sprintf(
