@@ -8,11 +8,6 @@ import (
 	"qiniupkg.com/x/rpc.v7"
 )
 
-var (
-	RS_HOST  = "http://rs.qbox.me"
-	RSF_HOST = "http://rsf.qbox.me"
-)
-
 // ----------------------------------------------------------
 
 type zoneConfig struct {
@@ -40,6 +35,11 @@ var zones = []zoneConfig{
 		},
 	},
 }
+
+const (
+	defaultRsHost  = "http://rs.qbox.me"
+	defaultRsfHost = "http://rsf.qbox.me"
+)
 
 // ----------------------------------------------------------
 
@@ -72,10 +72,10 @@ func New(zone int, cfg *Config) (p *Client) {
 	p.Client = rpc.Client{qbox.NewClient(p.mac, p.Transport)}
 
 	if p.RSHost == "" {
-		p.RSHost = RS_HOST
+		p.RSHost = defaultRsHost
 	}
 	if p.RSFHost == "" {
-		p.RSFHost = RSF_HOST
+		p.RSFHost = defaultRsfHost
 	}
 
 	if zone < 0 || zone >= len(zones) {
