@@ -7,3 +7,6 @@ before_script:
   - export QINIU_TEST_DOMAIN="gosdk.qiniudn.com"
   - pwd
   - tree
+install:
+  - pwd
+  - tree
