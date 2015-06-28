@@ -33,7 +33,7 @@ type PutExtra struct {
 	// 可选，当为 "" 时候，服务端自动判断。
 	MimeType string
 
-	Crc32    uint32
+	Crc32 uint32
 
 	// CheckCrc == 0 (DontCheckCrc): 表示不进行 crc32 校验
 	// CheckCrc == 1 (CalcAndCheckCrc): 对于 Put 等同于 CheckCrc = 2；对于 PutFile 会自动计算 crc32 值

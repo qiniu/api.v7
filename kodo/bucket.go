@@ -57,6 +57,10 @@ func (p Bucket) ChangeMime(ctx Context, key, mime string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIChangeMime(p.Name, key, mime))
 }
 
+func (p Bucket) Fetch(ctx Context, key string, url string) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+uriFetch(p.Name, key, url))
+}
+
 // ----------------------------------------------------------
 
 type ListItem struct {
@@ -115,7 +119,7 @@ type BatchStatItemRet struct {
 	Code  int    `json:"code"`
 }
 
-func (p Bucket) BatchStat(ctx Context, keys []string) (ret []BatchStatItemRet, err error) {
+func (p Bucket) BatchStat(ctx Context, keys ...string) (ret []BatchStatItemRet, err error) {
 
 	b := make([]string, len(keys))
 	for i, key := range keys {
@@ -130,7 +134,7 @@ type BatchItemRet struct {
 	Code  int    `json:"code"`
 }
 
-func (p Bucket) BatchDelete(ctx Context, keys []string) (ret []BatchItemRet, err error) {
+func (p Bucket) BatchDelete(ctx Context, keys ...string) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(keys))
 	for i, key := range keys {
@@ -145,7 +149,7 @@ type KeyPair struct {
 	Dest string
 }
 
-func (p Bucket) BatchMove(ctx Context, entries []KeyPair) (ret []BatchItemRet, err error) {
+func (p Bucket) BatchMove(ctx Context, entries ...KeyPair) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(entries))
 	for i, e := range entries {
@@ -155,7 +159,7 @@ func (p Bucket) BatchMove(ctx Context, entries []KeyPair) (ret []BatchItemRet, e
 	return
 }
 
-func (p Bucket) BatchCopy(ctx Context, entries []KeyPair) (ret []BatchItemRet, err error) {
+func (p Bucket) BatchCopy(ctx Context, entries ...KeyPair) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(entries))
 	for i, e := range entries {
@@ -169,6 +173,10 @@ func (p Bucket) BatchCopy(ctx Context, entries []KeyPair) (ret []BatchItemRet, e
 
 func encodeURI(uri string) string {
 	return base64.URLEncoding.EncodeToString([]byte(uri))
+}
+
+func uriFetch(bucket, key, url string) string {
+	return "/fetch/" + encodeURI(url) + "/to/" + encodeURI(bucket+":"+key)
 }
 
 func URIDelete(bucket, key string) string {
