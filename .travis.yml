@@ -12,4 +12,5 @@ install:
   - git clone --depth=50 git://github.com/qiniu/x.git $QINIU_SRC/qiniupkg.com/x
   - export TRAVIS_BUILD_DIR=$QINIU_SRC/qiniupkg.com/api.v7
   - cd $TRAVIS_BUILD_DIR
+  - go get golang.org/x/net/context
   
