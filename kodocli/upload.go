@@ -55,17 +55,16 @@ type PutRet struct {
 
 // ----------------------------------------------------------
 
-/**
- * 上传一个文件。
- * 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
- *
- * ctx       请求的上下文。
- * ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
- * uptoken   由业务服务器颁发的上传凭证。
- * key       要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
- * localFile 要上传的文件的本地路径。
- * extra     上传的一些可选项。详细见 PutExtra 结构的描述。
- */
+// 上传一个文件。
+// 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
+//
+// ctx       请求的上下文。
+// ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// uptoken   由业务服务器颁发的上传凭证。
+// key       要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+// localFile 要上传的文件的本地路径。
+// extra     上传的一些可选项。详细见 PutExtra 结构的描述。
+//
 func (p Uploader) PutFile(
 	ctx Context, ret interface{}, uptoken, key, localFile string, extra *PutExtra) (err error) {
 
