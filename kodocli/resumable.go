@@ -117,6 +117,17 @@ var once sync.Once
 
 // ----------------------------------------------------------
 
+/**
+ * 上传一个文件，支持断点续传和分块上传。
+ *
+ * ctx     请求的上下文。
+ * ret     上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken 由业务服务器颁发的上传凭证。
+ * key     要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+ * f       文件内容的访问接口。考虑到需要支持分块上传和断点续传，要的是 io.ReaderAt 接口，而不是 io.Reader。
+ * fsize   要上传的文件大小。
+ * extra   上传的一些可选项。详细见 RputExtra 结构的描述。
+ */
 func (p Uploader) Rput(
 	ctx Context, ret interface{}, uptoken string,
 	key string, f io.ReaderAt, fsize int64, extra *RputExtra) error {
@@ -124,18 +135,51 @@ func (p Uploader) Rput(
 	return p.rput(ctx, ret, uptoken, key, true, f, fsize, extra)
 }
 
+/**
+ * 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
+ * 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+ *
+ * ctx     请求的上下文。
+ * ret     上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken 由业务服务器颁发的上传凭证。
+ * f       文件内容的访问接口。考虑到需要支持分块上传和断点续传，要的是 io.ReaderAt 接口，而不是 io.Reader。
+ * fsize   要上传的文件大小。
+ * extra   上传的一些可选项。详细见 RputExtra 结构的描述。
+ */
 func (p Uploader) RputWithoutKey(
 	ctx Context, ret interface{}, uptoken string, f io.ReaderAt, fsize int64, extra *RputExtra) error {
 
 	return p.rput(ctx, ret, uptoken, "", false, f, fsize, extra)
 }
 
+/**
+ * 上传一个文件，支持断点续传和分块上传。
+ * 和 Rput 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
+ *
+ * ctx       请求的上下文。
+ * ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken   由业务服务器颁发的上传凭证。
+ * key       要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+ * localFile 要上传的文件的本地路径。
+ * extra     上传的一些可选项。详细见 RputExtra 结构的描述。
+ */
 func (p Uploader) RputFile(
 	ctx Context, ret interface{}, uptoken, key, localFile string, extra *RputExtra) (err error) {
 
 	return p.rputFile(ctx, ret, uptoken, key, true, localFile, extra)
 }
 
+/**
+ * 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
+ * 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+ * 和 RputWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
+ *
+ * ctx       请求的上下文。
+ * ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken   由业务服务器颁发的上传凭证。
+ * localFile 要上传的文件的本地路径。
+ * extra     上传的一些可选项。详细见 RputExtra 结构的描述。
+ */
 func (p Uploader) RputFileWithoutKey(
 	ctx Context, ret interface{}, uptoken, localFile string, extra *RputExtra) (err error) {
 

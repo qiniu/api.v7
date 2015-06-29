@@ -55,12 +55,34 @@ type PutRet struct {
 
 // ----------------------------------------------------------
 
+/**
+ * 上传一个文件。
+ * 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
+ *
+ * ctx       请求的上下文。
+ * ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken   由业务服务器颁发的上传凭证。
+ * key       要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+ * localFile 要上传的文件的本地路径。
+ * extra     上传的一些可选项。详细见 PutExtra 结构的描述。
+ */
 func (p Uploader) PutFile(
 	ctx Context, ret interface{}, uptoken, key, localFile string, extra *PutExtra) (err error) {
 
 	return p.putFile(ctx, ret, uptoken, key, true, localFile, extra)
 }
 
+/**
+ * 上传一个文件。文件的访问路径（key）自动生成。
+ * 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+ * 和 RputWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
+ *
+ * ctx       请求的上下文。
+ * ret       上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken   由业务服务器颁发的上传凭证。
+ * localFile 要上传的文件的本地路径。
+ * extra     上传的一些可选项。详细见 PutExtra 结构的描述。
+ */
 func (p Uploader) PutFileWithoutKey(
 	ctx Context, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
 
@@ -94,12 +116,34 @@ func (p Uploader) putFile(
 
 // ----------------------------------------------------------
 
+/**
+ * 上传一个文件。
+ *
+ * ctx     请求的上下文。
+ * ret     上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken 由业务服务器颁发的上传凭证。
+ * key     要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+ * data    文件内容的访问接口（io.Reader）。
+ * fsize   要上传的文件大小。
+ * extra   上传的一些可选项。详细见 PutExtra 结构的描述。
+ */
 func (p Uploader) Put(
 	ctx Context, ret interface{}, uptoken, key string, data io.Reader, size int64, extra *PutExtra) error {
 
 	return p.put(ctx, ret, uptoken, key, true, data, size, extra, path.Base(key))
 }
 
+/**
+ * 上传一个文件。文件的访问路径（key）自动生成。
+ * 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+ *
+ * ctx     请求的上下文。
+ * ret     上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+ * uptoken 由业务服务器颁发的上传凭证。
+ * data    文件内容的访问接口（io.Reader）。
+ * fsize   要上传的文件大小。
+ * extra   上传的一些可选项。详细见 PutExtra 结构的描述。
+ */
 func (p Uploader) PutWithoutKey(
 	ctx Context, ret interface{}, uptoken string, data io.Reader, size int64, extra *PutExtra) error {
 
