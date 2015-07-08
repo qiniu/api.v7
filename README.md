@@ -6,7 +6,7 @@ qiniupkg.com/api.v7 (Qiniu Go SDK v7.x)
 # 下载
 
 ```
-go get qiniupkg.com/api.v7
+go get -u qiniupkg.com/api.v7
 ```
 
 # 使用文档
