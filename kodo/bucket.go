@@ -11,6 +11,8 @@ import (
 
 // ----------------------------------------------------------
 
+// 批量操作。
+//
 func (p *Client) Batch(ctx Context, ret interface{}, op []string) (err error) {
 
 	return p.CallWithForm(ctx, ret, "POST", p.RSHost+"/batch", map[string][]string{"op": op})
@@ -23,6 +25,10 @@ type Bucket struct {
 	Name string
 }
 
+// 取七牛空间（bucket）的对象实例。
+//
+// name 是创建该七牛空间（bucket）时采用的名称。
+//
 func (p *Client) Bucket(name string) Bucket {
 
 	return Bucket{p, name}
@@ -36,27 +42,72 @@ type Entry struct {
 	EndUser  string `json:"endUser"`
 }
 
+// 取文件属性。
+//
+// ctx 是请求的上下文。
+// key 是要访问的文件的访问路径。
+//
 func (p Bucket) Stat(ctx Context, key string) (entry Entry, err error) {
 	err = p.Conn.Call(ctx, &entry, "POST", p.Conn.RSHost+URIStat(p.Name, key))
 	return
 }
 
+// 删除一个文件。
+//
+// ctx 是请求的上下文。
+// key 是要删除的文件的访问路径。
+//
 func (p Bucket) Delete(ctx Context, key string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIDelete(p.Name, key))
 }
 
+// 移动一个文件。
+//
+// ctx     是请求的上下文。
+// keySrc  是要移动的文件的旧路径。
+// keyDest 是要移动的文件的新路径。
+//
 func (p Bucket) Move(ctx Context, keySrc, keyDest string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIMove(p.Name, keySrc, p.Name, keyDest))
 }
 
+// 跨空间（bucket）移动一个文件。
+//
+// ctx        是请求的上下文。
+// keySrc     是要移动的文件的旧路径。
+// bucketDest 是文件的目标空间。
+// keyDest    是要移动的文件的新路径。
+//
+func (p Bucket) MoveEx(ctx Context, keySrc, bucketDest, keyDest string) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIMove(p.Name, keySrc, bucketDest, keyDest))
+}
+
+// 复制一个文件。
+//
+// ctx     是请求的上下文。
+// keySrc  是要复制的文件的源路径。
+// keyDest 是要复制的文件的目标路径。
+//
 func (p Bucket) Copy(ctx Context, keySrc, keyDest string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URICopy(p.Name, keySrc, p.Name, keyDest))
 }
 
+// 修改文件的MIME类型。
+//
+// ctx  是请求的上下文。
+// key  是要修改的文件的访问路径。
+// mime 是要设置的新MIME类型。
+//
 func (p Bucket) ChangeMime(ctx Context, key, mime string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIChangeMime(p.Name, key, mime))
 }
 
+// 从网上抓取一个资源并存储到七牛空间（bucket）中。
+//
+// ctx 是请求的上下文。
+// key 是要存储的文件的访问路径。如果文件已经存在则覆盖。
+// url 是要抓取的资源的URL。
+//
 func (p Bucket) Fetch(ctx Context, key string, url string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+uriFetch(p.Name, key, url))
 }
@@ -72,9 +123,9 @@ type ListItem struct {
 	EndUser  string `json:"endUser"`
 }
 
-// 1. 首次请求 marker = ""
-// 2. 无论 err 值如何，均应该先看 entries 是否有内容
-// 3. 如果后续没有更多数据，err 返回 EOF，markerOut 返回 ""（但不通过该特征来判断是否结束）
+// 首次请求，请将 marker 设置为 ""。
+// 无论 err 值如何，均应该先看 entries 是否有内容。
+// 如果后续没有更多数据，err 返回 EOF，markerOut 返回 ""（但不通过该特征来判断是否结束）。
 //
 func (p Bucket) List(
 	ctx Context, prefix, marker string, limit int) (entries []ListItem, markerOut string, err error) {
