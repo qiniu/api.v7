@@ -120,6 +120,11 @@ func incBody(req *http.Request) bool {
 	return false
 }
 
+func (t *Transport) NestedObject() interface{} {
+
+	return t.Transport
+}
+
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 
 	token, err := t.mac.SignRequest(req, incBody(req))

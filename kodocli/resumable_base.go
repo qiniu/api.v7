@@ -22,6 +22,10 @@ type uptokenTransport struct {
 	Transport http.RoundTripper
 }
 
+func (t *uptokenTransport) NestedObject() interface{} {
+	return t.Transport
+}
+
 func (t *uptokenTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	req.Header.Set("Authorization", t.token)
 	return t.Transport.RoundTrip(req)
