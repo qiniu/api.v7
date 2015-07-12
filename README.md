@@ -3,6 +3,8 @@ qiniupkg.com/api.v7 (Qiniu Go SDK v7.x)
 
 [![Build Status](https://travis-ci.org/qiniu/api.v7.svg?branch=develop)](https://travis-ci.org/qiniu/api.v7) [![GoDoc](https://godoc.org/qiniupkg.com/api.v7?status.svg)](https://godoc.org/qiniupkg.com/api.v7)
 
+[![Qiniu Logo](http://qiniutek.com/images/logo-2.png)](http://qiniu.com/)
+
 # 下载
 
 ```
