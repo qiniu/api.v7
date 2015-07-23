@@ -13,3 +13,11 @@
 会影响您的数据安全。
 */
 package api
+
+import (
+	_ "qiniupkg.com/api.v7/auth/qbox"
+	_ "qiniupkg.com/api.v7/conf"
+	_ "qiniupkg.com/api.v7/kodo"
+	_ "qiniupkg.com/api.v7/kodocli"
+)
+
