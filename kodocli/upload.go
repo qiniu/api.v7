@@ -49,8 +49,9 @@ type PutExtra struct {
 // 如果 uptoken 没有指定 ReturnBody，那么返回值是标准的 PutRet 结构
 //
 type PutRet struct {
-	Hash string `json:"hash"`
-	Key  string `json:"key"`
+	Hash         string `json:"hash"`
+	PersistentId string `json:"persistentId"`
+	Key          string `json:"key"`
 }
 
 // ----------------------------------------------------------
@@ -273,4 +274,3 @@ func getFileCrc32(f *os.File) (uint32, error) {
 }
 
 // ----------------------------------------------------------
-
