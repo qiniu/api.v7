@@ -1,8 +1,11 @@
 package kodo
 
 import (
+	"net/http"
 	"io"
+
 	"qiniupkg.com/api.v7/kodocli"
+	"qiniupkg.com/x/rpc.v7"
 
 	. "golang.org/x/net/context"
 )
@@ -30,6 +33,12 @@ func (p Bucket) makeUptokenWithoutKey() string {
 	return p.Conn.MakeUptoken(policy)
 }
 
+func (p Bucket) makeUploader() kodocli.Uploader {
+
+	c := &http.Client{Transport: p.Conn.Transport}
+	return kodocli.Uploader{Conn: rpc.Client{c}, UpHosts: p.Conn.UpHosts}
+}
+
 // ----------------------------------------------------------
 
 // 上传一个文件。
@@ -44,7 +53,7 @@ func (p Bucket) makeUptokenWithoutKey() string {
 func (p Bucket) Put(
 	ctx Context, ret interface{}, key string, data io.Reader, size int64, extra *PutExtra) error {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptoken(key)
 	return uploader.Put(ctx, ret, uptoken, key, data, size, (*kodocli.PutExtra)(extra))
 }
@@ -60,7 +69,7 @@ func (p Bucket) Put(
 func (p Bucket) PutWithoutKey(
 	ctx Context, ret interface{}, data io.Reader, size int64, extra *PutExtra) error {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptokenWithoutKey()
 	return uploader.PutWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.PutExtra)(extra))
 }
@@ -76,7 +85,7 @@ func (p Bucket) PutWithoutKey(
 func (p Bucket) PutFile(
 	ctx Context, ret interface{}, key, localFile string, extra *PutExtra) (err error) {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptoken(key)
 	return uploader.PutFile(ctx, ret, uptoken, key, localFile, (*kodocli.PutExtra)(extra))
 }
@@ -92,7 +101,7 @@ func (p Bucket) PutFile(
 func (p Bucket) PutFileWithoutKey(
 	ctx Context, ret interface{}, localFile string, extra *PutExtra) (err error) {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptokenWithoutKey()
 	return uploader.PutFileWithoutKey(ctx, ret, uptoken, localFile, (*kodocli.PutExtra)(extra))
 }
@@ -111,7 +120,7 @@ func (p Bucket) PutFileWithoutKey(
 func (p Bucket) Rput(
 	ctx Context, ret interface{}, key string, data io.ReaderAt, size int64, extra *RputExtra) error {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptoken(key)
 	return uploader.Rput(ctx, ret, uptoken, key, data, size, (*kodocli.RputExtra)(extra))
 }
@@ -127,7 +136,7 @@ func (p Bucket) Rput(
 func (p Bucket) RputWithoutKey(
 	ctx Context, ret interface{}, data io.ReaderAt, size int64, extra *RputExtra) error {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptokenWithoutKey()
 	return uploader.RputWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.RputExtra)(extra))
 }
@@ -144,7 +153,7 @@ func (p Bucket) RputWithoutKey(
 func (p Bucket) RputFile(
 	ctx Context, ret interface{}, key, localFile string, extra *RputExtra) (err error) {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptoken(key)
 	return uploader.RputFile(ctx, ret, uptoken, key, localFile, (*kodocli.RputExtra)(extra))
 }
@@ -160,7 +169,7 @@ func (p Bucket) RputFile(
 func (p Bucket) RputFileWithoutKey(
 	ctx Context, ret interface{}, localFile string, extra *RputExtra) (err error) {
 
-	uploader := kodocli.Uploader{Conn: p.Conn.Client, UpHosts: p.Conn.UpHosts}
+	uploader := p.makeUploader()
 	uptoken := p.makeUptokenWithoutKey()
 	return uploader.RputFileWithoutKey(ctx, ret, uptoken, localFile, (*kodocli.RputExtra)(extra))
 }
