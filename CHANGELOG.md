@@ -2,6 +2,9 @@
 
 ## 7.0.4 (2015-09-03)
 
+### 增加
+* 上传返回参数PutRet增加PersistentId，用于获取上传对应的fop操作的id
+
 ### 修复
 * token 覆盖问题
 
@@ -18,7 +21,7 @@
 ## 7.0.1 (2015-07-7-10)
 
 ### 增加
-* 完善 PutPolicy：支持 MimeLimit、CallbackHost 、CallbackFetchKey、CallbackBodyType、Checksum
+* 完善 PutPolicy：支持 MimeLimit、CallbackHost、CallbackFetchKey、 CallbackBodyType、 Checksum
 
 ## 7.0.0 (2016-06-29)
 
