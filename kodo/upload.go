@@ -1,8 +1,8 @@
 package kodo
 
 import (
-	"net/http"
 	"io"
+	"net/http"
 
 	"qiniupkg.com/api.v7/kodocli"
 	"qiniupkg.com/x/rpc.v7"
@@ -12,6 +12,7 @@ import (
 
 type PutExtra kodocli.PutExtra
 type RputExtra kodocli.RputExtra
+type PutRet kodocli.PutRet
 
 // ----------------------------------------------------------
 
@@ -175,4 +176,3 @@ func (p Bucket) RputFileWithoutKey(
 }
 
 // ----------------------------------------------------------
-
