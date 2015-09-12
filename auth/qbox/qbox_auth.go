@@ -81,6 +81,21 @@ func (mac *Mac) SignRequest(req *http.Request, incbody bool) (token string, err 
 	return
 }
 
+func (mac *Mac) VerifyCallback(req *http.Request) (bool, error) {
+
+	auth := req.Header.Get("Authorization")
+	if auth == "" {
+		return false, nil
+	}
+
+	token, err := mac.SignRequest(req, true)
+	if err != nil {
+		return false, err
+	}
+
+	return auth == "QBox "+token, nil
+}
+
 // ---------------------------------------------------------------------------------------
 
 func Sign(mac *Mac, data []byte) string {
