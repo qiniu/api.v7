@@ -128,30 +128,34 @@ type ListItem struct {
 // 如果后续没有更多数据，err 返回 EOF，markerOut 返回 ""（但不通过该特征来判断是否结束）。
 //
 func (p Bucket) List(
-	ctx Context, prefix, marker string, limit int) (entries []ListItem, markerOut string, err error) {
+	ctx Context, prefix, delimiter, marker string, limit int) (entries []ListItem, commonPrefixes []string, markerOut string, err error) {
 
-	listUrl := p.makeListURL(prefix, marker, limit)
+	listUrl := p.makeListURL(prefix, delimiter, marker, limit)
 
 	var listRet struct {
-		Marker string     `json:"marker"`
-		Items  []ListItem `json:"items"`
+		Marker   string     `json:"marker"`
+		Items    []ListItem `json:"items"`
+		Prefixes []string   `json:"commonPrefixes"`
 	}
 	err = p.Conn.Call(ctx, &listRet, "POST", listUrl)
 	if err != nil {
 		return
 	}
 	if listRet.Marker == "" {
-		return listRet.Items, "", io.EOF
+		return listRet.Items, listRet.Prefixes, "", io.EOF
 	}
-	return listRet.Items, listRet.Marker, nil
+	return listRet.Items, listRet.Prefixes, listRet.Marker, nil
 }
 
-func (p Bucket) makeListURL(prefix, marker string, limit int) string {
+func (p Bucket) makeListURL(prefix, delimiter, marker string, limit int) string {
 
 	query := make(url.Values)
 	query.Add("bucket", p.Name)
 	if prefix != "" {
 		query.Add("prefix", prefix)
+	}
+	if delimiter != "" {
+		query.Add("delimiter", delimiter)
 	}
 	if marker != "" {
 		query.Add("marker", marker)
@@ -251,4 +255,3 @@ func URIChangeMime(bucket, key, mime string) string {
 }
 
 // ----------------------------------------------------------
-
