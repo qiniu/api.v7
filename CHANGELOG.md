@@ -1,5 +1,11 @@
 #Changelog
 
+## 7.0.5 (2015-11-20)
+
+### 增加
+* add delimiter support to Bucket.List
+* 增加回调校验
+
 ## 7.0.4 (2015-09-03)
 
 ### 增加
