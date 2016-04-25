@@ -48,7 +48,7 @@ func testBatchStat(t *testing.T) {
 	}
 
 	if len(rets) != 3 {
-		t.Fatal("BatchStat failed: len(result) = ", len(rets))
+		t.Fatal("BatchStat failed: len(rets) != 3")
 	}
 
 	stat, err := bucket.Stat(nil, bkey)
