@@ -1,9 +1,9 @@
 package main
 
 import (
-  "kodo"
-  "conf"
-  "kodocli"
+  "qiniupkg.com/api.v7/kodo"
+  "qiniupkg.com/api.v7/conf"
+  "qiniupkg.com/api.v7/kodocli"
   "fmt"
 )
 
