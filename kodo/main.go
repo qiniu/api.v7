@@ -3,6 +3,7 @@ package kodo
 import (
 	"net/http"
 
+	"qiniupkg.com/api.v7/api"
 	"qiniupkg.com/api.v7/auth/qbox"
 	"qiniupkg.com/api.v7/conf"
 	"qiniupkg.com/x/rpc.v7"
@@ -48,6 +49,8 @@ type Config struct {
 	SecretKey string
 	RSHost    string
 	RSFHost   string
+	APIHost   string
+	Scheme    string
 	IoHost    string
 	UpHosts   []string
 	Transport http.RoundTripper
@@ -59,6 +62,8 @@ type Client struct {
 	rpc.Client
 	mac *qbox.Mac
 	Config
+
+	apiCli *api.Client
 }
 
 func New(zone int, cfg *Config) (p *Client) {
@@ -77,9 +82,16 @@ func New(zone int, cfg *Config) (p *Client) {
 	if p.RSFHost == "" {
 		p.RSFHost = defaultRsfHost
 	}
+	if p.Scheme != "https" {
+		p.Scheme = "http"
+	}
+	if p.APIHost == "" {
+		p.APIHost = api.DefaultApiHost
+	}
+	p.apiCli = api.NewClient(p.APIHost, p.Scheme)
 
 	if zone < 0 || zone >= len(zones) {
-		panic("invalid config: invalid zone")
+		return
 	}
 	if len(p.UpHosts) == 0 {
 		p.UpHosts = zones[zone].UpHosts
@@ -88,6 +100,10 @@ func New(zone int, cfg *Config) (p *Client) {
 		p.IoHost = zones[zone].IoHost
 	}
 	return
+}
+
+func NewWithoutZone(cfg *Config) (p *Client) {
+	return New(-1, cfg)
 }
 
 // ----------------------------------------------------------
@@ -109,4 +125,3 @@ func SetAppName(userApp string) error {
 }
 
 // ----------------------------------------------------------
-
