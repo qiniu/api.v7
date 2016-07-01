@@ -56,7 +56,7 @@ func newBucket() (bucket Bucket) {
 	if bucketName == "" || domain == "" {
 		panic("require test env")
 	}
-	client = New(0, nil)
+	client = NewWithoutZone(nil)
 
 	return client.Bucket(bucketName)
 }
