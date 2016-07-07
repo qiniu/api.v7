@@ -1,9 +1,11 @@
 package kodocli
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"sync"
 
 	"qiniupkg.com/x/xlog.v7"
@@ -150,6 +152,19 @@ func (p Uploader) RputWithoutKey(
 	return p.rput(ctx, ret, uptoken, "", false, f, fsize, extra)
 }
 
+//上传一个未知长度的流,默认分块上传.
+// ctx 是请求上下文。
+// ret 是上传成功后返回的数据。
+// uptoken 是由业务服务器颁发的上传凭证。
+// f 是io.reader接口
+// extra 是上传的一些可选择项。详细见RputExtra结构的描述。
+//
+
+func (p Uploader) RputStream(
+	ctx Context, ret interface{}, uptoken, key string, f io.Reader, extra *RputExtra) error {
+	return p.rputStream(ctx, ret, uptoken, key, true, f, extra)
+}
+
 // 上传一个文件，支持断点续传和分块上传。
 // 和 Rput 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
@@ -160,6 +175,7 @@ func (p Uploader) RputWithoutKey(
 // localFile 是要上传的文件的本地路径。
 // extra     是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
+
 func (p Uploader) RputFile(
 	ctx Context, ret interface{}, uptoken, key, localFile string, extra *RputExtra) (err error) {
 
@@ -233,7 +249,8 @@ func (p Uploader) rput(
 		task := func() {
 			defer wg.Done()
 			tryTimes := extra.TryTimes
-lzRetry:	err := p.resumableBput(ctx, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
+		lzRetry:
+			err := p.resumableBput(ctx, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
@@ -246,6 +263,100 @@ lzRetry:	err := p.resumableBput(ctx, &extra.Progresses[blkIdx], f, blkIdx, blkSi
 			}
 		}
 		tasks <- task
+	}
+
+	wg.Wait()
+	if nfails != 0 {
+		return ErrPutFailed
+	}
+
+	return p.mkfile(ctx, ret, key, hasKey, fsize, extra)
+}
+
+func (p Uploader) rputStream(
+	ctx Context, ret interface{}, uptoken, key string,
+	hasKey bool, f io.Reader, extra *RputExtra) error {
+
+	once.Do(initWorkers)
+
+	log := xlog.NewWith(ctx)
+
+	if extra == nil {
+		extra = new(RputExtra)
+	}
+	if extra.Progresses == nil {
+		extra.Progresses = []BlkputRet{}
+	}
+	if extra.ChunkSize == 0 {
+		extra.ChunkSize = settings.ChunkSize
+	}
+	if extra.TryTimes == 0 {
+		extra.TryTimes = settings.TryTimes
+	}
+	if extra.Notify == nil {
+		extra.Notify = notifyNil
+	}
+	if extra.NotifyErr == nil {
+		extra.NotifyErr = notifyErrNil
+	}
+
+	var (
+		blkIdx  int   = -1
+		blkSize int64 = 1 << blockBits
+
+		wg    sync.WaitGroup
+		fsize int64 = 0
+	)
+	p.Conn.Client = newUptokenClient(uptoken, p.Conn.Transport)
+	nfails := 0
+	for {
+		bbuf := bytes.NewBuffer(make([]byte, 0, blkSize))
+
+		n, err := io.CopyN(bbuf, f, blkSize)
+
+		//ended
+		if n == 0 {
+			if err != nil && err != io.EOF {
+				err = errors.New("io.CopyN(?, ?, " + strconv.FormatInt(blkSize, 10) + "): " + err.Error())
+				return err
+			}
+			break
+
+		}
+
+		fsize += n
+
+		//not ended
+		if n > 0 {
+			wg.Add(1)
+
+			progress := BlkputRet{}
+			extra.Progresses = append(extra.Progresses, progress)
+			blkIdx++
+
+			task := func() {
+				defer wg.Done()
+				tryTimes := extra.TryTimes
+			lzRetry:
+
+				err := p.resumableBput(ctx, &extra.Progresses[blkIdx], bytes.NewReader(bbuf.Bytes()), 0, int(n), extra)
+
+				if err != nil {
+					if tryTimes > 1 {
+						tryTimes--
+						log.Info("resumble.Put retrying ...")
+						goto lzRetry
+					}
+					log.Warn("resumable.Put", blkIdx, "Stream failed:", err)
+					extra.NotifyErr(blkIdx, int(blkSize), err)
+					nfails++
+
+				}
+
+			}
+			tasks <- task
+		}
+
 	}
 
 	wg.Wait()
