@@ -2,10 +2,12 @@ package kodo
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
+	"qiniupkg.com/api.v7/api"
 	"qiniupkg.com/api.v7/auth/qbox"
 	"qiniupkg.com/x/url.v7"
 )
@@ -71,17 +73,46 @@ type PutPolicy struct {
 	AsyncOps            string `json:"asyncOps,omitempty"`
 	EndUser             string `json:"endUser,omitempty"`
 	Checksum            string `json:"checksum,omitempty"` // 格式：<HashName>:<HexHashValue>，目前支持 MD5/SHA1。
+
+	UpHosts []string `json:"uphosts,omitempty"`
 }
 
 func (p *Client) MakeUptoken(policy *PutPolicy) string {
+	token, err := p.MakeUptokenWithSafe(policy)
+	if err != nil {
+		fmt.Errorf("makeuptoken failed: policy: %+v, error: %+v", policy, err)
+	}
+	return token
+}
 
+func (p *Client) MakeUptokenWithSafe(policy *PutPolicy) (token string, err error) {
 	var rr = *policy
+	if len(policy.UpHosts) == 0 {
+		bucketName := getBucketNameFromPutPolicy(policy)
+		bucketInfo, err1 := p.GetBucketInfo(bucketName)
+		if err1 != nil {
+			err = err1
+			return
+		}
+		rr.UpHosts = bucketInfo.UpHosts
+	}
 	if rr.Expires == 0 {
 		rr.Expires = 3600
 	}
 	rr.Expires += uint32(time.Now().Unix())
 	b, _ := json.Marshal(&rr)
-	return qbox.SignWithData(p.mac, b)
+	token = qbox.SignWithData(p.mac, b)
+	return
+}
+
+func getBucketNameFromPutPolicy(policy *PutPolicy) (bucketName string) {
+	scope := policy.Scope
+	bucketName = strings.Split(scope, ":")[0]
+	return
+}
+
+func (p *Client) GetBucketInfo(bucketName string) (bucketInfo api.BucketInfo, err error) {
+	return p.apiCli.GetBucketInfo(p.AccessKey, bucketName)
 }
 
 // ----------------------------------------------------------

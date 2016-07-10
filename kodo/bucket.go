@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	. "golang.org/x/net/context"
+	"qiniupkg.com/api.v7/api"
+	"qiniupkg.com/x/log.v7"
 )
 
 // ----------------------------------------------------------
@@ -21,6 +23,7 @@ func (p *Client) Batch(ctx Context, ret interface{}, op []string) (err error) {
 // ----------------------------------------------------------
 
 type Bucket struct {
+	api.BucketInfo
 	Conn *Client
 	Name string
 }
@@ -30,8 +33,26 @@ type Bucket struct {
 // name 是创建该七牛空间（bucket）时采用的名称。
 //
 func (p *Client) Bucket(name string) Bucket {
+	b, err := p.BucketWithSafe(name)
+	if err != nil {
+		log.Errorf("Bucket(%s) failed: %+v", name, err)
+	}
+	return b
+}
 
-	return Bucket{p, name}
+func (p *Client) BucketWithSafe(name string) (Bucket, error) {
+	var info api.BucketInfo
+	if len(p.UpHosts) == 0 {
+		var err error
+		info, err = p.apiCli.GetBucketInfo(p.mac.AccessKey, name)
+		if err != nil {
+			return Bucket{}, err
+		}
+	} else {
+		info.IoHost = p.IoHost
+		info.UpHosts = p.UpHosts
+	}
+	return Bucket{info, p, name}, nil
 }
 
 type Entry struct {
@@ -109,7 +130,7 @@ func (p Bucket) ChangeMime(ctx Context, key, mime string) (err error) {
 // url 是要抓取的资源的URL。
 //
 func (p Bucket) Fetch(ctx Context, key string, url string) (err error) {
-	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+uriFetch(p.Name, key, url))
+	return p.Conn.Call(ctx, nil, "POST", p.IoHost+uriFetch(p.Name, key, url))
 }
 
 // ----------------------------------------------------------

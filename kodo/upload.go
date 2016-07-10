@@ -21,6 +21,7 @@ func (p Bucket) makeUptoken(key string) string {
 	policy := &PutPolicy{
 		Scope:   p.Name + ":" + key,
 		Expires: 3600,
+		UpHosts: p.UpHosts,
 	}
 	return p.Conn.MakeUptoken(policy)
 }
@@ -30,6 +31,7 @@ func (p Bucket) makeUptokenWithoutKey() string {
 	policy := &PutPolicy{
 		Scope:   p.Name,
 		Expires: 3600,
+		UpHosts: p.UpHosts,
 	}
 	return p.Conn.MakeUptoken(policy)
 }
@@ -37,7 +39,7 @@ func (p Bucket) makeUptokenWithoutKey() string {
 func (p Bucket) makeUploader() kodocli.Uploader {
 
 	c := &http.Client{Transport: p.Conn.Transport}
-	return kodocli.Uploader{Conn: rpc.Client{c}, UpHosts: p.Conn.UpHosts}
+	return kodocli.Uploader{Conn: rpc.Client{c}, UpHosts: p.UpHosts, ApiCli: p.Conn.apiCli}
 }
 
 // ----------------------------------------------------------
