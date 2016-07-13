@@ -71,6 +71,7 @@ type PutPolicy struct {
 	AsyncOps            string `json:"asyncOps,omitempty"`
 	EndUser             string `json:"endUser,omitempty"`
 	Checksum            string `json:"checksum,omitempty"` // 格式：<HashName>:<HexHashValue>，目前支持 MD5/SHA1。
+	DeleteAfterDays     int    `json:"deleteAfterDays,omitempty"`
 }
 
 func (p *Client) MakeUptoken(policy *PutPolicy) string {
