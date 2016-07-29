@@ -87,7 +87,10 @@ func (p *Client) MakeUptoken(policy *PutPolicy) string {
 
 func (p *Client) MakeUptokenWithSafe(policy *PutPolicy) (token string, err error) {
 	var rr = *policy
-	if len(policy.UpHosts) == 0 {
+	if len(p.UpHosts) != 0 {
+		rr.UpHosts = p.UpHosts
+	}
+	if len(rr.UpHosts) == 0 {
 		bucketName := getBucketNameFromPutPolicy(policy)
 		bucketInfo, err1 := p.GetBucketInfo(bucketName)
 		if err1 != nil {
@@ -112,7 +115,7 @@ func getBucketNameFromPutPolicy(policy *PutPolicy) (bucketName string) {
 }
 
 func (p *Client) GetBucketInfo(bucketName string) (bucketInfo api.BucketInfo, err error) {
-	return p.apiCli.GetBucketInfo(p.AccessKey, bucketName)
+	return p.apiCli.GetBucketInfo(p.mac.AccessKey, bucketName)
 }
 
 // ----------------------------------------------------------

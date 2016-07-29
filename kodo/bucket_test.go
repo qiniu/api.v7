@@ -45,6 +45,8 @@ func TestAll(t *testing.T) {
 	testBatchMove(t)
 	testBatchDelete(t)
 	testBatch(t)
+	testClient_MakeUptokenBucket(t)
+	testClient_MakeUptokenBucketNotExist(t)
 }
 
 func testBatchStat(t *testing.T) {
