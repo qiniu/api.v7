@@ -59,48 +59,12 @@ func testClient_MakeUptokenBucket(t *testing.T) {
 	if token == "" {
 		t.Fatal("nil token")
 	}
+
 	token, err := c.MakeUptokenWithSafe(&PutPolicy{
 		Scope:   "NotExistBucket",
 		Expires: 3600,
 	})
-	if err != nil {
+	if err == nil {
 		t.Fatal("make up token fail")
-	}
-}
-
-func testClient_MakeUptokenBucketNotExist(t *testing.T) {
-	{
-		c := New(0, nil)
-		token := c.MakeUptoken(&PutPolicy{
-			Scope:   "NotExistBucket",
-			Expires: 3600,
-		})
-		if token == "" {
-			t.Fatal("nil token")
-		}
-		token, err := c.MakeUptokenWithSafe(&PutPolicy{
-			Scope:   "NotExistBucket",
-			Expires: 3600,
-		})
-		if err != nil {
-			t.Fatal("bucket not exit, should has an error")
-		}
-	}
-	{
-		c := New(-1, nil)
-		token := c.MakeUptoken(&PutPolicy{
-			Scope:   "NotExistBucket",
-			Expires: 3600,
-		})
-		if token != "" {
-			t.Fatal("not nil token")
-		}
-		token, err := c.MakeUptokenWithSafe(&PutPolicy{
-			Scope:   "NotExistBucket",
-			Expires: 3600,
-		})
-		if err == nil {
-			t.Fatal("bucket not exit, should has an error")
-		}
 	}
 }

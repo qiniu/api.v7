@@ -87,9 +87,6 @@ func (p *Client) MakeUptoken(policy *PutPolicy) string {
 
 func (p *Client) MakeUptokenWithSafe(policy *PutPolicy) (token string, err error) {
 	var rr = *policy
-	if len(p.UpHosts) != 0 {
-		rr.UpHosts = p.UpHosts
-	}
 	if len(rr.UpHosts) == 0 {
 		bucketName := getBucketNameFromPutPolicy(policy)
 		bucketInfo, err1 := p.GetBucketInfo(bucketName)
