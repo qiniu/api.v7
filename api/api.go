@@ -50,7 +50,7 @@ func (p *Client) GetBucketInfo(ak, bucketName string) (ret BucketInfo, err error
 	if err != nil {
 		return
 	}
-	ret.Expire = time.Now().Unix()
+	ret.Expire = time.Now().Unix() + info.Ttl
 	if p.scheme == "https" {
 		ret.UpHosts = hostInfo.Https["up"]
 		if iohosts, ok := hostInfo.Https["io"]; ok && len(iohosts) != 0 {
