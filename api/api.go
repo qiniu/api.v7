@@ -5,12 +5,17 @@ import (
 
 	"qiniupkg.com/x/rpc.v7"
 
+	"sync"
+
 	. "golang.org/x/net/context"
 )
 
 const DefaultApiHost string = "http://uc.qbox.me"
 
-var hostCache = make(map[string]BucketInfo)
+var (
+	bucketMu    sync.RWMutex
+	bucketCache = make(map[string]BucketInfo)
+)
 
 type Client struct {
 	*rpc.Client
@@ -34,27 +39,32 @@ type BucketInfo struct {
 
 func (p *Client) GetBucketInfo(ak, bucketName string) (ret BucketInfo, err error) {
 	key := ak + ":" + bucketName + ":" + p.scheme
-	if info, ok := hostCache[key]; ok && (info.Expire == 0 || info.Expire > time.Now().Unix()) {
-		ret = info
+	bucketMu.RLock()
+	bucketInfo, ok := bucketCache[key]
+	bucketMu.RUnlock()
+	if ok && (bucketInfo.Expire == 0 || bucketInfo.Expire > time.Now().Unix()) {
+		ret = bucketInfo
 		return
 	}
-	info, err := p.bucketHosts(ak, bucketName)
+	hostInfo, err := p.bucketHosts(ak, bucketName)
 	if err != nil {
 		return
 	}
 	ret.Expire = time.Now().Unix()
 	if p.scheme == "https" {
-		ret.UpHosts = info.Https["up"]
-		if iohosts, ok := info.Https["io"]; ok && len(iohosts) != 0 {
+		ret.UpHosts = hostInfo.Https["up"]
+		if iohosts, ok := hostInfo.Https["io"]; ok && len(iohosts) != 0 {
 			ret.IoHost = iohosts[0]
 		}
 	} else {
-		ret.UpHosts = info.Http["up"]
-		if iohosts, ok := info.Http["io"]; ok && len(iohosts) != 0 {
+		ret.UpHosts = hostInfo.Http["up"]
+		if iohosts, ok := hostInfo.Http["io"]; ok && len(iohosts) != 0 {
 			ret.IoHost = iohosts[0]
 		}
 	}
-	hostCache[key] = ret
+	bucketMu.Lock()
+	bucketCache[key] = ret
+	bucketMu.Unlock()
 	return
 }
 
