@@ -1,9 +1,12 @@
 package kodocli
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"sync"
 
 	"qiniupkg.com/x/xlog.v7"
@@ -17,6 +20,7 @@ var (
 	ErrInvalidPutProgress = errors.New("invalid put progress")
 	ErrPutFailed          = errors.New("resumable put failed")
 	ErrUnmatchedChecksum  = errors.New("unmatched checksum")
+	ErrBadToken           = errors.New("invalid token")
 )
 
 const (
@@ -117,6 +121,49 @@ var once sync.Once
 
 // ----------------------------------------------------------
 
+type Policy struct {
+	Scope   string   `json:"scope"`
+	UpHosts []string `json:"uphosts"`
+}
+
+func unmarshal(uptoken string, uptokenPolicy *Policy) (err error) {
+	parts := strings.Split(uptoken, ":")
+	if len(parts) != 3 {
+		err = ErrBadToken
+		return
+	}
+	b, err := base64.URLEncoding.DecodeString(parts[2])
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, uptokenPolicy)
+}
+
+func (p Uploader) getUpHostFromToken(uptoken string) (uphosts []string, err error) {
+	if len(p.UpHosts) != 0 {
+		uphosts = p.UpHosts
+		return
+	}
+	ak := strings.Split(uptoken, ":")[0]
+	uptokenPolicy := Policy{}
+	err = unmarshal(uptoken, &uptokenPolicy)
+	if err != nil {
+		return
+	}
+	if len(uptokenPolicy.UpHosts) == 0 {
+		bucketName := strings.Split(uptokenPolicy.Scope, ":")[0]
+		bucketInfo, err1 := p.ApiCli.GetBucketInfo(ak, bucketName)
+		if err1 != nil {
+			err = err1
+			return
+		}
+		uphosts = bucketInfo.UpHosts
+	} else {
+		uphosts = uptokenPolicy.UpHosts
+	}
+	return
+}
+
 // 上传一个文件，支持断点续传和分块上传。
 //
 // ctx     是请求的上下文。
@@ -214,6 +261,10 @@ func (p Uploader) rput(
 	if extra.NotifyErr == nil {
 		extra.NotifyErr = notifyErrNil
 	}
+	uphosts, err := p.getUpHostFromToken(uptoken)
+	if err != nil {
+		return err
+	}
 
 	var wg sync.WaitGroup
 	wg.Add(blockCnt)
@@ -233,7 +284,8 @@ func (p Uploader) rput(
 		task := func() {
 			defer wg.Done()
 			tryTimes := extra.TryTimes
-lzRetry:	err := p.resumableBput(ctx, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
+		lzRetry:
+			err := p.resumableBput(ctx, uphosts, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
@@ -253,7 +305,7 @@ lzRetry:	err := p.resumableBput(ctx, &extra.Progresses[blkIdx], f, blkIdx, blkSi
 		return ErrPutFailed
 	}
 
-	return p.mkfile(ctx, ret, key, hasKey, fsize, extra)
+	return p.mkfile(ctx, uphosts, ret, key, hasKey, fsize, extra)
 }
 
 func (p Uploader) rputFile(

@@ -9,7 +9,7 @@ import (
 	"qiniupkg.com/x/rpc.v7"
 )
 
-var version = "7.0.5"
+var version = "7.1.0"
 
 var ACCESS_KEY string
 var SECRET_KEY string
@@ -36,3 +36,4 @@ func init() {
 }
 
 // ----------------------------------------------------------
+

@@ -1,7 +1,10 @@
 package kodo
 
 import (
+	"math/rand"
+	"strconv"
 	"testing"
+	"time"
 )
 
 var (
@@ -16,6 +19,10 @@ func init() {
 		return
 	}
 
+	rand.Seed(time.Now().UnixNano())
+	bkey += strconv.Itoa(rand.Int())
+	bnewkey1 += strconv.Itoa(rand.Int())
+	bnewkey2 += strconv.Itoa(rand.Int())
 	// 删除 可能存在的 key
 	bucket.BatchDelete(nil, bkey, bnewkey1, bnewkey2)
 }
@@ -38,6 +45,7 @@ func TestAll(t *testing.T) {
 	testBatchMove(t)
 	testBatchDelete(t)
 	testBatch(t)
+	testClient_MakeUptokenBucket(t)
 }
 
 func testBatchStat(t *testing.T) {
@@ -48,7 +56,7 @@ func testBatchStat(t *testing.T) {
 	}
 
 	if len(rets) != 3 {
-		t.Fatal("BatchStat failed: len(result) = ", len(rets))
+		t.Fatal("BatchStat failed: len(rets) = ", 3)
 	}
 
 	stat, err := bucket.Stat(nil, bkey)
@@ -137,4 +145,3 @@ func testBatch(t *testing.T) {
 		t.Fatal("len(rets) != 3")
 	}
 }
-
