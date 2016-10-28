@@ -1,10 +1,5 @@
 package media
 
-import (
-	"encoding/base64"
-	"github.com/google/go-querystring/query"
-	"regexp"
-)
 
 type AuthumbView struct {
 	Format        string `url:"11-avthumb,omitempty"`
@@ -42,19 +37,27 @@ func NewAvthumb() AuthumbView {
 	return AuthumbView{}
 }
 
-func (this AuthumbView) makeFops() string {
-	if len(this.AB) > 0 {
-		this.AB = base64.StdEncoding.EncodeToString([]byte(this.AB))
-	}
-	v, _ := query.Values(this)
-	fops := regexp.MustCompile(`[&=]`).ReplaceAllString(v.Encode(), "/")
-	fops = regexp.MustCompile(`\d*-`).ReplaceAllString(fops, "")
-	return fops
-}
-
+/**
+http://developer.qiniu.com/code/v6/api/dora-api/av/avthumb.html
+ */
 func (this AuthumbView) Avthumb(params Options) (result Result, err error) {
-	fops := this.makeFops()
+	if len(this.Subtitle) > 0 {
+		this.Subtitle = UrlSafeBase64Encode(this.Subtitle)
+	}
+	if len(this.WmImage) > 0 {
+		this.WmImage = UrlSafeBase64Encode(this.WmImage)
+	}
+	if len(this.WmText) > 0 {
+		this.WmText = UrlSafeBase64Encode(this.WmText)
+	}
+	if len(this.WmFont) > 0 {
+		this.WmFont = UrlSafeBase64Encode(this.WmFont)
+	}
+	if len(this.WmFontColor) > 0 {
+		this.WmFontColor = UrlSafeBase64Encode(this.WmFontColor)
+	}
+	fops := makeFops(this)
 	params.Fops = fops
-	result, err = put(params)
+	result, err = post(params)
 	return
 }
