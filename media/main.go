@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/google/go-querystring/query"
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/api.v7/conf"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"errors"
+	"qiniupkg.com/api.v7/conf"
+	"qiniupkg.com/api.v7/auth/qbox"
 )
 
 const (
