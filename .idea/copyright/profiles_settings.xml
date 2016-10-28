@@ -1,0 +1,10 @@
+<component name="CopyrightManager">
+  <settings default="TD">
+    <module2copyright>
+      <element module="All" copyright="TD" />
+    </module2copyright>
+    <LanguageOptions name="CSS">
+      <option name="fileTypeOverride" value="1" />
+    </LanguageOptions>
+  </settings>
+</component>

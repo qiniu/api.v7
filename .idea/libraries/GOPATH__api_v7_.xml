@@ -1,0 +1,56 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;api.v7&gt;">
+    <CLASSES>
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/db" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/def" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_api" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_passport" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_web" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/lib" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/linkparser" />
+      <root url="file://$PROJECT_DIR$/../../../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/app_generator" />
+      <root url="file://$PROJECT_DIR$/../../../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/pb" />
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_td_wx" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_spider" />
+      <root url="file://$PROJECT_DIR$/../../../qiniupkg.com" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_treedom" />
+      <root url="file://$PROJECT_DIR$/../../../golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/memcache" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/revel_chat" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/test" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_chat" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/db" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/def" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_api" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_passport" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_web" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/lib" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/linkparser" />
+      <root url="file://$PROJECT_DIR$/../../../google.golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/app_generator" />
+      <root url="file://$PROJECT_DIR$/../../../gopkg.in" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/pb" />
+      <root url="file://$PROJECT_DIR$/../.." />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_td_wx" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_spider" />
+      <root url="file://$PROJECT_DIR$/../../../qiniupkg.com" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_treedom" />
+      <root url="file://$PROJECT_DIR$/../../../golang.org" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/memcache" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/revel_chat" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/test" />
+      <root url="file://$PROJECT_DIR$/../../../../../gocode/src/srv_live_chat" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
