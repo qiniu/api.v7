@@ -8,8 +8,8 @@ import (
 	"github.com/qiniu/api.v7/conf"
 	"io/ioutil"
 	"net/http"
-	"qiniupkg.com/x/errors.v7"
 	"strings"
+	"errors"
 )
 
 const (
