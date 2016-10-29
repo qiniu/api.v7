@@ -26,6 +26,9 @@ func (this PrivateM3U8) Download(M3U8DownloadURI string,expiresTs int64) (result
 	fops := makeFops(this)
 	M3U8DownloadURI = fmt.Sprintf("%s?%s&e=%d", M3U8DownloadURI, fops, expiresTs)
 	body, err := get(M3U8DownloadURI, true)
+	if err != nil {
+		return
+	}
 	err = json.Unmarshal(body, &result)
 	if err != nil {
 		return
