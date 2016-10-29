@@ -22,7 +22,7 @@ type AvSegtimeView struct {
 	HlsKey     string `url:"30-hlsKey,omitempty"`
 	HlsKeyType string `url:"31-hlsKeyType,omitempty"`
 	HlsKeyUrl  string `url:"32-hlsKeyUrl,omitempty"`
-	Pattern    string `url:"33-pattern,omitempty"`
+	Pattern    string `url:"33-pattern,omitempty"` //need use UrlSafeBase64Encode at external
 }
 
 func NewAvSegtime() AvSegtimeView {
@@ -31,7 +31,7 @@ func NewAvSegtime() AvSegtimeView {
 
 /**
 http://developer.qiniu.com/code/v6/api/dora-api/av/segtime.html
- */
+*/
 
 func (this AvSegtimeView) AvSegtime(params Options) (result Result, err error) {
 	if len(this.Domain) > 0 {

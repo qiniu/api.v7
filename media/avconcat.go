@@ -14,7 +14,7 @@ type AvConcatView struct {
 func NewAvConcat() AvConcatView {
 	view := AvConcatView{}
 	view.Urls = make([]string, 0,20)
-	return AvConcatView{}
+	return view
 }
 
 /**

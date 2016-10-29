@@ -8,6 +8,7 @@ import (
 	"github.com/google/go-querystring/query"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"qiniupkg.com/api.v7/auth/qbox"
 	"qiniupkg.com/api.v7/conf"
 	"regexp"
@@ -36,10 +37,28 @@ type Result struct {
 	PersistentId string `json:"persistentId,omitempty"`
 }
 
-func get(urlStr string) (body []byte, err error) {
+func get(params ...interface{}) (body []byte, err error) {
+	if len(params) == 0 {
+		return
+	}
+	urlStr, ok := params[0].(string)
+	if !ok {
+		return
+	}
 	req, err := http.NewRequest("GET", urlStr, strings.NewReader(""))
 	if err != nil {
 		return
+	}
+	if len(params) >= 2 {
+		withToken, ok := params[1].(bool)
+		if !ok {
+			return
+		}
+		if withToken {
+			mac := qbox.NewMac(conf.ACCESS_KEY, conf.SECRET_KEY)
+			token, _ := mac.SignRequest(req, false)
+			req.URL, _ = url.Parse(urlStr + fmt.Sprintf("&token=%s", token))
+		}
 	}
 	body, err = request(req)
 	return
@@ -104,20 +123,32 @@ func convertQueryStrToFopStr(str string) (fops string) {
 	return
 }
 
+/**
+only for media package
+ */
 func UrlBase64Encode(str string) (base64Str string) {
 	base64Str = base64.StdEncoding.EncodeToString([]byte(str))
 	base64Str = fixedEqualToDollar(base64Str)
 	return
 }
 
+/**
+fixed base64 equals conflict with url query encode equals
+ */
 func fixedEqualToDollar(str string) string {
 	return regexp.MustCompile(`[=]`).ReplaceAllString(str, "$")
 }
 
+/**
+fixed base64 equals from dollar after query encode
+ */
 func fixedDollarToEqual(str string) string {
 	return regexp.MustCompile(`[$]`).ReplaceAllString(str, "=")
 }
 
+/**
+only for media package
+ */
 func UrlSafeBase64Encode(str string) (base64Str string) {
 	base64Str = base64.StdEncoding.EncodeToString([]byte(str))
 	base64Str = regexp.MustCompile(`[+]`).ReplaceAllString(base64Str, "-")
