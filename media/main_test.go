@@ -4,7 +4,7 @@ import (
 	"os"
 	"qiniupkg.com/api.v7/conf"
 	"testing"
-	"github.com/chanxuehong/time"
+	"time"
 )
 
 func init() {
