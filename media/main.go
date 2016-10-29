@@ -55,6 +55,10 @@ func get(params ...interface{}) (body []byte, err error) {
 			return
 		}
 		if withToken {
+			if conf.ACCESS_KEY == "" || conf.SECRET_KEY == "" {
+				err = errors.New("missing some required parameters")
+				return
+			}
 			mac := qbox.NewMac(conf.ACCESS_KEY, conf.SECRET_KEY)
 			token, _ := mac.SignRequest(req, false)
 			req.URL, _ = url.Parse(urlStr + fmt.Sprintf("&token=%s", token))
