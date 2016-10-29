@@ -32,7 +32,7 @@ func TestAvSegtime(t *testing.T)  {
 	options := Options{NeedConvertFileName: "320ae9957cb2a82416d9a843903ce32c.m3u8"}
 	res, err := view.AvSegtime(options)
 	if err != nil {
-		t.Log("Avthumb Err:", err)
+		t.Log("AvSegtime Err:", err)
 	} else {
 		t.Log("persistentId:", res.PersistentId)
 	}
@@ -93,7 +93,7 @@ func TestPrivateM3U8(t *testing.T) {
 	view:=NewPrivateM3U8()
 	res,err:=view.Download("http://7xoucz.com1.z0.glb.clouddn.com/qiniutest.m3u8",time.Now().Unix()+1200)
 	if err != nil {
-		t.Log("VSample Err:", err)
+		t.Log("PrivateM3U8 Err:", err)
 	} else {
 		t.Log("body:", res.Body)
 	}
