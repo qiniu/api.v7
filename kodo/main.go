@@ -43,7 +43,7 @@ var zones = []zoneConfig{
 			"http://upload-z2.qiniu.com",
 		},
 	},
-	// z3 北美机房:
+	// na0 北美机房:
 	{
 		IoHost: "http://iovip-na.qbox.me",
 		UpHosts: []string{
