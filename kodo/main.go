@@ -45,10 +45,10 @@ var zones = []zoneConfig{
 	},
 	// na0 北美机房:
 	{
-		IoHost: "http://iovip-na.qbox.me",
+		IoHost: "http://iovip-na0.qbox.me",
 		UpHosts: []string{
-			"http://up-na.qiniu.com",
-			"http://upload-na.qiniu.com",
+			"http://up-na0.qiniu.com",
+			"http://upload-na0.qiniu.com",
 		},
 	},
 }
