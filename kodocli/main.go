@@ -32,6 +32,20 @@ var zones = []zoneConfig{
 			"-H up-z1.qiniu.com http://106.38.227.27",
 		},
 	},
+	// z2 华南机房:
+	{
+		UpHosts: []string{
+			"http://up-z2.qiniu.com",
+			"http://upload-z2.qiniu.com",
+		},
+	},
+	// na0 北美机房:
+	{
+		UpHosts: []string{
+			"http://up-na0.qiniu.com",
+			"http://upload-na0.qiniu.com",
+		},
+	},
 }
 
 // ----------------------------------------------------------
