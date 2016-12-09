@@ -289,7 +289,7 @@ func (p Uploader) rput(
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
-					log.Info("resumable.Put retrying ...")
+					log.Info("resumable.Put retrying ...", blkIdx, "reason:", err)
 					goto lzRetry
 				}
 				log.Warn("resumable.Put", blkIdx, "failed:", err)
