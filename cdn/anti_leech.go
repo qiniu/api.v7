@@ -22,8 +22,7 @@ func CreateTimestampAntiLeechUrl(host, fileName string, queryStr url.Values, enc
 
 	u, parseErr := url.Parse(urlStr)
 	if parseErr != nil {
-		err = parseErr
-		return
+		return "", parseErr
 	}
 	return createTimestampAntiLeechUrl(u, encryptKey, durationInSeconds), nil
 
