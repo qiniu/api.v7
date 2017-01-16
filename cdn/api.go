@@ -146,9 +146,9 @@ http://developer.qiniu.com/article/fusion/api/refresh.html
 	urls	要刷新的单个url列表，总数不超过100条；单个url，即一个具体的url，例如：http://bar.foo.com/index.html
 	dirs	要刷新的目录url列表，总数不超过10条；目录dir，即表示一个目录级的url，例如：http://bar.foo.com/dir/，也支持在尾部使用通配符，例如：http://bar.foo.com/dir/*
 */
-func RefreshUrlsAndDirs(urls, dirs []string) (result RefreshReq, err error) {
+func RefreshUrlsAndDirs(urls, dirs []string) (result RefreshResp, err error) {
 
-	reqBody := RefreshQuery{
+	reqBody := RefreshReq{
 		Urls: urls,
 		Dirs: dirs,
 	}

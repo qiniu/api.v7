@@ -1,10 +1,10 @@
 package cdn
 
 import (
+	"os"
 	"reflect"
 	"testing"
-	"os"
-	
+
 	"qiniupkg.com/api.v7/kodo"
 )
 
@@ -23,18 +23,17 @@ func TestGetBandWidthData(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        args
-		wantTraffic TrafficQueryResp
+		wantTraffic TrafficResp
 		wantErr     bool
 	}{
 		{
-			name:"BandWidthTest_1",
-			args:args{
+			name: "BandWidthTest_1",
+			args: args{
 				"2016-12-20",
 				"2016-12-20",
 				"5min",
 				[]string{"abc.def.com"},
 			},
-			
 		},
 	}
 	kodo.SetMac(ak, sk)
@@ -45,7 +44,7 @@ func TestGetBandWidthData(t *testing.T) {
 				t.Errorf("GetBandWidthData() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 		})
 	}
 }
@@ -60,18 +59,17 @@ func TestGetFluxData(t *testing.T) {
 	tests := []struct {
 		name        string
 		args        args
-		wantTraffic TrafficQueryResp
+		wantTraffic TrafficResp
 		wantErr     bool
 	}{
 		{
-			name:"BandWidthTest_1",
-			args:args{
+			name: "BandWidthTest_1",
+			args: args{
 				"2016-12-20",
 				"2016-12-20",
 				"5min",
 				[]string{"abc.def.com"},
 			},
-			
 		},
 	}
 	kodo.SetMac(ak, sk)
@@ -98,15 +96,15 @@ func TestRefreshUrlsAndDirs(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:"refresh_test_1",
-			args:args{
-				urls:[]string{""},
+			name: "refresh_test_1",
+			args: args{
+				urls: []string{""},
 			},
-			wantErr:true,
+			wantErr: false,
 		},
 	}
 	kodo.SetMac(ak, sk)
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := RefreshUrlsAndDirs(tt.args.urls, tt.args.dirs)
@@ -114,7 +112,7 @@ func TestRefreshUrlsAndDirs(t *testing.T) {
 				t.Errorf("RefreshUrlsAndDirs() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			
+
 		})
 	}
 }
@@ -130,11 +128,11 @@ func TestRefreshUrls(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:"refresh_test_1",
-			args:args{
-				urls:[]string{""},
+			name: "refresh_test_1",
+			args: args{
+				urls: []string{""},
 			},
-			wantErr:true,
+			wantErr: false,
 		},
 	}
 	kodo.SetMac(ak, sk)
@@ -158,8 +156,7 @@ func TestRefreshDirs(t *testing.T) {
 		args       args
 		wantResult RefreshResp
 		wantErr    bool
-	}{
-	}
+	}{}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			gotResult, err := RefreshDirs(tt.args.dirs)
@@ -185,11 +182,11 @@ func TestPrefetchUrls(t *testing.T) {
 		wantErr    bool
 	}{
 		{
-			name:"refresh_test_1",
-			args:args{
-				urls:[]string{""},
+			name: "refresh_test_1",
+			args: args{
+				urls: []string{""},
 			},
-			wantErr:true,
+			wantErr: false,
 		},
 	}
 	kodo.SetMac(ak, sk)
