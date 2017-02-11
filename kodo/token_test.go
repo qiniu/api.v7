@@ -50,3 +50,21 @@ func TestGetPrivateUrl(t *testing.T) {
 	}
 }
 
+func testClient_MakeUptokenBucket(t *testing.T) {
+	c := New(0, nil)
+	token := c.MakeUptoken(&PutPolicy{
+		Scope:   "gosdk",
+		Expires: 3600,
+	})
+	if token == "" {
+		t.Fatal("nil token")
+	}
+
+	token, err := c.MakeUptokenWithSafe(&PutPolicy{
+		Scope:   "NotExistBucket",
+		Expires: 3600,
+	})
+	if err == nil {
+		t.Fatal("make up token fail")
+	}
+}
