@@ -1,6 +1,7 @@
 package kodo
 
 import (
+	"context"
 	"math/rand"
 	"strconv"
 	"testing"
@@ -46,6 +47,7 @@ func TestAll(t *testing.T) {
 	testBatchDelete(t)
 	testBatch(t)
 	testClient_MakeUptokenBucket(t)
+	testDeleteAfterDays(t)
 }
 
 func testBatchStat(t *testing.T) {
@@ -144,4 +146,22 @@ func testBatch(t *testing.T) {
 	if len(rets) != 3 {
 		t.Fatal("len(rets) != 3")
 	}
+}
+
+func testDeleteAfterDays(t *testing.T) {
+
+	ctx := context.Background()
+
+	err := bucket.DeleteAfterDays(ctx, bnewkey1, 5)
+	if err == nil {
+		t.Fatal("Expect an error")
+	}
+
+	bucket.Copy(ctx, bkey, bnewkey1)
+
+	err = bucket.DeleteAfterDays(ctx, bnewkey1, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 }
