@@ -178,7 +178,7 @@ func (p Uploader) put(
 	lastLine := fmt.Sprintf("\r\n--%s--\r\n", writer.Boundary())
 	r := strings.NewReader(lastLine)
 
-	var bodyLen = -1
+	var bodyLen int64 = -1
 	if size >= 0 {
 		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
 	}
