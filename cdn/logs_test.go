@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"api.v7/kodo"
+	"qiniupkg.com/api.v7/kodo"
 )
 
 func init() {
