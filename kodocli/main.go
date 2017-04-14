@@ -77,7 +77,7 @@ func NewUploader(zone int, cfg *UploadConfig) (p Uploader) {
 		uc.APIHost = api.DefaultApiHost
 	}
 	if len(uc.UpHosts) == 0 {
-		if zone > 0 && zone < len(zones) {
+		if zone >= 0 && zone < len(zones) {
 			uc.UpHosts = zones[zone].UpHosts
 		}
 	}
