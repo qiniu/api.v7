@@ -303,7 +303,6 @@ func URIChangeType(bucket, key string, fileType int) string {
 
 func URIDeleteAfterDays(bucket, key string, days int) string {
 	return fmt.Sprintf("/deleteAfterDays/%s/%d", encodeURI(bucket+":"+key), days)
-
 }
 
 // ----------------------------------------------------------
