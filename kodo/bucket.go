@@ -299,6 +299,7 @@ func URIChangeMime(bucket, key, mime string) string {
 
 func URIChangeType(bucket, key string, fileType int) string {
 	return "/chtype/" + encodeURI(bucket+":"+key) + "/type/" + strconv.Itoa(fileType)
+}
 
 func URIDeleteAfterDays(bucket, key string, days int) string {
 	return fmt.Sprintf("/deleteAfterDays/%s/%d", encodeURI(bucket+":"+key), days)
