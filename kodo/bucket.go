@@ -2,6 +2,7 @@ package kodo
 
 import (
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/url"
 	"strconv"
@@ -142,6 +143,16 @@ func (p Bucket) ChangeType(ctx Context, key string, fileType int) (err error) {
 //
 func (p Bucket) Fetch(ctx Context, key string, url string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.IoHost+uriFetch(p.Name, key, url))
+}
+
+// 更新文件生命周期
+//
+// ctx 是请求的上下文。
+// key 是要更新的文件的访问路径。
+// deleteAfterDays 设置为0表示取消 lifecycle
+//
+func (p Bucket) DeleteAfterDays(ctx Context, key string, days int) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIDeleteAfterDays(p.Name, key, days))
 }
 
 // ----------------------------------------------------------
@@ -288,6 +299,10 @@ func URIChangeMime(bucket, key, mime string) string {
 
 func URIChangeType(bucket, key string, fileType int) string {
 	return "/chtype/" + encodeURI(bucket+":"+key) + "/type/" + strconv.Itoa(fileType)
+
+func URIDeleteAfterDays(bucket, key string, days int) string {
+	return fmt.Sprintf("/deleteAfterDays/%s/%d", encodeURI(bucket+":"+key), days)
+
 }
 
 // ----------------------------------------------------------
