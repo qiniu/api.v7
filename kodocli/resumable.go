@@ -12,8 +12,6 @@ import (
 	"qiniupkg.com/x/xlog.v7"
 
 	. "golang.org/x/net/context"
-	"strconv"
-	"fmt"
 )
 
 // ----------------------------------------------------------
