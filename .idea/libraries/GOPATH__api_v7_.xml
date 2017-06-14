@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="GOPATH &lt;api.v7&gt;">
+    <CLASSES>
+      <root url="file://$USER_HOME$/gopkg/src/github.com" />
+    </CLASSES>
+    <SOURCES>
+      <root url="file://$USER_HOME$/gopkg/src/github.com" />
+    </SOURCES>
+    <excluded>
+      <root url="file://$PROJECT_DIR$" />
+    </excluded>
+  </library>
+</component>
