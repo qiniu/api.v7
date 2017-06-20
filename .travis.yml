@@ -13,4 +13,5 @@ install:
   - export TRAVIS_BUILD_DIR=$QINIU_SRC/qiniupkg.com/api.v7
   - cd $TRAVIS_BUILD_DIR
   - go get golang.org/x/net/context
+  - go get github.com/google/go-querystring/query
   
