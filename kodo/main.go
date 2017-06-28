@@ -16,6 +16,17 @@ type zoneConfig struct {
 	UpHosts []string
 }
 
+const (
+	// ZoneZ0  华东机房
+	ZoneZ0 = iota
+	// ZoneZ1 华北机房
+	ZoneZ1
+	// ZoneZ2 华南机房
+	ZoneZ2
+	// ZoneNa0 北美机房
+	ZoneNa0
+)
+
 var zones = []zoneConfig{
 	// z0 华东机房:
 	{

@@ -7,7 +7,7 @@
 
 然后我们创建一个 Client 对象：
 
-	zone := 0 // 您空间(Bucket)所在的区域
+	zone := kodo.ZoneZ0 // 您空间(Bucket)所在的区域
 	c := kodo.New(zone, nil) // 用默认配置创建 Client
 
 有了 Client，你就可以操作您的空间(Bucket)了，比如我们要上传一个文件：
