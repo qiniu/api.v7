@@ -155,6 +155,27 @@ func (p Bucket) DeleteAfterDays(ctx Context, key string, days int) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.RSHost+URIDeleteAfterDays(p.Name, key, days))
 }
 
+// 设置镜像源
+//
+// srcSiteURL 镜像源的访问域名。必须设置为形如 http://source.com/ 或 http://114.114.114.114/ 的字符串
+// host 回源时使用的 Host 头部值
+func (p Bucket) Image(ctx Context, srcSiteURL, host string) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", "http://pu.qbox.me:10200"+URIImage(p.Name, srcSiteURL, host))
+}
+
+//取消镜像源
+//
+func (p Bucket) UnImage(ctx Context) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", "http://pu.qbox.me:10200"+URIUnImage(p.Name))
+}
+
+//镜像资源更新
+//
+// key 被抓取资源名称
+func (p Bucket) Prefetch(ctx Context, key string) (err error) {
+	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+URIPrefetch(p.Name, key))
+}
+
 // ----------------------------------------------------------
 
 type ListItem struct {
@@ -303,6 +324,17 @@ func URIChangeType(bucket, key string, fileType int) string {
 
 func URIDeleteAfterDays(bucket, key string, days int) string {
 	return fmt.Sprintf("/deleteAfterDays/%s/%d", encodeURI(bucket+":"+key), days)
+}
+
+func URIImage(bucket, srcSiteURL, host string) string {
+	return fmt.Sprintf("/image/%s/from/%s/host/%s", bucket, encodeURI(srcSiteURL), encodeURI(host))
+}
+func URIUnImage(bucket string) string {
+	return fmt.Sprintf("/unimage/%s", bucket)
+}
+
+func URIPrefetch(bucket, key string) string {
+	return fmt.Sprintf("/prefetch/%s", encodeURI(bucket+":"+key))
 }
 
 // ----------------------------------------------------------
