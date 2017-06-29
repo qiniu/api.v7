@@ -9,7 +9,7 @@ import (
 
 	"time"
 
-	"qiniupkg.com/api.v7/kodo"
+	"github.com/qiniu/api.v7/kodo"
 )
 
 var (

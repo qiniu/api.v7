@@ -2,6 +2,7 @@ package kodocli
 
 import (
 	"bytes"
+	. "context"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -12,8 +13,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	. "golang.org/x/net/context"
 )
 
 // ----------------------------------------------------------

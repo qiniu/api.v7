@@ -1,13 +1,11 @@
 package api
 
 import (
+	. "context"
+	"sync"
 	"time"
 
-	"qiniupkg.com/x/rpc.v7"
-
-	"sync"
-
-	. "golang.org/x/net/context"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 const DefaultApiHost string = "http://uc.qbox.me"

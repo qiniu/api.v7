@@ -1,15 +1,15 @@
 package kodo
 
 import (
+	. "context"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"net/url"
 	"strconv"
 
-	. "golang.org/x/net/context"
-	"qiniupkg.com/api.v7/api"
-	"qiniupkg.com/x/log.v7"
+	"github.com/qiniu/api.v7/api"
+	"github.com/qiniu/x/log.v7"
 )
 
 // ----------------------------------------------------------
@@ -159,6 +159,7 @@ func (p Bucket) DeleteAfterDays(ctx Context, key string, days int) (err error) {
 //
 // srcSiteURL 镜像源的访问域名。必须设置为形如 http://source.com/ 或 http://114.114.114.114/ 的字符串
 // host 回源时使用的 Host 头部值
+//
 func (p Bucket) Image(ctx Context, srcSiteURL, host string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", "http://pu.qbox.me:10200"+URIImage(p.Name, srcSiteURL, host))
 }
@@ -172,6 +173,7 @@ func (p Bucket) UnImage(ctx Context) (err error) {
 //镜像资源更新
 //
 // key 被抓取资源名称
+//
 func (p Bucket) Prefetch(ctx Context, key string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+URIPrefetch(p.Name, key))
 }
@@ -329,6 +331,7 @@ func URIDeleteAfterDays(bucket, key string, days int) string {
 func URIImage(bucket, srcSiteURL, host string) string {
 	return fmt.Sprintf("/image/%s/from/%s/host/%s", bucket, encodeURI(srcSiteURL), encodeURI(host))
 }
+
 func URIUnImage(bucket string) string {
 	return fmt.Sprintf("/unimage/%s", bucket)
 }

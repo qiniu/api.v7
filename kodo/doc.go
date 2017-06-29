@@ -1,5 +1,5 @@
 /*
-包 qiniupkg.com/api.v7/kodo 提供了在您的业务服务器（服务端）调用七牛云存储服务的能力
+包 github.com/qiniu/api.v7/kodo 提供了在您的业务服务器（服务端）调用七牛云存储服务的能力
 
 首先，我们要配置下 AccessKey/SecretKey，这可以在七牛 Portal 中查到：
 

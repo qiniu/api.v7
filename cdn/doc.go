@@ -1,7 +1,7 @@
 /*
-包qiniupkg.com/api.v7/fusion提供了七牛CDN的API功能
+包 github.com/qiniu/api.v7/cdn 提供了七牛CDN的API功能
 首先，我们要配置下 AccessKey/SecretKey,
-	import "qiniupkg.com/api.v7/kodo"
+	import "github.com/qiniu/api.v7/kodo"
 
 	kodo.SetMac("ak", "sk")
 设置了AccessKey/SecretKey 就可以使用cdn的各类功能

@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"qiniupkg.com/api.v7/api"
-	"qiniupkg.com/api.v7/auth/qbox"
-	"qiniupkg.com/x/url.v7"
+	"github.com/qiniu/api.v7/api"
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/x/url.v7"
 )
 
 // ----------------------------------------------------------

@@ -40,7 +40,7 @@ func newBucket() (bucket Bucket) {
 
 	QINIU_KODO_TEST = os.Getenv("QINIU_KODO_TEST")
 	if skipTest() {
-		println("[INFO] QINIU_KODO_TEST: skipping to test qiniupkg.com/api.v7")
+		println("[INFO] QINIU_KODO_TEST: skipping to test github.com/qiniu/api.v7")
 		return
 	}
 

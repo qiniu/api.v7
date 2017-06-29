@@ -1,6 +1,7 @@
 package kodocli
 
 import (
+	. "context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -9,9 +10,7 @@ import (
 	"strings"
 	"sync"
 
-	"qiniupkg.com/x/xlog.v7"
-
-	. "golang.org/x/net/context"
+	"github.com/qiniu/x/xlog.v7"
 )
 
 // ----------------------------------------------------------

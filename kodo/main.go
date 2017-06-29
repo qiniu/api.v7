@@ -3,10 +3,10 @@ package kodo
 import (
 	"net/http"
 
-	"qiniupkg.com/api.v7/api"
-	"qiniupkg.com/api.v7/auth/qbox"
-	"qiniupkg.com/api.v7/conf"
-	"qiniupkg.com/x/rpc.v7"
+	"github.com/qiniu/api.v7/api"
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 // ----------------------------------------------------------

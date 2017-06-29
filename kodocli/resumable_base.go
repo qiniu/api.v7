@@ -1,6 +1,7 @@
 package kodocli
 
 import (
+	. "context"
 	"encoding/base64"
 	"fmt"
 	"hash/crc32"
@@ -8,11 +9,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"qiniupkg.com/x/bytes.v7"
-	"qiniupkg.com/x/rpc.v7"
-	"qiniupkg.com/x/xlog.v7"
-
-	. "golang.org/x/net/context"
+	"github.com/qiniu/x/bytes.v7"
+	"github.com/qiniu/x/rpc.v7"
+	"github.com/qiniu/x/xlog.v7"
 )
 
 // ----------------------------------------------------------

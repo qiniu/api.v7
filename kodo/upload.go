@@ -1,13 +1,12 @@
 package kodo
 
 import (
+	. "context"
 	"io"
 	"net/http"
 
-	"qiniupkg.com/api.v7/kodocli"
-	"qiniupkg.com/x/rpc.v7"
-
-	. "golang.org/x/net/context"
+	"github.com/qiniu/api.v7/kodocli"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 type PutExtra kodocli.PutExtra
