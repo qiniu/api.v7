@@ -70,74 +70,6 @@ func (p *Client) BucketWithSafe(name string) (Bucket, error) {
 	return Bucket{info, p, name}, nil
 }
 
-// PfopResult pfop返回信息
-type PfopResult struct {
-	PersistentID string `json:"persistentId,omitempty"`
-}
-
-// FopRet 持久化云处理结果
-type FopRet struct {
-	ID          string `json:"id"`
-	Code        int    `json:"code"`
-	Desc        string `json:"desc"`
-	InputBucket string `json:"inputBucket,omitempty"`
-	InputKey    string `json:"inputKey,omitempty"`
-	Pipeline    string `json:"pipeline,omitempty"`
-	Reqid       string `json:"reqid,omitempty"`
-	Items       []FopResult
-}
-
-// FopResult 云处理操作列表，包含每个云处理操作的状态信息
-type FopResult struct {
-	Cmd   string   `json:"cmd"`
-	Code  int      `json:"code"`
-	Desc  string   `json:"desc"`
-	Error string   `json:"error,omitempty"`
-	Hash  string   `json:"hash,omitempty"`
-	Key   string   `json:"key,omitempty"`
-	Keys  []string `json:"keys,omitempty"`
-}
-
-// Pfop 持久化数据处理
-//
-// bucket		资源空间
-// key			源资源名
-// fops			云处理操作列表，用 ; 分隔，如: avthumb/flv&#124;saveas/cWJ1Y2tldDpxa2V5 ，是将上传的视频文件转码成flv格式后存储为 qbucket:qkey ，其中 cWJ1Y2tldDpxa2V5 是 qbucket:qkey 的URL安全的Base64编码结果。
-// notifyURL	处理结果通知接收 URL，七牛将会向你设置的 URL 发起 Content-Type: application/json 的 POST 请求。请参考持久化处理结果通知。
-// pipeline		为空则表示使用公用队列，处理速度比较慢。建议指定私有队列，转码的时候使用独立的计算资源。
-// force		强制执行数据处理。当服务端发现 fops 指定的数据处理结果已经存在，那就认为已经处理成功，避免重复处理浪费资源。加上本字段并设为 1，则可强制执行数据处理并覆盖原结果。
-//
-func (p *Client) Pfop(ctx Context, bucket, key, fops string, notifyURL, pipeline string, force bool) (persistentID string, err error) {
-	pfopParams := map[string][]string{
-		"bucket": []string{bucket},
-		"key":    []string{key},
-		"fops":   []string{fops},
-	}
-	if notifyURL != "" {
-		pfopParams["notifyURL"] = []string{notifyURL}
-	}
-	if pipeline != "" {
-		pfopParams["pipeline"] = []string{pipeline}
-	}
-	if force {
-		pfopParams["force"] = []string{"1"}
-	}
-	var ret PfopResult
-	err = p.CallWithForm(ctx, &ret, "POST", "http://api.qiniu.com/pfop/", pfopParams)
-	if err != nil {
-		return
-	}
-
-	persistentID = ret.PersistentID
-	return
-}
-
-// Prefop 持久化处理状态查询
-func (p *Client) Prefop(ctx Context, persistentID string) (ret FopRet, err error) {
-	err = p.Call(ctx, &ret, "GET", "http://api.qiniu.com/status/get/prefop?id="+persistentID)
-	return
-}
-
 // Entry 资源元信息
 type Entry struct {
 	Hash     string `json:"hash"`
@@ -265,8 +197,77 @@ func (p Bucket) Prefetch(ctx Context, key string) (err error) {
 	return p.Conn.Call(ctx, nil, "POST", p.Conn.IoHost+URIPrefetch(p.Name, key))
 }
 
+// PfopResult pfop返回信息
+type PfopResult struct {
+	PersistentID string `json:"persistentId,omitempty"`
+}
+
+// FopRet 持久化云处理结果
+type FopRet struct {
+	ID          string `json:"id"`
+	Code        int    `json:"code"`
+	Desc        string `json:"desc"`
+	InputBucket string `json:"inputBucket,omitempty"`
+	InputKey    string `json:"inputKey,omitempty"`
+	Pipeline    string `json:"pipeline,omitempty"`
+	Reqid       string `json:"reqid,omitempty"`
+	Items       []FopResult
+}
+
+// FopResult 云处理操作列表，包含每个云处理操作的状态信息
+type FopResult struct {
+	Cmd   string   `json:"cmd"`
+	Code  int      `json:"code"`
+	Desc  string   `json:"desc"`
+	Error string   `json:"error,omitempty"`
+	Hash  string   `json:"hash,omitempty"`
+	Key   string   `json:"key,omitempty"`
+	Keys  []string `json:"keys,omitempty"`
+}
+
+// Pfop 持久化数据处理
+//
+// bucket		资源空间
+// key			源资源名
+// fops			云处理操作列表，用`;``分隔，如:`avthumb/flv;saveas/cWJ1Y2tldDpxa2V5`，是将上传的视频文件转码成flv格式后存储为 qbucket:qkey ，其中 cWJ1Y2tldDpxa2V5 是 qbucket:qkey 的URL安全的Base64编码结果。
+// notifyURL	处理结果通知接收 URL，七牛将会向你设置的 URL 发起 Content-Type: application/json 的 POST 请求。
+// pipeline		为空则表示使用公用队列，处理速度比较慢。建议指定私有队列，转码的时候使用独立的计算资源。
+// force		强制执行数据处理。当服务端发现 fops 指定的数据处理结果已经存在，那就认为已经处理成功，避免重复处理浪费资源。本字段设为 `true`，则可强制执行数据处理并覆盖原结果。
+//
+func (p *Client) Pfop(ctx Context, bucket, key, fops, notifyURL, pipeline string, force bool) (persistentID string, err error) {
+	pfopParams := map[string][]string{
+		"bucket": []string{bucket},
+		"key":    []string{key},
+		"fops":   []string{fops},
+	}
+	if notifyURL != "" {
+		pfopParams["notifyURL"] = []string{notifyURL}
+	}
+	if pipeline != "" {
+		pfopParams["pipeline"] = []string{pipeline}
+	}
+	if force {
+		pfopParams["force"] = []string{"1"}
+	}
+	var ret PfopResult
+	err = p.CallWithForm(ctx, &ret, "POST", "http://api.qiniu.com/pfop/", pfopParams)
+	if err != nil {
+		return
+	}
+
+	persistentID = ret.PersistentID
+	return
+}
+
+// Prefop 持久化处理状态查询
+func (p *Client) Prefop(ctx Context, persistentID string) (ret FopRet, err error) {
+	err = p.Call(ctx, &ret, "GET", "http://api.qiniu.com/status/get/prefop?id="+persistentID)
+	return
+}
+
 // ----------------------------------------------------------
 
+// ListItem List借口返回结果
 type ListItem struct {
 	Key      string `json:"key"`
 	Hash     string `json:"hash"`
@@ -276,7 +277,7 @@ type ListItem struct {
 	EndUser  string `json:"endUser"`
 }
 
-// 首次请求，请将 marker 设置为 ""。
+// List 首次请求，请将 marker 设置为 ""。
 // 无论 err 值如何，均应该先看 entries 是否有内容。
 // 如果后续没有更多数据，err 返回 EOF，markerOut 返回 ""（但不通过该特征来判断是否结束）。
 //
@@ -327,6 +328,7 @@ type BatchStatItemRet struct {
 	Code  int    `json:"code"`
 }
 
+// BatchStat 批量取文件属性
 func (p Bucket) BatchStat(ctx Context, keys ...string) (ret []BatchStatItemRet, err error) {
 
 	b := make([]string, len(keys))
@@ -342,6 +344,7 @@ type BatchItemRet struct {
 	Code  int    `json:"code"`
 }
 
+// BatchDelete 批量删除
 func (p Bucket) BatchDelete(ctx Context, keys ...string) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(keys))
@@ -357,6 +360,7 @@ type KeyPair struct {
 	Dest string
 }
 
+// BatchMove 批量移动文件
 func (p Bucket) BatchMove(ctx Context, entries ...KeyPair) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(entries))
@@ -367,6 +371,7 @@ func (p Bucket) BatchMove(ctx Context, entries ...KeyPair) (ret []BatchItemRet, 
 	return
 }
 
+// BatchCopy 批量复制文件
 func (p Bucket) BatchCopy(ctx Context, entries ...KeyPair) (ret []BatchItemRet, err error) {
 
 	b := make([]string, len(entries))
