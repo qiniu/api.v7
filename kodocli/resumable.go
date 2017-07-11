@@ -325,4 +325,27 @@ func (p Uploader) rputFile(
 	return p.rput(ctx, ret, uptoken, key, hasKey, f, fi.Size(), extra)
 }
 
+
+// Here are some wrappers.
+// See  https://github.com/qiniu/api.v7/issues/73
+//
+
+
+func (p Uploader) Mkblk(
+	ctx Context, uphosts []string, ret *BlkputRet, blockSize int, body io.Reader, size int) error {
+	return p.mkblk(ctx, uphosts, ret, blockSize, body, size)
+}
+
+func (p Uploader) Bput(
+	ctx Context, ret *BlkputRet, body io.Reader, size int) error {
+	return p.bput(ctx, ret, body, size)
+}
+
+func (p Uploader) Mkfile(
+	ctx Context, uphosts []string, ret interface{}, key string, hasKey bool, fsize int64, extra *RputExtra) (err error) {
+	return p.mkfile(ctx, uphosts, ret, key, hasKey, fsize, extra)
+}
+
+
+
 // ----------------------------------------------------------
