@@ -1,13 +1,12 @@
 package kodo
 
 import (
+	. "context"
 	"io"
 	"net/http"
 
-	"qiniupkg.com/api.v7/kodocli"
-	"qiniupkg.com/x/rpc.v7"
-
-	. "golang.org/x/net/context"
+	"github.com/qiniu/api.v7/kodocli"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 type PutExtra kodocli.PutExtra
@@ -44,7 +43,7 @@ func (p Bucket) makeUploader() kodocli.Uploader {
 
 // ----------------------------------------------------------
 
-// 上传一个文件。
+// Put 上传一个文件。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。返回的是 PutRet 结构。可选，可以传 nil 表示不感兴趣。
@@ -61,7 +60,7 @@ func (p Bucket) Put(
 	return uploader.Put(ctx, ret, uptoken, key, data, size, (*kodocli.PutExtra)(extra))
 }
 
-// 上传一个文件。自动以文件的 hash 作为文件的访问路径（key）。
+// PutWithoutKey 上传一个文件。自动以文件的 hash 作为文件的访问路径（key）。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。返回的是 PutRet 结构。可选，可以传 nil 表示不感兴趣。
@@ -77,7 +76,7 @@ func (p Bucket) PutWithoutKey(
 	return uploader.PutWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.PutExtra)(extra))
 }
 
-// 上传一个文件。
+// PutFile 上传一个文件。
 // 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
 //
 // ctx       是请求的上下文。
@@ -93,7 +92,7 @@ func (p Bucket) PutFile(
 	return uploader.PutFile(ctx, ret, uptoken, key, localFile, (*kodocli.PutExtra)(extra))
 }
 
-// 上传一个文件。自动以文件的 hash 作为文件的访问路径（key）。
+// PutFileWithoutKey 上传一个文件。自动以文件的 hash 作为文件的访问路径（key）。
 // 和 PutWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
 //
 // ctx       是请求的上下文。
@@ -111,7 +110,7 @@ func (p Bucket) PutFileWithoutKey(
 
 // ----------------------------------------------------------
 
-// 上传一个文件，支持断点续传和分块上传。
+// Rput 上传一个文件，支持断点续传和分块上传。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -128,7 +127,7 @@ func (p Bucket) Rput(
 	return uploader.Rput(ctx, ret, uptoken, key, data, size, (*kodocli.RputExtra)(extra))
 }
 
-// 上传一个文件，支持断点续传和分块上传。自动以文件的 hash 作为文件的访问路径（key）。
+// RputWithoutKey 上传一个文件，支持断点续传和分块上传。自动以文件的 hash 作为文件的访问路径（key）。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -144,7 +143,7 @@ func (p Bucket) RputWithoutKey(
 	return uploader.RputWithoutKey(ctx, ret, uptoken, data, size, (*kodocli.RputExtra)(extra))
 }
 
-// 上传一个文件，支持断点续传和分块上传。
+// RputFile 上传一个文件，支持断点续传和分块上传。
 // 和 Rput 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。
@@ -161,7 +160,7 @@ func (p Bucket) RputFile(
 	return uploader.RputFile(ctx, ret, uptoken, key, localFile, (*kodocli.RputExtra)(extra))
 }
 
-// 上传一个文件，支持断点续传和分块上传。自动以文件的 hash 作为文件的访问路径（key）。
+// RputFileWithoutKey 上传一个文件，支持断点续传和分块上传。自动以文件的 hash 作为文件的访问路径（key）。
 // 和 RputWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。

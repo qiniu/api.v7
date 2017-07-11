@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"qiniupkg.com/api.v7/auth/qbox"
-	. "qiniupkg.com/api.v7/conf"
+	"github.com/qiniu/api.v7/auth/qbox"
+	. "github.com/qiniu/api.v7/conf"
 )
 
 var (

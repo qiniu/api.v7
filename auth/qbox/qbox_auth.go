@@ -7,8 +7,8 @@ import (
 	"io"
 	"net/http"
 
-	. "qiniupkg.com/api.v7/conf"
-	"qiniupkg.com/x/bytes.v7/seekable"
+	. "github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/x/bytes.v7/seekable"
 )
 
 // ----------------------------------------------------------

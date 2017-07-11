@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"qiniupkg.com/x/rpc.v7"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 func TestUA(t *testing.T) {

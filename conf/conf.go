@@ -5,8 +5,8 @@ import (
 	"runtime"
 	"syscall"
 
-	"qiniupkg.com/x/ctype.v7"
-	"qiniupkg.com/x/rpc.v7"
+	"github.com/qiniu/x/ctype.v7"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 var version = "7.1.0"
@@ -36,4 +36,3 @@ func init() {
 }
 
 // ----------------------------------------------------------
-
