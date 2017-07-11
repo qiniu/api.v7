@@ -10,7 +10,7 @@ github.com/qiniu/api.v7 (Qiniu Go SDK v7.x)
 ```
 go get -u github.com/qiniu/api.v7
 ```
-如果碰到golang.org/x/net/context 不能下载，请把 http://devtools.qiniu.com/golang.org.x.net.context.tgz 下载到代码目录下并解压到src目录，或者直接下载全部 http://devtools.qiniu.com/qiniu_api_v7.tgz。
+如果碰到golang.org/x/net/context 不能下载，请把 http://devtools.qiniu.com/golang.org.x.net.context.tgz 下载到代码目录下并解压到src目录，或者直接下载全部 http://devtools.qiniu.com/qiniu_api_v7.tgz 。
 
 # 使用文档
 
