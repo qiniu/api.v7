@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	FUSION_HOST  = "http://fusion.qiniuapi.com"
-	LIST_LOG_API = "http://fusion.qiniuapi.com/v2/tune/log/list"
+	FusionHost  = "http://fusion.qiniuapi.com"
 )
 
 type CdnManager struct {
@@ -257,37 +256,20 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 		Domains: domains,
 	}
 
-	logReqBytes, _ := json.Marshal(&logReq)
-	req, reqErr := http.NewRequest("POST", LIST_LOG_API, bytes.NewReader(logReqBytes))
+	resData, reqErr := postRequest(m.Mac,"/v2/tune/log/list",logReq)
 	if reqErr != nil {
-		err = fmt.Errorf("New request error, %s", reqErr)
+		err = fmt.Errorf("get response error, %s", reqErr)
 		return
 	}
-
-	token, signErr := m.Mac.SignRequest(req, false)
-	if signErr != nil {
-		err = signErr
-		return
-	}
-
-	req.Header.Add("Authorization", "QBox "+token)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, respErr := http.DefaultClient.Do(req)
-	if respErr != nil {
-		err = fmt.Errorf("Get response error, %s", respErr)
-		return
-	}
-	defer resp.Body.Close()
 
 	listLogResult := ListLogResult{}
-	decoder := json.NewDecoder(resp.Body)
-	if decodeErr := decoder.Decode(&listLogResult); decodeErr != nil {
-		err = fmt.Errorf("Parse response error, %s", decodeErr)
+	if decodeErr :=json.Unmarshal(resData,&listLogResult); decodeErr != nil {
+		err = fmt.Errorf("get response error, %s", decodeErr)
 		return
 	}
-	if resp.StatusCode != http.StatusOK {
-		err = fmt.Errorf("Get log list error, %d %s", listLogResult.Code, listLogResult.Error)
+
+	if listLogResult.Error!=""{
+		err = fmt.Errorf("get log list error, %d %s", listLogResult.Code, listLogResult.Error)
 		return
 	}
 
@@ -307,7 +289,7 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
 	err error) {
 
-	urlStr := fmt.Sprintf("%s%s", FUSION_HOST, path)
+	urlStr := fmt.Sprintf("%s%s", FusionHost, path)
 	reqData, _ := json.Marshal(body)
 	req, reqErr := http.NewRequest("POST", urlStr, bytes.NewReader(reqData))
 	if reqErr != nil {
