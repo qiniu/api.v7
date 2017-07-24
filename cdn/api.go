@@ -226,44 +226,6 @@ func (m *CdnManager) PrefetchUrls(urls []string) (result PrefetchResp, err error
 	return
 }
 
-// RequestWithBody
-// 带body对api发出请求并且返回response body
-func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
-	err error) {
-
-	urlStr := fmt.Sprintf("%s%s", FUSION_HOST, path)
-	reqData, _ := json.Marshal(body)
-	req, reqErr := http.NewRequest("POST", urlStr, bytes.NewReader(reqData))
-	if reqErr != nil {
-		err = reqErr
-		return
-	}
-
-	accessToken, signErr := mac.SignRequest(req, false)
-	if signErr != nil {
-		err = signErr
-		return
-	}
-
-	req.Header.Add("Authorization", "QBox "+accessToken)
-	req.Header.Add("Content-Type", "application/json")
-
-	resp, respErr := http.DefaultClient.Do(req)
-	if respErr != nil {
-		err = respErr
-		return
-	}
-	defer resp.Body.Close()
-
-	resData, ioErr := ioutil.ReadAll(resp.Body)
-	if ioErr != nil {
-		err = ioErr
-		return
-	}
-
-	return
-}
-
 // ListLogRequest 日志下载请求内容
 type ListLogRequest struct {
 	Day     string `json:"day"`
@@ -338,4 +300,42 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 	}
 	return
 
+}
+
+// RequestWithBody
+// 带body对api发出请求并且返回response body
+func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
+	err error) {
+
+	urlStr := fmt.Sprintf("%s%s", FUSION_HOST, path)
+	reqData, _ := json.Marshal(body)
+	req, reqErr := http.NewRequest("POST", urlStr, bytes.NewReader(reqData))
+	if reqErr != nil {
+		err = reqErr
+		return
+	}
+
+	accessToken, signErr := mac.SignRequest(req, false)
+	if signErr != nil {
+		err = signErr
+		return
+	}
+
+	req.Header.Add("Authorization", "QBox "+accessToken)
+	req.Header.Add("Content-Type", "application/json")
+
+	resp, respErr := http.DefaultClient.Do(req)
+	if respErr != nil {
+		err = respErr
+		return
+	}
+	defer resp.Body.Close()
+
+	resData, ioErr := ioutil.ReadAll(resp.Body)
+	if ioErr != nil {
+		err = ioErr
+		return
+	}
+
+	return
 }
