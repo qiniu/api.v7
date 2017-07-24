@@ -4,11 +4,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
-	"io"
-	"net/http"
-
+	"fmt"
 	. "github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7/seekable"
+	"io"
+	"net/http"
 )
 
 // ----------------------------------------------------------
@@ -19,10 +19,6 @@ type Mac struct {
 }
 
 func NewMac(accessKey, secretKey string) (mac *Mac) {
-
-	if accessKey == "" {
-		accessKey, secretKey = ACCESS_KEY, SECRET_KEY
-	}
 	return &Mac{accessKey, []byte(secretKey)}
 }
 
@@ -32,29 +28,17 @@ func (mac *Mac) Sign(data []byte) (token string) {
 	h.Write(data)
 
 	sign := base64.URLEncoding.EncodeToString(h.Sum(nil))
-	return mac.AccessKey + ":" + sign[:27]
+	return fmt.Sprintf("%s:%s", mac.AccessKey, sign)
 }
 
 func (mac *Mac) SignWithData(b []byte) (token string) {
 
-	blen := base64.URLEncoding.EncodedLen(len(b))
-
-	key := mac.AccessKey
-	nkey := len(key)
-	ret := make([]byte, nkey+30+blen)
-
-	base64.URLEncoding.Encode(ret[nkey+30:], b)
-
+	encodedData := base64.URLEncoding.EncodeToString(b)
 	h := hmac.New(sha1.New, mac.SecretKey)
-	h.Write(ret[nkey+30:])
+	h.Write([]byte(encodedData))
 	digest := h.Sum(nil)
-
-	copy(ret, key)
-	ret[nkey] = ':'
-	base64.URLEncoding.Encode(ret[nkey+1:], digest)
-	ret[nkey+29] = ':'
-
-	return string(ret)
+	sign := base64.URLEncoding.EncodeToString(digest)
+	return fmt.Sprintf("%s:%s:%s", mac.AccessKey, sign, encodedData)
 }
 
 func (mac *Mac) SignRequest(req *http.Request, incbody bool) (token string, err error) {
@@ -77,7 +61,7 @@ func (mac *Mac) SignRequest(req *http.Request, incbody bool) (token string, err 
 	}
 
 	sign := base64.URLEncoding.EncodeToString(h.Sum(nil))
-	token = mac.AccessKey + ":" + sign
+	token = fmt.Sprintf("%s:%s", mac.AccessKey, sign)
 	return
 }
 
@@ -100,17 +84,11 @@ func (mac *Mac) VerifyCallback(req *http.Request) (bool, error) {
 
 func Sign(mac *Mac, data []byte) string {
 
-	if mac == nil {
-		mac = NewMac(ACCESS_KEY, SECRET_KEY)
-	}
 	return mac.Sign(data)
 }
 
 func SignWithData(mac *Mac, data []byte) string {
 
-	if mac == nil {
-		mac = NewMac(ACCESS_KEY, SECRET_KEY)
-	}
 	return mac.SignWithData(data)
 }
 
@@ -152,9 +130,6 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 
 func NewTransport(mac *Mac, transport http.RoundTripper) *Transport {
 
-	if mac == nil {
-		mac = NewMac(ACCESS_KEY, SECRET_KEY)
-	}
 	if transport == nil {
 		transport = http.DefaultTransport
 	}
