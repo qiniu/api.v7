@@ -204,14 +204,14 @@ type PfopResult struct {
 
 // FopRet 持久化云处理结果
 type FopRet struct {
-	ID          string `json:"id"`
-	Code        int    `json:"code"`
-	Desc        string `json:"desc"`
-	InputBucket string `json:"inputBucket,omitempty"`
-	InputKey    string `json:"inputKey,omitempty"`
-	Pipeline    string `json:"pipeline,omitempty"`
-	Reqid       string `json:"reqid,omitempty"`
-	Items       []FopResult
+	ID          string      `json:"id"`
+	Code        int         `json:"code"`
+	Desc        string      `json:"desc"`
+	InputBucket string      `json:"inputBucket,omitempty"`
+	InputKey    string      `json:"inputKey,omitempty"`
+	Pipeline    string      `json:"pipeline,omitempty"`
+	Reqid       string      `json:"reqid,omitempty"`
+	Items       []FopResult `json:"items,omitempty"`
 }
 
 // FopResult 云处理操作列表，包含每个云处理操作的状态信息
@@ -229,7 +229,7 @@ type FopResult struct {
 //
 // bucket		资源空间
 // key			源资源名
-// fops			云处理操作列表，用`;``分隔，如:`avthumb/flv;saveas/cWJ1Y2tldDpxa2V5`，是将上传的视频文件转码成flv格式后存储为 qbucket:qkey ，其中 cWJ1Y2tldDpxa2V5 是 qbucket:qkey 的URL安全的Base64编码结果。
+// fops			云处理操作列表，用`;``分隔，如:`avthumb/flv|saveas/cWJ1Y2tldDpxa2V5`，是将上传的视频文件转码成flv格式后存储为 qbucket:qkey ，其中 cWJ1Y2tldDpxa2V5 是 qbucket:qkey 的URL安全的Base64编码结果。
 // notifyURL	处理结果通知接收 URL，七牛将会向你设置的 URL 发起 Content-Type: application/json 的 POST 请求。
 // pipeline		为空则表示使用公用队列，处理速度比较慢。建议指定私有队列，转码的时候使用独立的计算资源。
 // force		强制执行数据处理。当服务端发现 fops 指定的数据处理结果已经存在，那就认为已经处理成功，避免重复处理浪费资源。本字段设为 `true`，则可强制执行数据处理并覆盖原结果。

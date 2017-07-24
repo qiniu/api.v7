@@ -19,7 +19,6 @@ import (
 // 如果空间是 private 的，那么需要对 baseUrl 进行私有签名得到一个临时有效的 privateUrl 进行下载。
 //
 func MakeBaseUrl(domain, key string) (baseUrl string) {
-
 	return "http://" + domain + "/" + url.Escape(key)
 }
 
@@ -30,7 +29,6 @@ type GetPolicy struct {
 }
 
 func (p *Client) MakePrivateUrl(baseUrl string, policy *GetPolicy) (privateUrl string) {
-
 	var expires int64
 	if policy == nil || policy.Expires == 0 {
 		expires = 3600
@@ -53,29 +51,28 @@ func (p *Client) MakePrivateUrl(baseUrl string, policy *GetPolicy) (privateUrl s
 // --------------------------------------------------------------------------------
 
 type PutPolicy struct {
-	Scope               string   `json:"scope"`
-	Expires             uint32   `json:"deadline"`             // 截止时间（以秒为单位）
-	InsertOnly          uint16   `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
-	DetectMime          uint8    `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
-	CallbackFetchKey    uint8    `json:"callbackFetchKey,omitempty"`
-	FsizeLimit          int64    `json:"fsizeLimit,omitempty"`
-	MimeLimit           string   `json:"mimeLimit,omitempty"`
-	SaveKey             string   `json:"saveKey,omitempty"`
-	CallbackUrl         string   `json:"callbackUrl,omitempty"`
-	CallbackHost        string   `json:"callbackHost,omitempty"`
-	CallbackBody        string   `json:"callbackBody,omitempty"`
-	CallbackBodyType    string   `json:"callbackBodyType,omitempty"`
-	ReturnUrl           string   `json:"returnUrl,omitempty"`
-	ReturnBody          string   `json:"returnBody,omitempty"`
-	PersistentOps       string   `json:"persistentOps,omitempty"`
-	PersistentNotifyUrl string   `json:"persistentNotifyUrl,omitempty"`
-	PersistentPipeline  string   `json:"persistentPipeline,omitempty"`
-	AsyncOps            string   `json:"asyncOps,omitempty"`
-	EndUser             string   `json:"endUser,omitempty"`
-	Checksum            string   `json:"checksum,omitempty"` // 格式：<HashName>:<HexHashValue>，目前支持 MD5/SHA1。
-	UpHosts             []string `json:"uphosts,omitempty"`
-	DeleteAfterDays     int      `json:"deleteAfterDays,omitempty"`
-	FileType            int      `json:"fileType,omitempty"`
+	Scope               string `json:"scope"`
+	isPrefixalScope     int    `json:"isPrefixalScope"`
+	Expires             uint32 `json:"deadline"`             // 截止时间（以秒为单位）
+	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
+	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
+	MimeLimit           string `json:"mimeLimit,omitempty"`
+	FsizeMin            int64  `json:"fsizeMin"`
+	FsizeLimit          int64  `json:"fsizeLimit,omitempty"`
+	SaveKey             string `json:"saveKey,omitempty"`
+	CallbackUrl         string `json:"callbackUrl,omitempty"`
+	CallbackHost        string `json:"callbackHost,omitempty"`
+	CallbackBody        string `json:"callbackBody,omitempty"`
+	CallbackBodyType    string `json:"callbackBodyType,omitempty"`
+	CallbackFetchKey    uint8  `json:"callbackFetchKey,omitempty"`
+	ReturnUrl           string `json:"returnUrl,omitempty"`
+	ReturnBody          string `json:"returnBody,omitempty"`
+	PersistentOps       string `json:"persistentOps,omitempty"`
+	PersistentNotifyUrl string `json:"persistentNotifyUrl,omitempty"`
+	PersistentPipeline  string `json:"persistentPipeline,omitempty"`
+	EndUser             string `json:"endUser,omitempty"`
+	DeleteAfterDays     int    `json:"deleteAfterDays,omitempty"`
+	FileType            int    `json:"fileType,omitempty"`
 }
 
 func (p *Client) MakeUptoken(policy *PutPolicy) string {
