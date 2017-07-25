@@ -11,11 +11,15 @@ import (
 )
 
 var (
-	FusionHost  = "http://fusion.qiniuapi.com"
+	FusionHost = "http://fusion.qiniuapi.com"
 )
 
 type CdnManager struct {
-	Mac *qbox.Mac
+	mac *qbox.mac
+}
+
+func NewCdnManager(mac *qbox.Mac) *CdnManager {
+	return &CdnManager{mac: mac}
 }
 
 /*
@@ -71,7 +75,7 @@ func (m *CdnManager) GetBandwidthData(startDate, endDate, granularity string,
 		Domains:     domains,
 	}
 
-	resData, reqErr := postRequest(m.Mac, "/v2/tune/bandwidth", reqBody)
+	resData, reqErr := postRequest(m.mac, "/v2/tune/bandwidth", reqBody)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -105,7 +109,7 @@ func (m *CdnManager) GetFluxData(startDate, endDate, granularity string,
 		Domains:     domains,
 	}
 
-	resData, reqErr := postRequest(m.Mac, "/v2/tune/flux", reqBody)
+	resData, reqErr := postRequest(m.mac, "/v2/tune/flux", reqBody)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -158,7 +162,7 @@ func (m *CdnManager) RefreshUrlsAndDirs(urls, dirs []string) (result RefreshResp
 		Dirs: dirs,
 	}
 
-	resData, reqErr := postRequest(m.Mac, "/v2/tune/refresh", reqBody)
+	resData, reqErr := postRequest(m.mac, "/v2/tune/refresh", reqBody)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -210,7 +214,7 @@ func (m *CdnManager) PrefetchUrls(urls []string) (result PrefetchResp, err error
 		Urls: urls,
 	}
 
-	resData, reqErr := postRequest(m.Mac, "/v2/tune/prefetch", reqBody)
+	resData, reqErr := postRequest(m.mac, "/v2/tune/prefetch", reqBody)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -256,19 +260,19 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 		Domains: domains,
 	}
 
-	resData, reqErr := postRequest(m.Mac,"/v2/tune/log/list",logReq)
+	resData, reqErr := postRequest(m.mac, "/v2/tune/log/list", logReq)
 	if reqErr != nil {
 		err = fmt.Errorf("get response error, %s", reqErr)
 		return
 	}
 
 	listLogResult := ListLogResult{}
-	if decodeErr :=json.Unmarshal(resData,&listLogResult); decodeErr != nil {
+	if decodeErr := json.Unmarshal(resData, &listLogResult); decodeErr != nil {
 		err = fmt.Errorf("get response error, %s", decodeErr)
 		return
 	}
 
-	if listLogResult.Error!=""{
+	if listLogResult.Error != "" {
 		err = fmt.Errorf("get log list error, %d %s", listLogResult.Code, listLogResult.Error)
 		return
 	}
@@ -286,7 +290,7 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 
 // RequestWithBody
 // 带body对api发出请求并且返回response body
-func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
+func postRequest(mac *qbox.mac, path string, body interface{}) (resData []byte,
 	err error) {
 
 	urlStr := fmt.Sprintf("%s%s", FusionHost, path)

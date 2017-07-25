@@ -38,7 +38,7 @@ func init() {
 		panic("please run ./test-env.sh first")
 	}
 	mac = qbox.NewMac(ak, sk)
-	cdnManager = &CdnManager{Mac: mac}
+	cdnManager = NewCdnManager(mac)
 }
 
 //TestGetBandwidthData

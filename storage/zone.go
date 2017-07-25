@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/qiniu/x/rpc.v7"
+	"strings"
 	"sync"
 )
 
@@ -14,6 +15,17 @@ type Zone struct {
 	RsfHost    string
 	ApiHost    string
 	IovipHost  string
+}
+
+func (z *Zone) String() string {
+	str := ""
+	str += fmt.Sprintf("SrcUpHosts: %v\n", z.SrcUpHosts)
+	str += fmt.Sprintf("CdnUpHosts: %v\n", z.CdnUpHosts)
+	str += fmt.Sprintf("IovipHost: %s\n", z.IovipHost)
+	str += fmt.Sprintf("RsHost: %s\n", z.RsHost)
+	str += fmt.Sprintf("RsfHost: %s\n", z.RsfHost)
+	str += fmt.Sprintf("ApiHost: %s\n", z.ApiHost)
+	return str
 }
 
 //z0
@@ -85,26 +97,83 @@ const UC_HOST = "https://uc.qbox.me"
 type UcQueryRet struct {
 	Ttl int                            `json:"ttl"`
 	Io  map[string]map[string][]string `json:"io"`
-	Up  map[string]map[string][]string `json:"up"`
+	Up  map[string]UcQueryUp           `json:"up"`
+}
+
+type UcQueryUp struct {
+	Main   []string `json:"main,omitempty"`
+	Backup []string `json:"backup,omitempty"`
+	Info   string   `json:"info,omitempty"`
 }
 
 var (
 	zoneMutext sync.RWMutex
-	zoneCache  = make([string]Zone)
+	zoneCache  = make(map[string]*Zone)
 )
 
 //v2 version
-func QueryZone(ak, bucket string) (zone Zone, err error) {
+func GetZone(ak, bucket string) (zone *Zone, err error) {
+	zoneId := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
+	zoneMutext.RLock()
+	if v, ok := zoneCache[zoneId]; ok {
+		zone = v
+	}
+	zoneMutext.RUnlock()
+	if zone != nil {
+		return
+	}
 
 	//query from server
 	reqUrl := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UC_HOST, ak, bucket)
 	var ret UcQueryRet
 	ctx := context.Background()
-	qErr := rpc.CallWithForm(ctx, &ret, "GET", reqUrl, nil)
+	qErr := rpc.DefaultClient.CallWithForm(ctx, &ret, "GET", reqUrl, nil)
 	if qErr != nil {
 		err = fmt.Errorf("query zone error, %s", qErr.Error())
 		return
 	}
 
+	ioHost := ret.Io["src"]["main"][0]
+	srcUpHosts := ret.Up["src"].Main
+	if ret.Up["src"].Backup != nil {
+		srcUpHosts = append(srcUpHosts, ret.Up["src"].Backup...)
+	}
+	cdnUpHosts := ret.Up["acc"].Main
+	if ret.Up["acc"].Backup != nil {
+		cdnUpHosts = append(cdnUpHosts, ret.Up["acc"].Backup...)
+	}
+
+	zone = &Zone{
+		SrcUpHosts: srcUpHosts,
+		CdnUpHosts: cdnUpHosts,
+		IovipHost:  ioHost,
+		RsHost:     DefaultRsHost,
+		RsfHost:    DefaultRsfHost,
+		ApiHost:    DefaultApiHost,
+	}
+
+	//set specific hosts if possible
+	setSpecificHosts(ioHost, zone)
+
+	zoneMutext.Lock()
+	zoneCache[zoneId] = zone
+	zoneMutext.Unlock()
+	return
+}
+
+func setSpecificHosts(ioHost string, zone *Zone) {
+	if strings.Contains(ioHost, "-z1") {
+		zone.RsHost = "rs-z1.qiniu.com"
+		zone.RsfHost = "rsf-z1.qiniu.com"
+		zone.ApiHost = "api-z1.qiniu.com"
+	} else if strings.Contains(ioHost, "-z2") {
+		zone.RsHost = "rs-z2.qiniu.com"
+		zone.RsfHost = "rsf-z2.qiniu.com"
+		zone.ApiHost = "api-z2.qiniu.com"
+	} else if strings.Contains(ioHost, "-na0") {
+		zone.RsHost = "rs-na0.qiniu.com"
+		zone.RsfHost = "rsf-na0.qiniu.com"
+		zone.ApiHost = "api-na0.qiniu.com"
+	}
 }

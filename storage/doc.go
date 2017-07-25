@@ -49,4 +49,4 @@
 	resp, err := http.Get(privateUrl)
 	...
 */
-package kodo
+package storage

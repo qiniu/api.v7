@@ -5,13 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
-	. "github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7/seekable"
 	"io"
 	"net/http"
 )
-
-// ----------------------------------------------------------
 
 type Mac struct {
 	AccessKey string
@@ -41,7 +38,7 @@ func (mac *Mac) SignWithData(b []byte) (token string) {
 	return fmt.Sprintf("%s:%s:%s", mac.AccessKey, sign, encodedData)
 }
 
-func (mac *Mac) SignRequest(req *http.Request, incbody bool) (token string, err error) {
+func (mac *Mac) SignRequest(req *http.Request) (token string, err error) {
 
 	h := hmac.New(sha1.New, mac.SecretKey)
 
@@ -52,7 +49,7 @@ func (mac *Mac) SignRequest(req *http.Request, incbody bool) (token string, err 
 	}
 	io.WriteString(h, data+"\n")
 
-	if incbody {
+	if incBody(req) {
 		s2, err2 := seekable.New(req)
 		if err2 != nil {
 			return "", err2
@@ -72,15 +69,13 @@ func (mac *Mac) VerifyCallback(req *http.Request) (bool, error) {
 		return false, nil
 	}
 
-	token, err := mac.SignRequest(req, true)
+	token, err := mac.SignRequest(req)
 	if err != nil {
 		return false, err
 	}
 
 	return auth == "QBox "+token, nil
 }
-
-// ---------------------------------------------------------------------------------------
 
 func Sign(mac *Mac, data []byte) string {
 
@@ -92,55 +87,7 @@ func SignWithData(mac *Mac, data []byte) string {
 	return mac.SignWithData(data)
 }
 
-// ---------------------------------------------------------------------------------------
-
-type Transport struct {
-	mac       Mac
-	Transport http.RoundTripper
-}
-
 func incBody(req *http.Request) bool {
-
-	if req.Body == nil {
-		return false
-	}
-	if ct, ok := req.Header["Content-Type"]; ok {
-		switch ct[0] {
-		case "application/x-www-form-urlencoded":
-			return true
-		}
-	}
-	return false
+	return req.Body != nil &&
+		req.Header.Get("Content-Type") == "application/x-www-form-urlencoded"
 }
-
-func (t *Transport) NestedObject() interface{} {
-
-	return t.Transport
-}
-
-func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-
-	token, err := t.mac.SignRequest(req, incBody(req))
-	if err != nil {
-		return
-	}
-	req.Header.Set("Authorization", "QBox "+token)
-	return t.Transport.RoundTrip(req)
-}
-
-func NewTransport(mac *Mac, transport http.RoundTripper) *Transport {
-
-	if transport == nil {
-		transport = http.DefaultTransport
-	}
-	t := &Transport{mac: *mac, Transport: transport}
-	return t
-}
-
-func NewClient(mac *Mac, transport http.RoundTripper) *http.Client {
-
-	t := NewTransport(mac, transport)
-	return &http.Client{Transport: t}
-}
-
-// ---------------------------------------------------------------------------------------
