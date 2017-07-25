@@ -4,19 +4,17 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	//"github.com/qiniu/api.v7/api"
-	//"github.com/qiniu/x/log.v7"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
-	//"io"
-	//"net/url"
-	//"strconv"
+	"net/url"
+	"strconv"
 )
 
 const (
 	DefaultRsHost  = "rs.qiniu.com"
 	DefaultRsfHost = "rsf.qiniu.com"
 	DefaultApiHost = "api.qiniu.com"
+	DefaultPubHost = "pu.qbox.me:10200"
 )
 
 type FileInfo struct {
@@ -42,6 +40,36 @@ type FetchRet struct {
 	Fsize    int64  `json:"fsize"`
 	MimeType string `json:"mimeType"`
 	Key      string `json:"key"`
+}
+
+func (r *FetchRet) String() string {
+	str := ""
+	str += fmt.Sprintf("Key:      %s\n", r.Key)
+	str += fmt.Sprintf("Hash:     %s\n", r.Hash)
+	str += fmt.Sprintf("Fsize:    %d\n", r.Fsize)
+	str += fmt.Sprintf("MimeType: %s\n", r.MimeType)
+	return str
+}
+
+type ListItem struct {
+	Key      string `json:"key"`
+	Hash     string `json:"hash"`
+	Fsize    int64  `json:"fsize"`
+	PutTime  int64  `json:"putTime"`
+	MimeType string `json:"mimeType"`
+	Type     int    `json:"type"`
+	EndUser  string `json:"endUser"`
+}
+
+func (l *ListItem) String() string {
+	str := ""
+	str += fmt.Sprintf("Hash:     %s\n", l.Hash)
+	str += fmt.Sprintf("Fsize:    %d\n", l.Fsize)
+	str += fmt.Sprintf("PutTime:  %d\n", l.PutTime)
+	str += fmt.Sprintf("MimeType: %s\n", l.MimeType)
+	str += fmt.Sprintf("Type:     %d\n", l.Type)
+	str += fmt.Sprintf("EndUser:  %s\n", l.EndUser)
+	return str
 }
 
 type BucketManager struct {
@@ -199,6 +227,82 @@ func (m *BucketManager) FetchWithoutKey(resUrl, bucket string) (fetchRet FetchRe
 	return
 }
 
+// 同步镜像空间的资源和镜像源资源内容
+func (m *BucketManager) Prefetch(bucket, key string) (err error) {
+	ctx := context.TODO()
+	reqHost, reqErr := m.IovipHost(bucket)
+	if reqErr != nil {
+		err = reqErr
+		return
+	}
+	reqUrl := fmt.Sprintf("%s%s", reqHost, uriPrefetch(bucket, key))
+	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	return
+}
+
+// 设置空间镜像源
+func (m *BucketManager) SetImage(siteUrl, bucket string) (err error) {
+	ctx := context.TODO()
+	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteUrl, bucket))
+	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	return
+}
+
+// 设置空间镜像源，额外添加回源Host头部
+func (m *BucketManager) SetImageWithHost(siteUrl, bucket, host string) (err error) {
+	ctx := context.TODO()
+	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost,
+		uriSetImageWithHost(siteUrl, bucket, host))
+	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	return
+}
+
+// 取消空间镜像源设置
+func (m *BucketManager) UnsetImage(bucket string) (err error) {
+	ctx := context.TODO()
+	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
+	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	return err
+}
+
+type listFilesRet struct {
+	Marker         string     `json:"marker"`
+	Items          []ListItem `json:"items"`
+	CommonPrefixes []string   `json:"commonPrefixes"`
+}
+
+// 获取空间文件列表
+// @param bucket
+// @param prefix
+// @param delimiter
+// @param marker
+// @param limit
+func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
+	limit int) (entries []ListItem, commonPrefixes []string, nextMarker string, hasNext bool, err error) {
+	ctx := context.TODO()
+	reqHost, reqErr := m.RsfHost(bucket)
+	if reqErr != nil {
+		err = reqErr
+		return
+	}
+
+	ret := listFilesRet{}
+	reqUrl := fmt.Sprintf("%s%s", reqHost, uriListFiles(bucket, prefix, delimiter, marker, limit))
+	err = m.client.Call(ctx, &ret, "POST", reqUrl)
+	if err != nil {
+		return
+	}
+
+	commonPrefixes = ret.CommonPrefixes
+	nextMarker = ret.Marker
+	entries=ret.Items
+	if ret.Marker != "" {
+		hasNext = true
+	}
+
+	return
+}
+
 // 获取资源管理域名
 func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
 	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
@@ -211,6 +315,21 @@ func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
 		rsHost = fmt.Sprintf("https://%s", zone.RsHost)
 	} else {
 		rsHost = fmt.Sprintf("http://%s", zone.RsHost)
+	}
+	return
+}
+
+func (m *BucketManager) RsfHost(bucket string) (rsfHost string, err error) {
+	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
+	if zoneErr != nil {
+		err = zoneErr
+		return
+	}
+
+	if m.cfg.UseHttps {
+		rsfHost = fmt.Sprintf("https://%s", zone.RsfHost)
+	} else {
+		rsfHost = fmt.Sprintf("http://%s", zone.RsfHost)
 	}
 	return
 }
@@ -241,11 +360,13 @@ func URIDelete(bucket, key string) string {
 }
 
 func URICopy(srcBucket, srcKey, destBucket, destKey string, force bool) string {
-	return fmt.Sprintf("/copy/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey), EncodedEntry(destBucket, destKey), force)
+	return fmt.Sprintf("/copy/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey),
+		EncodedEntry(destBucket, destKey), force)
 }
 
 func URIMove(srcBucket, srcKey, destBucket, destKey string, force bool) string {
-	return fmt.Sprintf("/move/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey), EncodedEntry(destBucket, destKey), force)
+	return fmt.Sprintf("/move/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey),
+		EncodedEntry(destBucket, destKey), force)
 }
 
 func URIDeleteAfterDays(bucket, key string, days int) string {
@@ -253,7 +374,8 @@ func URIDeleteAfterDays(bucket, key string, days int) string {
 }
 
 func URIChangeMime(bucket, key, newMime string) string {
-	return fmt.Sprintf("/chgm/%s/mime/%s", EncodedEntry(bucket, key), newMime)
+	return fmt.Sprintf("/chgm/%s/mime/%s", EncodedEntry(bucket, key),
+		base64.URLEncoding.EncodeToString([]byte(newMime)))
 }
 
 func URIChangeType(bucket, key string, fileType int) string {
@@ -262,11 +384,13 @@ func URIChangeType(bucket, key string, fileType int) string {
 
 // 构建op的方法，非导出的方法无法用在Batch操作中
 func uriFetch(resUrl, bucket, key string) string {
-	return fmt.Sprintf("/fetch/%s/to/%s", base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntry(bucket, key))
+	return fmt.Sprintf("/fetch/%s/to/%s",
+		base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntry(bucket, key))
 }
 
 func uriFetchWithoutKey(resUrl, bucket string) string {
-	return fmt.Sprintf("/fetch/%s/to/%s", base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntryWithoutKey(bucket))
+	return fmt.Sprintf("/fetch/%s/to/%s",
+		base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntryWithoutKey(bucket))
 }
 
 func uriPrefetch(bucket, key string) string {
@@ -274,16 +398,36 @@ func uriPrefetch(bucket, key string) string {
 }
 
 func uriSetImage(siteUrl, bucket string) string {
-	return fmt.Sprintf("/image/%s/from/%s", bucket, base64.URLEncoding.EncodeToString([]byte(siteUrl)))
+	return fmt.Sprintf("/image/%s/from/%s", bucket,
+		base64.URLEncoding.EncodeToString([]byte(siteUrl)))
 }
 
 func uriSetImageWithHost(siteUrl, bucket, host string) string {
-	return fmt.Sprintf("/image/%s/from/%s/host/%s", bucket, base64.URLEncoding.EncodeToString([]byte(siteUrl)),
+	return fmt.Sprintf("/image/%s/from/%s/host/%s", bucket,
+		base64.URLEncoding.EncodeToString([]byte(siteUrl)),
 		base64.URLEncoding.EncodeToString([]byte(host)))
 }
 
 func uriUnsetImage(bucket string) string {
 	return fmt.Sprintf("/unimage/%s", bucket)
+}
+
+func uriListFiles(bucket, prefix, delimiter, marker string, limit int) string {
+	query := make(url.Values)
+	query.Add("bucket", bucket)
+	if prefix != "" {
+		query.Add("prefix", prefix)
+	}
+	if delimiter != "" {
+		query.Add("delimiter", delimiter)
+	}
+	if marker != "" {
+		query.Add("marker", marker)
+	}
+	if limit > 0 {
+		query.Add("limit", strconv.FormatInt(int64(limit), 10))
+	}
+	return fmt.Sprintf("/list?%s", query.Encode())
 }
 
 // EncodedEntry
