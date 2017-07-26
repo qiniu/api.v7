@@ -12,12 +12,10 @@ type Transport struct {
 }
 
 func (t *Transport) NestedObject() interface{} {
-
 	return t.Transport
 }
 
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-
 	token, err := t.mac.SignRequest(req)
 	if err != nil {
 		return
@@ -35,7 +33,6 @@ func NewTransport(mac *qbox.Mac, transport http.RoundTripper) *Transport {
 }
 
 func NewClient(mac *qbox.Mac, transport http.RoundTripper) *rpc.Client {
-
 	t := NewTransport(mac, transport)
 	return &rpc.Client{&http.Client{Transport: t}}
 }

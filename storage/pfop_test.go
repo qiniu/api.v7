@@ -12,7 +12,7 @@ var (
 )
 
 func TestPrefop(t *testing.T) {
-	pid := "na0.5978018392129336c20f3e62"
+	pid := "na0.597802c092129336c20f3f91"
 	prefopRet, err := operationManager.Prefop(pid)
 	if err != nil {
 		t.Fatalf("Prefop() error, %s", err)
@@ -27,7 +27,7 @@ func TestPfop(t *testing.T) {
 		EncodedEntry(saveBucket, "pfop_test_qiniu.mp4"))
 	fopVframe := fmt.Sprintf("vframe/jpg/offset/10|saveas/%s",
 		EncodedEntry(saveBucket, "pfop_test_qiniu.jpg"))
-	fopVsample := fmt.Sprintf("vsample/jpg/interval/2/pattern/%s",
+	fopVsample := fmt.Sprintf("vsample/jpg/interval/20/pattern/%s",
 		base64.URLEncoding.EncodeToString([]byte("pfop_test_$(count).jpg")))
 
 	fopBatch := []string{fopAvthumb, fopVframe, fopVsample}
