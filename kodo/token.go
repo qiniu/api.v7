@@ -54,9 +54,10 @@ func (p *Client) MakePrivateUrl(baseUrl string, policy *GetPolicy) (privateUrl s
 
 type PutPolicy struct {
 	Scope               string   `json:"scope"`
-	Expires             uint32   `json:"deadline"`             // 截止时间（以秒为单位）
-	InsertOnly          uint16   `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
-	DetectMime          uint8    `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
+	IsPrefixalScope     uint32   `json:"isPrefixalScope,omitempty"` // 若为 1，表示允许用户上传以 scope 的 keyPrefix 为前缀的文件。
+	Expires             uint32   `json:"deadline"`                  // 截止时间（以秒为单位）
+	InsertOnly          uint16   `json:"insertOnly,omitempty"`      // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
+	DetectMime          uint8    `json:"detectMime,omitempty"`      // 若非0, 则服务端根据内容自动确定 MimeType
 	CallbackFetchKey    uint8    `json:"callbackFetchKey,omitempty"`
 	FsizeLimit          int64    `json:"fsizeLimit,omitempty"`
 	MimeLimit           string   `json:"mimeLimit,omitempty"`
