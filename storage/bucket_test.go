@@ -4,16 +4,19 @@ import (
 	"fmt"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"math/rand"
+	"net/http"
 	"os"
 	"testing"
 	"time"
 )
 
 var (
-	testAK       = os.Getenv("QINIU_ACCESS_KEY")
-	testSK       = os.Getenv("QINIU_SECRET_KEY")
-	testBucket   = os.Getenv("QINIU_TEST_BUCKET")
-	testPipeline = os.Getenv("QINIU_TEST_PIPELINE")
+	testAK                  = os.Getenv("QINIU_ACCESS_KEY")
+	testSK                  = os.Getenv("QINIU_SECRET_KEY")
+	testBucket              = os.Getenv("QINIU_TEST_BUCKET")
+	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
+	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
+	testPipeline            = os.Getenv("QINIU_TEST_PIPELINE")
 
 	testKey      = "qiniu.png"
 	testFetchUrl = "http://devtools.qiniu.com/qiniu.png"
@@ -205,5 +208,20 @@ func TestListFiles(t *testing.T) {
 
 	for _, entry := range entries {
 		t.Logf("ListItem:\n%s", entry.String())
+	}
+}
+
+func TestMakePrivateUrl(t *testing.T) {
+	deadline := time.Now().Add(time.Second * 3600).Unix()
+	privateUrl := MakePrivateUrl(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
+	t.Logf("PrivateUrl: %s", privateUrl)
+	resp, respErr := http.Get(privateUrl)
+	if respErr != nil {
+		t.Fatalf("MakePrivateUrl() error, %s", respErr)
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("MakePrivateUrl() error, %s", resp.Status)
 	}
 }

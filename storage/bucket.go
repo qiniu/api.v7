@@ -8,6 +8,7 @@ import (
 	"github.com/qiniu/x/rpc.v7"
 	"net/url"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -438,4 +439,28 @@ func EncodedEntry(bucket, key string) string {
 
 func EncodedEntryWithoutKey(bucket string) string {
 	return base64.URLEncoding.EncodeToString([]byte(bucket))
+}
+
+// 公开空间资源下载链接
+// @param domain - 下载域名，例如 http://img.example.com
+// @param key    - 下载文件名，例如 img/2017/test.png
+func MakePublicUrl(domain, key string) (publicUrl string) {
+	return fmt.Sprintf("%s/%s", domain, url.QueryEscape(key))
+}
+
+// 私有空间资源下载链接
+// @param domain   - 下载域名，例如 http://img.example.com
+// @param key      - 下载文件名，例如 img/2017/test.png
+// @param deadline - 链接过期Unix时间戳
+func MakePrivateUrl(mac *qbox.Mac, domain, key string, deadline int64) (privateUrl string) {
+	publicUrl := MakePublicUrl(domain, key)
+	urlToSign := publicUrl
+	if strings.Contains(publicUrl, "?") {
+		urlToSign = fmt.Sprintf("%s&e=%d", urlToSign, deadline)
+	} else {
+		urlToSign = fmt.Sprintf("%s?e=%d", urlToSign, deadline)
+	}
+	token := mac.Sign([]byte(urlToSign))
+	privateUrl = fmt.Sprintf("%s&token=%s", urlToSign, token)
+	return
 }
