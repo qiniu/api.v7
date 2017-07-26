@@ -13,6 +13,8 @@ var (
 	testAK       = os.Getenv("QINIU_ACCESS_KEY")
 	testSK       = os.Getenv("QINIU_SECRET_KEY")
 	testBucket   = os.Getenv("QINIU_TEST_BUCKET")
+	testPipeline = os.Getenv("QINIU_TEST_PIPELINE")
+
 	testKey      = "qiniu.png"
 	testFetchUrl = "http://devtools.qiniu.com/qiniu.png"
 	testSiteUrl  = "http://devtools.qiniu.com"
@@ -20,6 +22,7 @@ var (
 
 var mac *qbox.Mac
 var bucketManager *BucketManager
+var operationManager *OperationManager
 
 func init() {
 	if testAK == "" || testSK == "" {
@@ -28,6 +31,7 @@ func init() {
 	mac = qbox.NewMac(testAK, testSK)
 	cfg := Config{}
 	bucketManager = NewBucketManager(mac, &cfg)
+	operationManager = NewOperationManager(mac, &cfg)
 	rand.Seed(time.Now().Unix())
 }
 
@@ -179,27 +183,27 @@ func TestPrefetchAndImage(t *testing.T) {
 	}
 }
 
-func TestListFiles(t *testing.T){
-	limit:=100
-	 prefix:="listfiles/"
-	for i:=0;i<limit;i++{
-		newKey:=fmt.Sprintf("%s%s/%d",prefix,testKey,i)
-		bucketManager.Copy(testBucket,testKey,testBucket,newKey,true)
+func TestListFiles(t *testing.T) {
+	limit := 100
+	prefix := "listfiles/"
+	for i := 0; i < limit; i++ {
+		newKey := fmt.Sprintf("%s%s/%d", prefix, testKey, i)
+		bucketManager.Copy(testBucket, testKey, testBucket, newKey, true)
 	}
-	entries,_,_,hasNext,err:=bucketManager.ListFiles(testBucket,prefix,"","",limit)
-	if err!=nil{
-		t.Fatalf("ListFiles() error, %s",err)
+	entries, _, _, hasNext, err := bucketManager.ListFiles(testBucket, prefix, "", "", limit)
+	if err != nil {
+		t.Fatalf("ListFiles() error, %s", err)
 	}
 
-	if hasNext{
+	if hasNext {
 		t.Fatalf("ListFiles() failed, unexpected hasNext")
 	}
 
-	if len(entries)!=limit{
-		t.Fatalf("ListFiles() failed, unexpected items count, expected: %d, actual: %d",limit,len(entries))
+	if len(entries) != limit {
+		t.Fatalf("ListFiles() failed, unexpected items count, expected: %d, actual: %d", limit, len(entries))
 	}
 
-	for _,entry:=range entries{
-		t.Logf("ListItem:\n%s",entry.String())
+	for _, entry := range entries {
+		t.Logf("ListItem:\n%s", entry.String())
 	}
 }

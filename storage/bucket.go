@@ -295,7 +295,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 
 	commonPrefixes = ret.CommonPrefixes
 	nextMarker = ret.Marker
-	entries=ret.Items
+	entries = ret.Items
 	if ret.Marker != "" {
 		hasNext = true
 	}

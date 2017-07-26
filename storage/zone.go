@@ -74,6 +74,7 @@ var Zone_z2 = Zone{
 	},
 	RsHost:    "rs-z2.qiniu.com",
 	RsfHost:   "rsf-z2.qiniu.com",
+	ApiHost:   "api-z2.qiniu.com",
 	IovipHost: "iovip-z2.qbox.me",
 }
 
@@ -87,6 +88,7 @@ var Zone_na0 = Zone{
 	},
 	RsHost:    "rs-na0.qiniu.com",
 	RsfHost:   "rsf-na0.qiniu.com",
+	ApiHost:   "api-na0.qiniu.com",
 	IovipHost: "iovip-na0.qbox.me",
 }
 
