@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"strings"
 	"time"

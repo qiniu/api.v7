@@ -312,11 +312,12 @@ func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
 		return
 	}
 
+	scheme := "http://"
 	if m.cfg.UseHttps {
-		rsHost = fmt.Sprintf("https://%s", zone.RsHost)
-	} else {
-		rsHost = fmt.Sprintf("http://%s", zone.RsHost)
+		scheme = "https://"
 	}
+
+	rsHost = fmt.Sprintf("%s%s", scheme, zone.RsHost)
 	return
 }
 
@@ -327,11 +328,12 @@ func (m *BucketManager) RsfHost(bucket string) (rsfHost string, err error) {
 		return
 	}
 
+	scheme := "http://"
 	if m.cfg.UseHttps {
-		rsfHost = fmt.Sprintf("https://%s", zone.RsfHost)
-	} else {
-		rsfHost = fmt.Sprintf("http://%s", zone.RsfHost)
+		scheme = "https://"
 	}
+
+	rsfHost = fmt.Sprintf("%s%s", scheme, zone.RsfHost)
 	return
 }
 
@@ -343,11 +345,12 @@ func (m *BucketManager) IovipHost(bucket string) (iovipHost string, err error) {
 		return
 	}
 
+	scheme := "http://"
 	if m.cfg.UseHttps {
-		iovipHost = fmt.Sprintf("https://%s", zone.IovipHost)
-	} else {
-		iovipHost = fmt.Sprintf("http://%s", zone.IovipHost)
+		scheme = "https://"
 	}
+
+	iovipHost = fmt.Sprintf("%s%s", scheme, zone.IovipHost)
 	return
 }
 
