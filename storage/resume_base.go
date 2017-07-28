@@ -1,21 +1,34 @@
-package kodocli
+package storage
 
 import (
-	. "context"
+	"context"
 	"encoding/base64"
 	"fmt"
+	"github.com/qiniu/x/bytes.v7"
+	"github.com/qiniu/x/rpc.v7"
+	"github.com/qiniu/x/xlog.v7"
 	"hash/crc32"
 	"io"
 	"net/http"
 	"strconv"
-
-	"github.com/qiniu/x/bytes.v7"
-	"github.com/qiniu/x/rpc.v7"
-	"github.com/qiniu/x/xlog.v7"
 )
 
-// ----------------------------------------------------------
+type ResumeUploader struct {
+	client *rpc.Client
+	cfg    *Config
+}
 
+func NewResumeUploader(cfg *Config) *ResumeUploader {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	return &ResumeUploader{
+		cfg: cfg,
+	}
+}
+
+// 分片上传请求
 type uptokenTransport struct {
 	token     string
 	Transport http.RoundTripper
@@ -37,31 +50,29 @@ func newUptokenTransport(token string, transport http.RoundTripper) *uptokenTran
 	return &uptokenTransport{"UpToken " + token, transport}
 }
 
-func newUptokenClient(token string, transport http.RoundTripper) *http.Client {
+func newUptokenClient(token string, transport http.RoundTripper) *rpc.Client {
 	t := newUptokenTransport(token, transport)
-	return &http.Client{Transport: t}
+	return &rpc.Client{&http.Client{Transport: t}}
 }
 
-// ----------------------------------------------------------
+// 创建块请求
+func (p *ResumeUploader) mkblk(
+	ctx context.Context, upHost string, ret *BlkputRet, blockSize int, body io.Reader, size int) error {
 
-func (p Uploader) mkblk(
-	ctx Context, uphosts []string, ret *BlkputRet, blockSize int, body io.Reader, size int) error {
-
-	url := uphosts[0] + "/mkblk/" + strconv.Itoa(blockSize)
-	return p.Conn.CallWith(ctx, ret, "POST", url, "application/octet-stream", body, size)
+	url := upHost + "/mkblk/" + strconv.Itoa(blockSize)
+	return p.client.CallWith(ctx, ret, "POST", url, "application/octet-stream", body, size)
 }
 
-func (p Uploader) bput(
-	ctx Context, ret *BlkputRet, body io.Reader, size int) error {
+func (p *ResumeUploader) bput(
+	ctx context.Context, ret *BlkputRet, body io.Reader, size int) error {
 
 	url := ret.Host + "/bput/" + ret.Ctx + "/" + strconv.FormatUint(uint64(ret.Offset), 10)
-	return p.Conn.CallWith(ctx, ret, "POST", url, "application/octet-stream", body, size)
+	return p.client.CallWith(ctx, ret, "POST", url, "application/octet-stream", body, size)
 }
 
-// ----------------------------------------------------------
-
-func (p Uploader) resumableBput(
-	ctx Context, uphosts []string, ret *BlkputRet, f io.ReaderAt, blkIdx, blkSize int, extra *RputExtra) (err error) {
+// 分片上传请求
+func (p *ResumeUploader) resumableBput(
+	ctx context.Context, upHost string, ret *BlkputRet, f io.ReaderAt, blkIdx, blkSize int, extra *RputExtra) (err error) {
 
 	log := xlog.NewWith(ctx)
 	h := crc32.NewIEEE()
@@ -81,7 +92,7 @@ func (p Uploader) resumableBput(
 		body1 := io.NewSectionReader(f, offbase, int64(bodyLength))
 		body := io.TeeReader(body1, h)
 
-		err = p.mkblk(ctx, uphosts, ret, blkSize, body, bodyLength)
+		err = p.mkblk(ctx, upHost, ret, blkSize, body, bodyLength)
 		if err != nil {
 			return
 		}
@@ -133,12 +144,11 @@ func (p Uploader) resumableBput(
 	return
 }
 
-// ----------------------------------------------------------
+// 创建文件请求
+func (p *ResumeUploader) mkfile(
+	ctx context.Context, upHost string, ret interface{}, key string, hasKey bool, fsize int64, extra *RputExtra) (err error) {
 
-func (p Uploader) mkfile(
-	ctx Context, uphosts []string, ret interface{}, key string, hasKey bool, fsize int64, extra *RputExtra) (err error) {
-
-	url := uphosts[0] + "/mkfile/" + strconv.FormatInt(fsize, 10)
+	url := upHost + "/mkfile/" + strconv.FormatInt(fsize, 10)
 
 	if extra.MimeType != "" {
 		url += "/mimeType/" + encode(extra.MimeType)
@@ -159,14 +169,10 @@ func (p Uploader) mkfile(
 		buf = buf[:len(buf)-1]
 	}
 
-	return p.Conn.CallWith(
+	return p.client.CallWith(
 		ctx, ret, "POST", url, "application/octet-stream", bytes.NewReader(buf), len(buf))
 }
-
-// ----------------------------------------------------------
 
 func encode(raw string) string {
 	return base64.URLEncoding.EncodeToString([]byte(raw))
 }
-
-// ----------------------------------------------------------

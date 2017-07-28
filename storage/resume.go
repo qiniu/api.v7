@@ -1,19 +1,14 @@
-package kodocli
+package storage
 
 import (
-	. "context"
-	"encoding/base64"
-	"encoding/json"
+	"context"
 	"errors"
+	"fmt"
+	"github.com/qiniu/x/xlog.v7"
 	"io"
 	"os"
-	"strings"
 	"sync"
-
-	"github.com/qiniu/x/xlog.v7"
 )
-
-// ----------------------------------------------------------
 
 var (
 	ErrInvalidPutProgress = errors.New("invalid put progress")
@@ -28,7 +23,7 @@ const (
 
 const (
 	defaultWorkers   = 4
-	defaultChunkSize = 1 * 1024 * 1024 // 1M
+	defaultChunkSize = 4 * 1024 * 1024 // 1M
 	defaultTryTimes  = 3
 )
 
@@ -47,7 +42,6 @@ var settings = Settings{
 }
 
 func SetSettings(v *Settings) {
-
 	settings = *v
 	if settings.Workers == 0 {
 		settings.Workers = defaultWorkers
@@ -63,8 +57,6 @@ func SetSettings(v *Settings) {
 	}
 }
 
-// ----------------------------------------------------------
-
 var tasks chan func()
 
 func worker(tasks chan func()) {
@@ -75,17 +67,15 @@ func worker(tasks chan func()) {
 }
 
 func initWorkers() {
-
 	tasks = make(chan func(), settings.TaskQsize)
 	for i := 0; i < settings.Workers; i++ {
 		go worker(tasks)
 	}
 }
 
+// 上传完毕块之后的回调
 func notifyNil(blkIdx int, blkSize int, ret *BlkputRet) {}
 func notifyErrNil(blkIdx int, blkSize int, err error)   {}
-
-// ----------------------------------------------------------
 
 const (
 	blockBits = 22
@@ -95,8 +85,6 @@ const (
 func BlockCount(fsize int64) int {
 	return int((fsize + blockMask) >> blockBits)
 }
-
-// ----------------------------------------------------------
 
 type BlkputRet struct {
 	Ctx      string `json:"ctx"`
@@ -118,51 +106,6 @@ type RputExtra struct {
 
 var once sync.Once
 
-// ----------------------------------------------------------
-
-type Policy struct {
-	Scope   string   `json:"scope"`
-	UpHosts []string `json:"uphosts"`
-}
-
-func unmarshal(uptoken string, uptokenPolicy *Policy) (err error) {
-	parts := strings.Split(uptoken, ":")
-	if len(parts) != 3 {
-		err = ErrBadToken
-		return
-	}
-	b, err := base64.URLEncoding.DecodeString(parts[2])
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(b, uptokenPolicy)
-}
-
-func (p Uploader) getUpHostFromToken(uptoken string) (uphosts []string, err error) {
-	if len(p.UpHosts) != 0 {
-		uphosts = p.UpHosts
-		return
-	}
-	ak := strings.Split(uptoken, ":")[0]
-	uptokenPolicy := Policy{}
-	err = unmarshal(uptoken, &uptokenPolicy)
-	if err != nil {
-		return
-	}
-	if len(uptokenPolicy.UpHosts) == 0 {
-		bucketName := strings.Split(uptokenPolicy.Scope, ":")[0]
-		bucketInfo, err1 := p.ApiCli.GetBucketInfo(ak, bucketName)
-		if err1 != nil {
-			err = err1
-			return
-		}
-		uphosts = bucketInfo.UpHosts
-	} else {
-		uphosts = uptokenPolicy.UpHosts
-	}
-	return
-}
-
 // 上传一个文件，支持断点续传和分块上传。
 //
 // ctx     是请求的上下文。
@@ -173,11 +116,10 @@ func (p Uploader) getUpHostFromToken(uptoken string) (uphosts []string, err erro
 // fsize   是要上传的文件大小。
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
-func (p Uploader) Rput(
-	ctx Context, ret interface{}, uptoken string,
-	key string, f io.ReaderAt, fsize int64, extra *RputExtra) error {
-
-	return p.rput(ctx, ret, uptoken, key, true, f, fsize, extra)
+func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, uptoken string, key string, f io.ReaderAt,
+	fsize int64, extra *RputExtra) (err error) {
+	err = p.rput(ctx, ret, uptoken, key, true, f, fsize, extra)
+	return
 }
 
 // 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
@@ -190,10 +132,10 @@ func (p Uploader) Rput(
 // fsize   是要上传的文件大小。
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
-func (p Uploader) RputWithoutKey(
-	ctx Context, ret interface{}, uptoken string, f io.ReaderAt, fsize int64, extra *RputExtra) error {
-
-	return p.rput(ctx, ret, uptoken, "", false, f, fsize, extra)
+func (p *ResumeUploader) PutWithoutKey(
+	ctx context.Context, ret interface{}, uptoken string, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
+	err = p.rput(ctx, ret, uptoken, "", false, f, fsize, extra)
+	return
 }
 
 // 上传一个文件，支持断点续传和分块上传。
@@ -206,10 +148,10 @@ func (p Uploader) RputWithoutKey(
 // localFile 是要上传的文件的本地路径。
 // extra     是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
-func (p Uploader) RputFile(
-	ctx Context, ret interface{}, uptoken, key, localFile string, extra *RputExtra) (err error) {
-
-	return p.rputFile(ctx, ret, uptoken, key, true, localFile, extra)
+func (p *ResumeUploader) PutFile(
+	ctx context.Context, ret interface{}, uptoken, key, localFile string, extra *RputExtra) (err error) {
+	err = p.rputFile(ctx, ret, uptoken, key, true, localFile, extra)
+	return
 }
 
 // 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
@@ -222,17 +164,14 @@ func (p Uploader) RputFile(
 // localFile 是要上传的文件的本地路径。
 // extra     是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
-func (p Uploader) RputFileWithoutKey(
-	ctx Context, ret interface{}, uptoken, localFile string, extra *RputExtra) (err error) {
-
+func (p *ResumeUploader) PutFileWithoutKey(
+	ctx context.Context, ret interface{}, uptoken, localFile string, extra *RputExtra) (err error) {
 	return p.rputFile(ctx, ret, uptoken, "", false, localFile, extra)
 }
 
-// ----------------------------------------------------------
-
-func (p Uploader) rput(
-	ctx Context, ret interface{}, uptoken string,
-	key string, hasKey bool, f io.ReaderAt, fsize int64, extra *RputExtra) error {
+func (p *ResumeUploader) rput(
+	ctx context.Context, ret interface{}, uptoken string,
+	key string, hasKey bool, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
 
 	once.Do(initWorkers)
 
@@ -260,9 +199,18 @@ func (p Uploader) rput(
 	if extra.NotifyErr == nil {
 		extra.NotifyErr = notifyErrNil
 	}
-	uphosts, err := p.getUpHostFromToken(uptoken)
-	if err != nil {
-		return err
+	//get up host
+
+	ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
+	if gErr != nil {
+		err = gErr
+		return
+	}
+
+	upHost, gErr := p.UpHost(ak, bucket)
+	if gErr != nil {
+		err = gErr
+		return
 	}
 
 	var wg sync.WaitGroup
@@ -271,7 +219,7 @@ func (p Uploader) rput(
 	last := blockCnt - 1
 	blkSize := 1 << blockBits
 	nfails := 0
-	p.Conn.Client = newUptokenClient(uptoken, p.Conn.Transport)
+	p.client = newUptokenClient(uptoken, nil)
 
 	for i := 0; i < blockCnt; i++ {
 		blkIdx := i
@@ -284,7 +232,7 @@ func (p Uploader) rput(
 			defer wg.Done()
 			tryTimes := extra.TryTimes
 		lzRetry:
-			err := p.resumableBput(ctx, uphosts, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
+			err := p.resumableBput(ctx, upHost, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
@@ -304,11 +252,11 @@ func (p Uploader) rput(
 		return ErrPutFailed
 	}
 
-	return p.mkfile(ctx, uphosts, ret, key, hasKey, fsize, extra)
+	return p.mkfile(ctx, upHost, ret, key, hasKey, fsize, extra)
 }
 
-func (p Uploader) rputFile(
-	ctx Context, ret interface{}, uptoken string,
+func (p *ResumeUploader) rputFile(
+	ctx context.Context, ret interface{}, uptoken string,
 	key string, hasKey bool, localFile string, extra *RputExtra) (err error) {
 
 	f, err := os.Open(localFile)
@@ -325,4 +273,23 @@ func (p Uploader) rputFile(
 	return p.rput(ctx, ret, uptoken, key, hasKey, f, fi.Size(), extra)
 }
 
-// ----------------------------------------------------------
+func (m *ResumeUploader) UpHost(ak, bucket string) (upHost string, err error) {
+	zone, zoneErr := GetZone(ak, bucket)
+	if zoneErr != nil {
+		err = zoneErr
+		return
+	}
+
+	scheme := "http://"
+	if m.cfg.UseHttps {
+		scheme = "https://"
+	}
+
+	host := zone.SrcUpHosts[0]
+	if m.cfg.UseCdnDomains {
+		host = zone.CdnUpHosts[0]
+	}
+
+	upHost = fmt.Sprintf("%s%s", scheme, host)
+	return
+}

@@ -27,6 +27,7 @@ var mac *qbox.Mac
 var bucketManager *BucketManager
 var operationManager *OperationManager
 var formUploader *FormUploader
+var resumeUploader *ResumeUploader
 
 func init() {
 	if testAK == "" || testSK == "" {
@@ -36,7 +37,8 @@ func init() {
 	cfg := Config{}
 	bucketManager = NewBucketManager(mac, &cfg)
 	operationManager = NewOperationManager(mac, &cfg)
-	formUploader = NewFormUploader(mac, &cfg)
+	formUploader = NewFormUploader(&cfg)
+	resumeUploader = NewResumeUploader(&cfg)
 	rand.Seed(time.Now().Unix())
 }
 

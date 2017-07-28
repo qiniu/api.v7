@@ -2,9 +2,8 @@ package storage
 
 import (
 	"bytes"
-	. "context"
+	"context"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
 	"hash/crc32"
 	"io"
@@ -17,20 +16,50 @@ import (
 	"strings"
 )
 
+const (
+	DontCheckCrc    = 0
+	CalcAndCheckCrc = 1
+	CheckCrc        = 2
+)
+
+// 表单上传的额外可选项
+type PutExtra struct {
+	// 可选，用户自定义参数，必须以 "x:" 开头。若不以x:开头，则忽略。
+	Params map[string]string
+
+	// 可选，当为 "" 时候，服务端自动判断。
+	MimeType string
+
+	Crc32 uint32
+
+	// CheckCrc == 0 (DontCheckCrc): 表示不进行 crc32 校验
+	// CheckCrc == 1 (CalcAndCheckCrc): 对于 Put 等同于 CheckCrc = 2；对于 PutFile 会自动计算 crc32 值
+	// CheckCrc == 2 (CheckCrc): 表示进行 crc32 校验，且 crc32 值就是上面的 Crc32 变量
+	CheckCrc uint32
+
+	// 上传事件：进度通知。这个事件的回调函数应该尽可能快地结束。
+	OnProgress func(fsize, uploaded int64)
+}
+
+// 如果 uptoken 没有指定 ReturnBody，那么返回值是标准的 PutRet 结构
+type PutRet struct {
+	Hash         string `json:"hash"`
+	PersistentId string `json:"persistentId"`
+	Key          string `json:"key"`
+}
+
 type FormUploader struct {
 	client *rpc.Client
-	mac    *qbox.Mac
 	cfg    *Config
 }
 
-func NewFormUploader(mac *qbox.Mac, cfg *Config) *FormUploader {
+func NewFormUploader(cfg *Config) *FormUploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
 	return &FormUploader{
-		client: NewClient(mac, nil),
-		mac:    mac,
+		client: &rpc.DefaultClient,
 		cfg:    cfg,
 	}
 }
@@ -46,7 +75,7 @@ func NewFormUploader(mac *qbox.Mac, cfg *Config) *FormUploader {
 // extra     是上传的一些可选项。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) PutFile(
-	ctx Context, ret interface{}, uptoken, key, localFile string, extra *PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken, key, localFile string, extra *PutExtra) (err error) {
 	return p.putFile(ctx, ret, uptoken, key, true, localFile, extra)
 }
 
@@ -61,12 +90,12 @@ func (p *FormUploader) PutFile(
 // extra     是上传的一些可选项。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) PutFileWithoutKey(
-	ctx Context, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
 	return p.putFile(ctx, ret, uptoken, "", false, localFile, extra)
 }
 
 func (p *FormUploader) putFile(
-	ctx Context, ret interface{}, uptoken string,
+	ctx context.Context, ret interface{}, uptoken string,
 	key string, hasKey bool, localFile string, extra *PutExtra) (err error) {
 
 	f, err := os.Open(localFile)
@@ -101,7 +130,7 @@ func (p *FormUploader) putFile(
 // extra   是上传的一些可选项。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) Put(
-	ctx Context, ret interface{}, uptoken, key string, data io.Reader, size int64, extra *PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken, key string, data io.Reader, size int64, extra *PutExtra) (err error) {
 	err = p.put(ctx, ret, uptoken, key, true, data, size, extra, path.Base(key))
 	return
 }
@@ -117,13 +146,13 @@ func (p *FormUploader) Put(
 // extra   是上传的一些可选项。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) PutWithoutKey(
-	ctx Context, ret interface{}, uptoken string, data io.Reader, size int64, extra *PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken string, data io.Reader, size int64, extra *PutExtra) (err error) {
 	err = p.put(ctx, ret, uptoken, "", false, data, size, extra, "filename")
 	return err
 }
 
 func (p *FormUploader) put(
-	ctx Context, ret interface{}, uptoken string,
+	ctx context.Context, ret interface{}, uptoken string,
 	key string, hasKey bool, data io.Reader, size int64, extra *PutExtra, fileName string) (err error) {
 
 	ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
@@ -174,7 +203,7 @@ func (p *FormUploader) put(
 	return
 }
 
-// 获取IOVIP域名
+// 获取上传域名
 func (m *FormUploader) UpHost(ak, bucket string) (upHost string, err error) {
 	zone, zoneErr := GetZone(ak, bucket)
 	if zoneErr != nil {
