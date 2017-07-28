@@ -4,32 +4,33 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
 	"io/ioutil"
 	"net/http"
 	"strings"
+
+	"github.com/qiniu/api.v7/auth/qbox"
 )
 
+// Fusion CDN服务域名
 var (
 	FusionHost = "http://fusion.qiniuapi.com"
 )
 
+// CdnManager 提供了文件和目录刷新，文件预取，获取域名带宽和流量数据，获取域名日志列表等功能
 type CdnManager struct {
-	mac *qbox.mac
+	mac *qbox.Mac
 }
 
+// NewCdnManager 用来构建一个新的 CdnManager
 func NewCdnManager(mac *qbox.Mac) *CdnManager {
 	return &CdnManager{mac: mac}
 }
 
-/*
-TrafficReq
-批量查询带宽/流量 请求内容
-StartDate	  string	开始日期，例如：2016-07-01
-EndDate		  string	结束日期，例如：2016-07-03
-Granularity	string	取值粒度，取值：5min/hour/day
-Domains	 	  string	域名列表，以 ; 分割
-*/
+// TrafficReq 为批量查询带宽/流量的API请求内容
+//	StartDate 	开始日期，格式例如：2016-07-01
+//	EndDate 	结束日期，格式例如：2016-07-03
+//	Granularity	取值粒度，取值可选值：5min/hour/day
+//	Domains 	域名列表，彼此用 ; 连接
 type TrafficReq struct {
 	StartDate   string `json:"startDate"`
 	EndDate     string `json:"endDate"`
@@ -37,8 +38,7 @@ type TrafficReq struct {
 	Domains     string `json:"domains"`
 }
 
-// TrafficResp
-// 带宽/流量查询响应内容
+// TrafficResp 为带宽/流量查询响应内容
 type TrafficResp struct {
 	Code  int                    `json:"code"`
 	Error string                 `json:"error"`
@@ -46,27 +46,19 @@ type TrafficResp struct {
 	Data  map[string]TrafficData `json:"data,omitempty"`
 }
 
-// TrafficData
-// 带宽/流量数据
+// TrafficData 为带宽/流量数据
 type TrafficData struct {
 	DomainChina   []int `json:"china"`
 	DomainOversea []int `json:"oversea"`
 }
 
-/*
-
-BandWidth
-获取域名访问带宽数据
-http://developer.qiniu.com/article/fusion/api/traffic-bandwidth.html
-
-	StartDate		  string		必须	开始日期，例如：2016-07-01
-	EndDate			  string		必须	结束日期，例如：2016-07-03
-	Granularity		string		必须	粒度，取值：5min ／ hour ／day
-	Domains			  []string	必须	域名列表
-*/
+// GetBandwidthData 方法用来获取域名访问带宽数据
+//	StartDate	string		必须	开始日期，例如：2016-07-01
+//	EndDate		string		必须	结束日期，例如：2016-07-03
+//	Granularity	string		必须	粒度，取值：5min ／ hour ／day
+//	Domains		[]string	必须	域名列表
 func (m *CdnManager) GetBandwidthData(startDate, endDate, granularity string,
 	domainList []string) (bandwidthData TrafficResp, err error) {
-
 	domains := strings.Join(domainList, ";")
 	reqBody := TrafficReq{
 		StartDate:   startDate,
@@ -88,19 +80,13 @@ func (m *CdnManager) GetBandwidthData(startDate, endDate, granularity string,
 	return
 }
 
-/* Flux
-
-获取域名访问流量数据
-http://developer.qiniu.com/article/fusion/api/traffic-bandwidth.html
-
-	StartDate		string		必须	开始日期，例如：2016-07-01
-	EndDate			string		必须	结束日期，例如：2016-07-03
-	Granularity		string		必须	粒度，取值：5min ／ hour ／day
-	Domains			[]string	必须	域名列表
-*/
+// GetFluxData 方法用来获取域名访问流量数据
+//	StartDate	string		必须	开始日期，例如：2016-07-01
+//	EndDate		string		必须	结束日期，例如：2016-07-03
+//	Granularity	string		必须	粒度，取值：5min ／ hour ／day
+//	Domains		[]string	必须	域名列表
 func (m *CdnManager) GetFluxData(startDate, endDate, granularity string,
 	domainList []string) (fluxData TrafficResp, err error) {
-
 	domains := strings.Join(domainList, ";")
 	reqBody := TrafficReq{
 		StartDate:   startDate,
@@ -124,39 +110,31 @@ func (m *CdnManager) GetFluxData(startDate, endDate, granularity string,
 	return
 }
 
-// RefreshReq
-// 缓存刷新请求内容
+// RefreshReq 为缓存刷新请求内容
 type RefreshReq struct {
 	Urls []string `json:"urls"`
 	Dirs []string `json:"dirs"`
 }
 
-// RefreshResp
-// 缓存刷新响应内容
+// RefreshResp 缓存刷新响应内容
 type RefreshResp struct {
 	Code          int      `json:"code"`
 	Error         string   `json:"error"`
 	RequestID     string   `json:"requestId,omitempty"`
 	InvalidUrls   []string `json:"invalidUrls,omitempty"`
 	InvalidDirs   []string `json:"invalidDirs,omitempty"`
-	UrlQuotaDay   int      `json:"urlQuotaDay,omitempty"`
-	UrlSurplusDay int      `json:"urlSurplusDay,omitempty"`
+	URLQuotaDay   int      `json:"urlQuotaDay,omitempty"`
+	URLSurplusDay int      `json:"urlSurplusDay,omitempty"`
 	DirQuotaDay   int      `json:"dirQuotaDay,omitempty"`
 	DirSurplusDay int      `json:"dirSurplusDay,omitempty"`
 }
 
-/*
-RefreshUrlsAndDirs
-
-刷新链接列表，每次最多不可以超过100条链接
-http://developer.qiniu.com/article/fusion/api/refresh.html
-urls	要刷新的单个url列表，总数不超过100条；单个url，即一个具体的url，
-例如：http://bar.foo.com/index.html
-dirs	要刷新的目录url列表，总数不超过10条；目录dir，即表示一个目录级的url，
-例如：http://bar.foo.com/dir/，也支持在尾部使用通配符，例如：http://bar.foo.com/dir/\
-*/
+// RefreshUrlsAndDirs 方法用来刷新文件或目录
+// urls	要刷新的单个url列表，单次方法调用总数不超过100条；单个url，即一个具体的url，
+// 例如：http://bar.foo.com/index.html
+// dirs	要刷新的目录url列表，单次方法调用总数不超过10条；目录dir，即表示一个目录级的url，
+// 例如：http://bar.foo.com/dir/，
 func (m *CdnManager) RefreshUrlsAndDirs(urls, dirs []string) (result RefreshResp, err error) {
-
 	reqBody := RefreshReq{
 		Urls: urls,
 		Dirs: dirs,
@@ -176,26 +154,22 @@ func (m *CdnManager) RefreshUrlsAndDirs(urls, dirs []string) (result RefreshResp
 	return
 }
 
-// RefreshUrls
-// 刷新文件
+// RefreshUrls 刷新文件
 func (m *CdnManager) RefreshUrls(urls []string) (result RefreshResp, err error) {
 	return m.RefreshUrlsAndDirs(urls, nil)
 }
 
-// RefreshDirs
-// 刷新目录
+// RefreshDirs 刷新目录
 func (m *CdnManager) RefreshDirs(dirs []string) (result RefreshResp, err error) {
 	return m.RefreshUrlsAndDirs(nil, dirs)
 }
 
-// PrefetchReq
-// 文件预取请求内容
+// PrefetchReq 文件预取请求内容
 type PrefetchReq struct {
 	Urls []string `json:"urls"`
 }
 
-// PrefetchResp
-// 文件预取响应内容
+// PrefetchResp 文件预取响应内容
 type PrefetchResp struct {
 	Code        int      `json:"code"`
 	Error       string   `json:"error"`
@@ -205,11 +179,8 @@ type PrefetchResp struct {
 	SurplusDay  int      `json:"surplusDay,omitempty"`
 }
 
-// PrefetchUrls
-// 预取文件链接，每次最多不可以超过100条
-// http://developer.qiniu.com/article/fusion/api/prefetch.html
+// PrefetchUrls 预取文件链接，每次最多不可以超过100条
 func (m *CdnManager) PrefetchUrls(urls []string) (result PrefetchResp, err error) {
-
 	reqBody := PrefetchReq{
 		Urls: urls,
 	}
@@ -251,9 +222,7 @@ type LogDomainInfo struct {
 }
 
 // GetCdnLogList 获取CDN域名访问日志的下载链接
-// http://developer.qiniu.com/article/fusion/api/log.html
 func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomainInfo, err error) {
-
 	//new log query request
 	logReq := ListLogRequest{
 		Day:     date,
@@ -288,11 +257,9 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 
 }
 
-// RequestWithBody
-// 带body对api发出请求并且返回response body
-func postRequest(mac *qbox.mac, path string, body interface{}) (resData []byte,
+// RequestWithBody 带body对api发出请求并且返回response body
+func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
 	err error) {
-
 	urlStr := fmt.Sprintf("%s%s", FusionHost, path)
 	reqData, _ := json.Marshal(body)
 	req, reqErr := http.NewRequest("POST", urlStr, bytes.NewReader(reqData))
@@ -301,7 +268,7 @@ func postRequest(mac *qbox.mac, path string, body interface{}) (resData []byte,
 		return
 	}
 
-	accessToken, signErr := mac.SignRequest(req, false)
+	accessToken, signErr := mac.SignRequest(req)
 	if signErr != nil {
 		err = signErr
 		return
