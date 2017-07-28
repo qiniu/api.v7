@@ -282,7 +282,7 @@ func (p *ResumeUploader) rputFile(
 	return p.rput(ctx, ret, uptoken, key, hasKey, f, fi.Size(), extra)
 }
 
-func (m *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
+func (p *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
 	zone, zoneErr := GetZone(ak, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -290,12 +290,12 @@ func (m *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if p.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
 	host := zone.SrcUpHosts[0]
-	if m.cfg.UseCdnDomains {
+	if p.cfg.UseCdnDomains {
 		host = zone.CdnUpHosts[0]
 	}
 

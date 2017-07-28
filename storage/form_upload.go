@@ -215,7 +215,7 @@ func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
 	}
 
 	scheme := "http://"
-	if p.cfg.UseHttps {
+	if p.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 

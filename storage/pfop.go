@@ -167,7 +167,7 @@ func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 	apiHost = fmt.Sprintf("%s%s", scheme, zone.ApiHost)
@@ -188,7 +188,7 @@ func (m *OperationManager) prefopApiHost(persistentID string) (apiHost string, e
 		err = errors.New("invalid persistent id")
 	}
 
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		apiHost = fmt.Sprintf("https://%s", apiHost)
 	} else {
 		apiHost = fmt.Sprintf("http://%s", apiHost)

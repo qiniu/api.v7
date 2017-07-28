@@ -120,7 +120,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	var reqHost string
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
@@ -229,7 +229,7 @@ func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error
 func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err error) {
 	ctx := context.TODO()
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 	reqURL := fmt.Sprintf("%s%s/batch", scheme, DefaultRsHost)
@@ -346,7 +346,7 @@ func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
@@ -362,7 +362,7 @@ func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
@@ -378,7 +378,7 @@ func (m *BucketManager) iovipHost(bucket string) (iovipHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
