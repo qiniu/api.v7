@@ -166,22 +166,23 @@ func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 		return
 	}
 
+	scheme := "http://"
 	if m.cfg.UseHttps {
-		apiHost = fmt.Sprintf("https://%s", zone.ApiHost)
-	} else {
-		apiHost = fmt.Sprintf("http://%s", zone.ApiHost)
+		scheme = "https://"
 	}
+	apiHost = fmt.Sprintf("%s%s", scheme, zone.ApiHost)
+
 	return
 }
 
-func (m *OperationManager) prefopApiHost(persistentId string) (apiHost string, err error) {
-	if strings.Contains(persistentId, "z1.") {
+func (m *OperationManager) prefopApiHost(persistentID string) (apiHost string, err error) {
+	if strings.Contains(persistentID, "z1.") {
 		apiHost = ZoneHuabei.ApiHost
-	} else if strings.Contains(persistentId, "z2.") {
+	} else if strings.Contains(persistentID, "z2.") {
 		apiHost = ZoneHuanan.ApiHost
-	} else if strings.Contains(persistentId, "na0.") {
+	} else if strings.Contains(persistentID, "na0.") {
 		apiHost = ZoneBeimei.ApiHost
-	} else if strings.Contains(persistentId, "z0.") {
+	} else if strings.Contains(persistentID, "z0.") {
 		apiHost = DefaultAPIHost
 	} else {
 		err = errors.New("invalid persistent id")

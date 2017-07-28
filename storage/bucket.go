@@ -101,6 +101,7 @@ type BucketManager struct {
 	cfg    *Config
 }
 
+// NewBucketManager 用来构建一个新的资源管理对象
 func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
@@ -113,178 +114,193 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 	}
 }
 
-// 获取空间列表
-// @param shared - 是否同时列出被授权访问的bucket
+// Buckets 用来获取空间列表，如果指定了 shared 参数为 true，那么一同列表被授权访问的空间
 func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	ctx := context.TODO()
 	var reqHost string
+
+	scheme := "http://"
 	if m.cfg.UseHttps {
-		reqHost = fmt.Sprintf("https://%s", DefaultRsHost)
-	} else {
-		reqHost = fmt.Sprintf("http://%s", DefaultRsHost)
+		scheme = "https://"
 	}
 
-	reqUrl := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
-	err = m.client.Call(ctx, &buckets, "POST", reqUrl)
+	reqHost = fmt.Sprintf("%s%s", scheme, DefaultRsHost)
+	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
+	err = m.client.Call(ctx, &buckets, "POST", reqURL)
 	return
 }
 
-// 获取文件信息
+// Stat 用来获取一个文件的基本信息
 func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.rsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIStat(bucket, key))
-	err = m.client.Call(ctx, &info, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIStat(bucket, key))
+	err = m.client.Call(ctx, &info, "POST", reqURL)
 	return
 }
 
-// 删除文件
+// Delete 用来删除空间中的一个文件
 func (m *BucketManager) Delete(bucket, key string) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.rsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIDelete(bucket, key))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIDelete(bucket, key))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 复制文件
+// Copy 用来创建已有空间中的文件的一个新的副本
 func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(srcBucket)
+	reqHost, reqErr := m.rsHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URICopy(srcBucket, srcKey, destBucket, destKey, force))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URICopy(srcBucket, srcKey, destBucket, destKey, force))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 移动文件
+// Move 用来将空间中的一个文件移动到新的空间或者重命名
 func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(srcBucket)
+	reqHost, reqErr := m.rsHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIMove(srcBucket, srcKey, destBucket, destKey, force))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIMove(srcBucket, srcKey, destBucket, destKey, force))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 更新文件的格式类型
+// ChangeMime 用来更新文件的MimeType
 func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.rsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIChangeMime(bucket, key, newMime))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeMime(bucket, key, newMime))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 更新文件存储类型
+// ChangeType 用来更新文件的存储类型，0表示普通存储，1表示低频存储
 func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.rsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIChangeType(bucket, key, fileType))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeType(bucket, key, fileType))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 更新文件生命周期
+// DeleteAfterDays 用来更新文件生命周期，如果 days 设置为0，则表示取消文件的定期删除功能，永久存储
 func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.rsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
-	reqUrl := fmt.Sprintf("%s%s", reqHost, URIDeleteAfterDays(bucket, key, days))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIDeleteAfterDays(bucket, key, days))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 抓取资源
-func (m *BucketManager) Fetch(resUrl, bucket, key string) (fetchRet FetchRet, err error) {
+// Batch 接口提供了资源管理的批量操作，支持 stat，copy，move，delete，chgm，chtype，deleteAfterDays几个接口
+func (m *BucketManager) Batch(operations []string) (batchOpRet BatchOpRet, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.IovipHost(bucket)
-	if reqErr != nil {
-		err = reqErr
-		return
+	scheme := "http://"
+	if m.cfg.UseHttps {
+		scheme = "https://"
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, uriFetch(resUrl, bucket, key))
-	err = m.client.Call(ctx, &fetchRet, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s/batch", DefaultRsHost, scheme)
+	params := map[string][]string{
+		"op": operations,
+	}
+	err = m.client.CallWithForm(ctx, &batchOpRet, "POST", reqURL, params)
 	return
 }
 
-// 抓取资源，如果不指定key，则以文件的内容hash作为文件名
-func (m *BucketManager) FetchWithoutKey(resUrl, bucket string) (fetchRet FetchRet, err error) {
+// Fetch 根据提供的远程资源链接来抓取一个文件到空间并已指定文件名保存
+func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.IovipHost(bucket)
+	reqHost, reqErr := m.iovipHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resUrl, bucket))
-	err = m.client.Call(ctx, &fetchRet, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetch(resURL, bucket, key))
+	err = m.client.Call(ctx, &fetchRet, "POST", reqURL)
 	return
 }
 
-// 同步镜像空间的资源和镜像源资源内容
+// FetchWithoutKey 根据提供的远程资源链接来抓取一个文件到空间并以文件的内容hash作为文件名
+func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRet, err error) {
+	ctx := context.TODO()
+	reqHost, reqErr := m.iovipHost(bucket)
+	if reqErr != nil {
+		err = reqErr
+		return
+	}
+	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resURL, bucket))
+	err = m.client.Call(ctx, &fetchRet, "POST", reqURL)
+	return
+}
+
+// Prefetch 用来同步镜像空间的资源和镜像源资源内容
 func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.IovipHost(bucket)
+	reqHost, reqErr := m.iovipHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, uriPrefetch(bucket, key))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, uriPrefetch(bucket, key))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 设置空间镜像源
-func (m *BucketManager) SetImage(siteUrl, bucket string) (err error) {
+// SetImage 用来设置空间镜像源
+func (m *BucketManager) SetImage(siteURL, bucket string) (err error) {
 	ctx := context.TODO()
-	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteUrl, bucket))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteURL, bucket))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 设置空间镜像源，额外添加回源Host头部
-func (m *BucketManager) SetImageWithHost(siteUrl, bucket, host string) (err error) {
+// SetImageWithHost 用来设置空间镜像源，额外添加回源Host头部
+func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err error) {
 	ctx := context.TODO()
-	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost,
-		uriSetImageWithHost(siteUrl, bucket, host))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost,
+		uriSetImageWithHost(siteURL, bucket, host))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return
 }
 
-// 取消空间镜像源设置
+// UnsetImage 用来取消空间镜像源设置
 func (m *BucketManager) UnsetImage(bucket string) (err error) {
 	ctx := context.TODO()
-	reqUrl := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
-	err = m.client.Call(ctx, nil, "POST", reqUrl)
+	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
+	err = m.client.Call(ctx, nil, "POST", reqURL)
 	return err
 }
 
@@ -294,24 +310,20 @@ type listFilesRet struct {
 	CommonPrefixes []string   `json:"commonPrefixes"`
 }
 
-// 获取空间文件列表
-// @param bucket
-// @param prefix
-// @param delimiter
-// @param marker
-// @param limit
+// ListFiles 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，循环列举的时候下次
+// 列举的位置 marker，以及每次返回的文件的最大数量limit，其中limit最大为1000。
 func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	limit int) (entries []ListItem, commonPrefixes []string, nextMarker string, hasNext bool, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.RsfHost(bucket)
+	reqHost, reqErr := m.rsfHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
 	ret := listFilesRet{}
-	reqUrl := fmt.Sprintf("%s%s", reqHost, uriListFiles(bucket, prefix, delimiter, marker, limit))
-	err = m.client.Call(ctx, &ret, "POST", reqUrl)
+	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles(bucket, prefix, delimiter, marker, limit))
+	err = m.client.Call(ctx, &ret, "POST", reqURL)
 	if err != nil {
 		return
 	}
@@ -326,8 +338,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	return
 }
 
-// 获取资源管理域名
-func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
+func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
 	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -343,7 +354,7 @@ func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
 	return
 }
 
-func (m *BucketManager) RsfHost(bucket string) (rsfHost string, err error) {
+func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
 	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -359,8 +370,7 @@ func (m *BucketManager) RsfHost(bucket string) (rsfHost string, err error) {
 	return
 }
 
-// 获取IOVIP域名
-func (m *BucketManager) IovipHost(bucket string) (iovipHost string, err error) {
+func (m *BucketManager) iovipHost(bucket string) (iovipHost string, err error) {
 	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -377,60 +387,68 @@ func (m *BucketManager) IovipHost(bucket string) (iovipHost string, err error) {
 }
 
 // 构建op的方法，导出的方法支持在Batch操作中使用
+
+// URIStat 构建 stat 接口的请求命令
 func URIStat(bucket, key string) string {
 	return fmt.Sprintf("/stat/%s", EncodedEntry(bucket, key))
 }
 
+// URIDelete 构建 delete 接口的请求命令
 func URIDelete(bucket, key string) string {
 	return fmt.Sprintf("/delete/%s", EncodedEntry(bucket, key))
 }
 
+// URICopy 构建 copy 接口的请求命令
 func URICopy(srcBucket, srcKey, destBucket, destKey string, force bool) string {
 	return fmt.Sprintf("/copy/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey),
 		EncodedEntry(destBucket, destKey), force)
 }
 
+// URIMove 构建 move 接口的请求命令
 func URIMove(srcBucket, srcKey, destBucket, destKey string, force bool) string {
 	return fmt.Sprintf("/move/%s/%s/force/%v", EncodedEntry(srcBucket, srcKey),
 		EncodedEntry(destBucket, destKey), force)
 }
 
+// URIDeleteAfterDays 构建 deleteAfterDays 接口的请求命令
 func URIDeleteAfterDays(bucket, key string, days int) string {
 	return fmt.Sprintf("/deleteAfterDays/%s/%d", EncodedEntry(bucket, key), days)
 }
 
+// URIChangeMime 构建 chgm 接口的请求命令
 func URIChangeMime(bucket, key, newMime string) string {
 	return fmt.Sprintf("/chgm/%s/mime/%s", EncodedEntry(bucket, key),
 		base64.URLEncoding.EncodeToString([]byte(newMime)))
 }
 
+// URIChangeType 构建 chtype 接口的请求命令
 func URIChangeType(bucket, key string, fileType int) string {
 	return fmt.Sprintf("/chtype/%s/type/%d", EncodedEntry(bucket, key), fileType)
 }
 
 // 构建op的方法，非导出的方法无法用在Batch操作中
-func uriFetch(resUrl, bucket, key string) string {
+func uriFetch(resURL, bucket, key string) string {
 	return fmt.Sprintf("/fetch/%s/to/%s",
-		base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntry(bucket, key))
+		base64.URLEncoding.EncodeToString([]byte(resURL)), EncodedEntry(bucket, key))
 }
 
-func uriFetchWithoutKey(resUrl, bucket string) string {
+func uriFetchWithoutKey(resURL, bucket string) string {
 	return fmt.Sprintf("/fetch/%s/to/%s",
-		base64.URLEncoding.EncodeToString([]byte(resUrl)), EncodedEntryWithoutKey(bucket))
+		base64.URLEncoding.EncodeToString([]byte(resURL)), EncodedEntryWithoutKey(bucket))
 }
 
 func uriPrefetch(bucket, key string) string {
 	return fmt.Sprintf("/prefetch/%s", EncodedEntry(bucket, key))
 }
 
-func uriSetImage(siteUrl, bucket string) string {
+func uriSetImage(siteURL, bucket string) string {
 	return fmt.Sprintf("/image/%s/from/%s", bucket,
-		base64.URLEncoding.EncodeToString([]byte(siteUrl)))
+		base64.URLEncoding.EncodeToString([]byte(siteURL)))
 }
 
-func uriSetImageWithHost(siteUrl, bucket, host string) string {
+func uriSetImageWithHost(siteURL, bucket, host string) string {
 	return fmt.Sprintf("/image/%s/from/%s/host/%s", bucket,
-		base64.URLEncoding.EncodeToString([]byte(siteUrl)),
+		base64.URLEncoding.EncodeToString([]byte(siteURL)),
 		base64.URLEncoding.EncodeToString([]byte(host)))
 }
 
@@ -456,36 +474,32 @@ func uriListFiles(bucket, prefix, delimiter, marker string, limit int) string {
 	return fmt.Sprintf("/list?%s", query.Encode())
 }
 
-// EncodedEntry
+// EncodedEntry 生成URL Safe Base64编码的 Entry
 func EncodedEntry(bucket, key string) string {
 	entry := fmt.Sprintf("%s:%s", bucket, key)
 	return base64.URLEncoding.EncodeToString([]byte(entry))
 }
 
+// EncodedEntryWithoutKey 生成 key 为null的情况下 URL Safe Base64编码的Entry
 func EncodedEntryWithoutKey(bucket string) string {
 	return base64.URLEncoding.EncodeToString([]byte(bucket))
 }
 
-// 公开空间资源下载链接
-// @param domain - 下载域名，例如 http://img.example.com
-// @param key    - 下载文件名，例如 img/2017/test.png
-func MakePublicUrl(domain, key string) (publicUrl string) {
+// MakePublicURL 用来生成公开空间资源下载链接
+func MakePublicURL(domain, key string) string {
 	return fmt.Sprintf("%s/%s", domain, url.QueryEscape(key))
 }
 
-// 私有空间资源下载链接
-// @param domain   - 下载域名，例如 http://img.example.com
-// @param key      - 下载文件名，例如 img/2017/test.png
-// @param deadline - 链接过期Unix时间戳
-func MakePrivateUrl(mac *qbox.Mac, domain, key string, deadline int64) (privateUrl string) {
-	publicUrl := MakePublicUrl(domain, key)
-	urlToSign := publicUrl
-	if strings.Contains(publicUrl, "?") {
+// MakePrivateURL 用来生成私有空间资源下载链接
+func MakePrivateURL(mac *qbox.Mac, domain, key string, deadline int64) (privateURL string) {
+	publicURL := MakePublicURL(domain, key)
+	urlToSign := publicURL
+	if strings.Contains(publicURL, "?") {
 		urlToSign = fmt.Sprintf("%s&e=%d", urlToSign, deadline)
 	} else {
 		urlToSign = fmt.Sprintf("%s?e=%d", urlToSign, deadline)
 	}
 	token := mac.Sign([]byte(urlToSign))
-	privateUrl = fmt.Sprintf("%s&token=%s", urlToSign, token)
+	privateURL = fmt.Sprintf("%s&token=%s", urlToSign, token)
 	return
 }

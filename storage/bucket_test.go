@@ -2,12 +2,13 @@ package storage
 
 import (
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
 	"math/rand"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/qiniu/api.v7/auth/qbox"
 )
 
 var (
@@ -217,9 +218,9 @@ func TestListFiles(t *testing.T) {
 
 func TestMakePrivateUrl(t *testing.T) {
 	deadline := time.Now().Add(time.Second * 3600).Unix()
-	privateUrl := MakePrivateUrl(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
-	t.Logf("PrivateUrl: %s", privateUrl)
-	resp, respErr := http.Get(privateUrl)
+	privateURL := MakePrivateURL(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
+	t.Logf("PrivateUrl: %s", privateURL)
+	resp, respErr := http.Get(privateURL)
 	if respErr != nil {
 		t.Fatalf("MakePrivateUrl() error, %s", respErr)
 	}
