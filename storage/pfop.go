@@ -4,17 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
-	"strings"
 )
 
+// OperationManager 提供了数据处理相关的方法
 type OperationManager struct {
 	client *rpc.Client
 	mac    *qbox.Mac
 	cfg    *Config
 }
 
+// NewOperationManager 用来构建一个新的数据处理对象
 func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
@@ -27,14 +30,14 @@ func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 	}
 }
 
-// PfopResult pfop返回信息
+// PfopRet 为数据处理请求的回复内容
 type PfopRet struct {
-	PersistentId string `json:"persistentId,omitempty"`
+	PersistentID string `json:"persistentId,omitempty"`
 }
 
-// FopRet 持久化云处理结果
+// PrefopRet 为数据处理请求的状态查询回复内容
 type PrefopRet struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Code        int    `json:"code"`
 	Desc        string `json:"desc"`
 	InputBucket string `json:"inputBucket,omitempty"`
@@ -44,23 +47,23 @@ type PrefopRet struct {
 	Items       []FopResult
 }
 
-func (this *PrefopRet) String() string {
-	strData := fmt.Sprintf("Id: %s\r\nCode: %d\r\nDesc: %s\r\n", this.Id, this.Code, this.Desc)
-	if this.InputBucket != "" {
-		strData += fmt.Sprintln(fmt.Sprintf("InputBucket: %s", this.InputBucket))
+func (r *PrefopRet) String() string {
+	strData := fmt.Sprintf("Id: %s\r\nCode: %d\r\nDesc: %s\r\n", r.ID, r.Code, r.Desc)
+	if r.InputBucket != "" {
+		strData += fmt.Sprintln(fmt.Sprintf("InputBucket: %s", r.InputBucket))
 	}
-	if this.InputKey != "" {
-		strData += fmt.Sprintln(fmt.Sprintf("InputKey: %s", this.InputKey))
+	if r.InputKey != "" {
+		strData += fmt.Sprintln(fmt.Sprintf("InputKey: %s", r.InputKey))
 	}
-	if this.Pipeline != "" {
-		strData += fmt.Sprintln(fmt.Sprintf("Pipeline: %s", this.Pipeline))
+	if r.Pipeline != "" {
+		strData += fmt.Sprintln(fmt.Sprintf("Pipeline: %s", r.Pipeline))
 	}
-	if this.Reqid != "" {
-		strData += fmt.Sprintln(fmt.Sprintf("Reqid: %s", this.Reqid))
+	if r.Reqid != "" {
+		strData += fmt.Sprintln(fmt.Sprintf("Reqid: %s", r.Reqid))
 	}
 
 	strData = fmt.Sprintln(strData)
-	for _, item := range this.Items {
+	for _, item := range r.Items {
 		strData += fmt.Sprintf("\tCmd:\t%s\r\n\tCode:\t%d\r\n\tDesc:\t%s\r\n", item.Cmd, item.Code, item.Desc)
 		if item.Error != "" {
 			strData += fmt.Sprintf("\tError:\t%s\r\n", item.Error)
@@ -99,16 +102,15 @@ type FopResult struct {
 
 // Pfop 持久化数据处理
 //
-// @param bucket	资源空间
-// @param key		源资源名
-// @param fops		云处理操作列表，用`;``分隔，如:`avthumb/flv;saveas/xxx`，是将上传的视频文件转码成flv格式后存储为 bucket:key，
-//                  其中 xxx 是 bucket:key 的URL安全的Base64编码结果。
-// @param notifyURL	处理结果通知接收 URL，七牛将会向你设置的 URL 发起 Content-Type: application/json 的 POST 请求。
-// @param pipeline	为空则表示使用公用队列，处理速度比较慢。建议指定私有队列，转码的时候使用独立的计算资源。
-// @param force		强制执行数据处理。当服务端发现 fops 指定的数据处理结果已经存在，那就认为已经处理成功，避免重复处理浪费资源。
-//                  本字段设为 `true`，则可强制执行数据处理并覆盖原结果。
+//	bucket		资源空间
+//	key   		源资源名
+//	fops		云处理操作列表，
+//	notifyURL	处理结果通知接收URL
+//	pipeline	多媒体处理队列名称
+//	force		强制执行数据处理
 //
-func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string, force bool) (persistentId string, err error) {
+func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
+	force bool) (persistentID string, err error) {
 	pfopParams := map[string][]string{
 		"bucket": []string{bucket},
 		"key":    []string{key},
@@ -128,37 +130,36 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string, f
 	}
 	var ret PfopRet
 	ctx := context.TODO()
-	reqHost, reqErr := m.ApiHost(bucket)
+	reqHost, reqErr := m.apiHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
-	reqUrl := fmt.Sprintf("%s/pfop/", reqHost)
-	err = m.client.CallWithForm(ctx, &ret, "POST", reqUrl, pfopParams)
+	reqURL := fmt.Sprintf("%s/pfop/", reqHost)
+	err = m.client.CallWithForm(ctx, &ret, "POST", reqURL, pfopParams)
 	if err != nil {
 		return
 	}
 
-	persistentId = ret.PersistentId
+	persistentID = ret.PersistentID
 	return
 }
 
 // Prefop 持久化处理状态查询
-func (m *OperationManager) Prefop(persistentId string) (ret PrefopRet, err error) {
+func (m *OperationManager) Prefop(persistentID string) (ret PrefopRet, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.prefopApiHost(persistentId)
+	reqHost, reqErr := m.prefopApiHost(persistentID)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 
-	reqUrl := fmt.Sprintf("%s/status/get/prefop?id=%s", reqHost, persistentId)
-	err = m.client.Call(ctx, &ret, "GET", reqUrl)
+	reqURL := fmt.Sprintf("%s/status/get/prefop?id=%s", reqHost, persistentID)
+	err = m.client.Call(ctx, &ret, "GET", reqURL)
 	return
 }
 
-// 获取资源管理域名
-func (m *OperationManager) ApiHost(bucket string) (apiHost string, err error) {
+func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -175,13 +176,13 @@ func (m *OperationManager) ApiHost(bucket string) (apiHost string, err error) {
 
 func (m *OperationManager) prefopApiHost(persistentId string) (apiHost string, err error) {
 	if strings.Contains(persistentId, "z1.") {
-		apiHost = Zone_z1.ApiHost
+		apiHost = ZoneHuabei.ApiHost
 	} else if strings.Contains(persistentId, "z2.") {
-		apiHost = Zone_z2.ApiHost
+		apiHost = ZoneHuanan.ApiHost
 	} else if strings.Contains(persistentId, "na0.") {
-		apiHost = Zone_na0.ApiHost
+		apiHost = ZoneBeimei.ApiHost
 	} else if strings.Contains(persistentId, "z0.") {
-		apiHost = DefaultApiHost
+		apiHost = DefaultAPIHost
 	} else {
 		err = errors.New("invalid persistent id")
 	}
@@ -193,5 +194,4 @@ func (m *OperationManager) prefopApiHost(persistentId string) (apiHost string, e
 	}
 
 	return
-
 }

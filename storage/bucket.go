@@ -4,21 +4,23 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/x/rpc.v7"
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/x/rpc.v7"
 )
 
+// 资源管理相关的默认域名
 const (
 	DefaultRsHost  = "rs.qiniu.com"
 	DefaultRsfHost = "rsf.qiniu.com"
-	DefaultApiHost = "api.qiniu.com"
+	DefaultAPIHost = "api.qiniu.com"
 	DefaultPubHost = "pu.qbox.me:10200"
 )
 
-// 结构体
+// FileInfo 文件基本信息
 type FileInfo struct {
 	Hash     string `json:"hash"`
 	Fsize    int64  `json:"fsize"`
@@ -37,6 +39,7 @@ func (f *FileInfo) String() string {
 	return str
 }
 
+// FetchRet 资源抓取的返回值
 type FetchRet struct {
 	Hash     string `json:"hash"`
 	Fsize    int64  `json:"fsize"`
@@ -53,6 +56,7 @@ func (r *FetchRet) String() string {
 	return str
 }
 
+// ListItem 为文件列举的返回值
 type ListItem struct {
 	Key      string `json:"key"`
 	Hash     string `json:"hash"`
@@ -74,7 +78,10 @@ func (l *ListItem) String() string {
 	return str
 }
 
-// 批量执行操作的结果
+// BatchOpRet 为批量执行操作的返回值
+// 批量操作支持 stat，copy，delete，move，chgm，chtype，deleteAfterDays几个操作
+// 其中 stat 为获取文件的基本信息，如果文件存在则返回基本信息，如果文件不存在返回 error 。
+// 其他的操作，如果成功，则返回 code，不成功会同时返回 error 信息，可以根据 error 信息来判断问题所在。
 type BatchOpRet struct {
 	Code int `json:"code,omitempty"`
 	Data struct {
@@ -87,6 +94,7 @@ type BatchOpRet struct {
 	} `json:"data,omitempty"`
 }
 
+// BucketManager 提供了对资源进行管理的操作
 type BucketManager struct {
 	client *rpc.Client
 	mac    *qbox.Mac

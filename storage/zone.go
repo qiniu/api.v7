@@ -3,11 +3,13 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/qiniu/x/rpc.v7"
 	"strings"
 	"sync"
+
+	"github.com/qiniu/x/rpc.v7"
 )
 
+// Zone 为空间对应的机房属性，主要包括了上传，资源管理等操作的域名
 type Zone struct {
 	SrcUpHosts []string
 	CdnUpHosts []string
@@ -28,8 +30,8 @@ func (z *Zone) String() string {
 	return str
 }
 
-//z0
-var Zone_z0 = Zone{
+// ZoneHuadong 表示华东机房
+var ZoneHuadong = Zone{
 	SrcUpHosts: []string{
 		"up.qiniup.com",
 		"up-nb.qiniup.com",
@@ -46,8 +48,8 @@ var Zone_z0 = Zone{
 	IovipHost: "iovip.qbox.me",
 }
 
-//z1
-var Zone_z1 = Zone{
+// ZoneHuabei 表示华北机房
+var ZoneHuabei = Zone{
 	SrcUpHosts: []string{
 		"up-z1.qiniup.com",
 	},
@@ -60,8 +62,8 @@ var Zone_z1 = Zone{
 	IovipHost: "iovip-z1.qbox.me",
 }
 
-//z2
-var Zone_z2 = Zone{
+// ZoneHuanan 表示华南机房
+var ZoneHuanan = Zone{
 	SrcUpHosts: []string{
 		"up-z2.qiniup.com",
 		"up-gz.qiniup.com",
@@ -78,8 +80,8 @@ var Zone_z2 = Zone{
 	IovipHost: "iovip-z2.qbox.me",
 }
 
-//na0
-var Zone_na0 = Zone{
+// ZoneBeimei 表示北美机房
+var ZoneBeimei = Zone{
 	SrcUpHosts: []string{
 		"up-na0.qiniu.com",
 	},
@@ -92,16 +94,17 @@ var Zone_na0 = Zone{
 	IovipHost: "iovip-na0.qbox.me",
 }
 
-//////////////////////////////
+// UcHost 为查询空间相关域名的API服务地址
+const UcHost = "https://uc.qbox.me"
 
-const UC_HOST = "https://uc.qbox.me"
-
+// UcQueryRet 为查询请求的回复
 type UcQueryRet struct {
-	Ttl int                            `json:"ttl"`
+	TTL int                            `json:"ttl"`
 	Io  map[string]map[string][]string `json:"io"`
 	Up  map[string]UcQueryUp           `json:"up"`
 }
 
+// UcQueryUp 为查询请求回复中的上传域名信息
 type UcQueryUp struct {
 	Main   []string `json:"main,omitempty"`
 	Backup []string `json:"backup,omitempty"`
@@ -113,12 +116,12 @@ var (
 	zoneCache  = make(map[string]*Zone)
 )
 
-//v2 version
+// GetZone 用来根据ak和bucket来获取空间相关的机房信息
 func GetZone(ak, bucket string) (zone *Zone, err error) {
-	zoneId := fmt.Sprintf("%s:%s", ak, bucket)
+	zoneID := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
 	zoneMutext.RLock()
-	if v, ok := zoneCache[zoneId]; ok {
+	if v, ok := zoneCache[zoneID]; ok {
 		zone = v
 	}
 	zoneMutext.RUnlock()
@@ -127,10 +130,10 @@ func GetZone(ak, bucket string) (zone *Zone, err error) {
 	}
 
 	//query from server
-	reqUrl := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UC_HOST, ak, bucket)
+	reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
 	var ret UcQueryRet
 	ctx := context.Background()
-	qErr := rpc.DefaultClient.CallWithForm(ctx, &ret, "GET", reqUrl, nil)
+	qErr := rpc.DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil)
 	if qErr != nil {
 		err = fmt.Errorf("query zone error, %s", qErr.Error())
 		return
@@ -152,14 +155,14 @@ func GetZone(ak, bucket string) (zone *Zone, err error) {
 		IovipHost:  ioHost,
 		RsHost:     DefaultRsHost,
 		RsfHost:    DefaultRsfHost,
-		ApiHost:    DefaultApiHost,
+		ApiHost:    DefaultAPIHost,
 	}
 
 	//set specific hosts if possible
 	setSpecificHosts(ioHost, zone)
 
 	zoneMutext.Lock()
-	zoneCache[zoneId] = zone
+	zoneCache[zoneID] = zone
 	zoneMutext.Unlock()
 	return
 }
