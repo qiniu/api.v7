@@ -1,5 +1,6 @@
 package storage
 
+// Config 为文件上传，资源管理等配置
 type Config struct {
 	Zone          *Zone //空间所在的机房
 	UseHttps      bool  //是否使用https域名
