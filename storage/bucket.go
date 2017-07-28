@@ -18,6 +18,7 @@ const (
 	DefaultPubHost = "pu.qbox.me:10200"
 )
 
+// 结构体
 type FileInfo struct {
 	Hash     string `json:"hash"`
 	Fsize    int64  `json:"fsize"`
@@ -71,6 +72,19 @@ func (l *ListItem) String() string {
 	str += fmt.Sprintf("Type:     %d\n", l.Type)
 	str += fmt.Sprintf("EndUser:  %s\n", l.EndUser)
 	return str
+}
+
+// 批量执行操作的结果
+type BatchOpRet struct {
+	Code int `json:"code,omitempty"`
+	Data struct {
+		Hash     string `json:"hash"`
+		Fsize    int64  `json:"fsize"`
+		PutTime  int64  `json:"putTime"`
+		MimeType string `json:"mimeType"`
+		Type     int    `json:"type"`
+		Error    string `json:"error"`
+	} `json:"data,omitempty"`
 }
 
 type BucketManager struct {
