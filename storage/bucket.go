@@ -226,13 +226,13 @@ func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error
 }
 
 // Batch 接口提供了资源管理的批量操作，支持 stat，copy，move，delete，chgm，chtype，deleteAfterDays几个接口
-func (m *BucketManager) Batch(operations []string) (batchOpRet BatchOpRet, err error) {
+func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err error) {
 	ctx := context.TODO()
 	scheme := "http://"
 	if m.cfg.UseHttps {
 		scheme = "https://"
 	}
-	reqURL := fmt.Sprintf("%s%s/batch", DefaultRsHost, scheme)
+	reqURL := fmt.Sprintf("%s%s/batch", scheme, DefaultRsHost)
 	params := map[string][]string{
 		"op": operations,
 	}

@@ -230,3 +230,31 @@ func TestMakePrivateUrl(t *testing.T) {
 		t.Fatalf("MakePrivateUrl() error, %s", resp.Status)
 	}
 }
+
+func TestBatch(t *testing.T) {
+	copyCnt := 100
+	copyOps := make([]string, 0, copyCnt)
+	testKeys := make([]string, 0, copyCnt)
+	for i := 0; i < copyCnt; i++ {
+		cpKey := fmt.Sprintf("%s_batchcopy_%d", testKey, i)
+		testKeys = append(testKeys, cpKey)
+		copyOps = append(copyOps, URICopy(testBucket, testKey, testBucket, cpKey, true))
+	}
+
+	_, bErr := bucketManager.Batch(copyOps)
+	if bErr != nil {
+		t.Fatalf("BatchCopy error, %s", bErr)
+	}
+
+	statOps := make([]string, 0, copyCnt)
+	for _, k := range testKeys {
+		statOps = append(statOps, URIStat(testBucket, k))
+	}
+	batchOpRets, bErr := bucketManager.Batch(statOps)
+	_, bErr = bucketManager.Batch(copyOps)
+	if bErr != nil {
+		t.Fatalf("BatchStat error, %s", bErr)
+	}
+
+	t.Logf("BatchStat: %v", batchOpRets)
+}
