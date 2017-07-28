@@ -4,14 +4,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/qiniu/api.v7/auth/qbox"
 	"strings"
 	"time"
+
+	"github.com/qiniu/api.v7/auth/qbox"
 )
 
+// PutPolicy 表示文件上传的上传策略
 type PutPolicy struct {
 	Scope               string `json:"scope"`
-	isPrefixalScope     int    `json:"isPrefixalScope"`
+	IsPrefixalScope     int    `json:"isPrefixalScope"`
 	Expires             uint32 `json:"deadline"`             // 截止时间（以秒为单位）
 	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
 	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
@@ -19,28 +21,29 @@ type PutPolicy struct {
 	MimeLimit           string `json:"mimeLimit,omitempty"`
 	SaveKey             string `json:"saveKey,omitempty"`
 	CallbackFetchKey    uint8  `json:"callbackFetchKey,omitempty"`
-	CallbackUrl         string `json:"callbackUrl,omitempty"`
+	CallbackURL         string `json:"callbackUrl,omitempty"`
 	CallbackHost        string `json:"callbackHost,omitempty"`
 	CallbackBody        string `json:"callbackBody,omitempty"`
 	CallbackBodyType    string `json:"callbackBodyType,omitempty"`
-	ReturnUrl           string `json:"returnUrl,omitempty"`
+	ReturnURL           string `json:"returnUrl,omitempty"`
 	ReturnBody          string `json:"returnBody,omitempty"`
 	PersistentOps       string `json:"persistentOps,omitempty"`
-	PersistentNotifyUrl string `json:"persistentNotifyUrl,omitempty"`
+	PersistentNotifyURL string `json:"persistentNotifyUrl,omitempty"`
 	PersistentPipeline  string `json:"persistentPipeline,omitempty"`
 	EndUser             string `json:"endUser,omitempty"`
 	DeleteAfterDays     int    `json:"deleteAfterDays,omitempty"`
 	FileType            int    `json:"fileType,omitempty"`
 }
 
+// UploadToken 方法用来进行上传凭证的生成
 func (p *PutPolicy) UploadToken(mac *qbox.Mac) (token string) {
 	if p.Expires == 0 {
 		p.Expires = 3600 // 1 hour
 	}
 	p.Expires += uint32(time.Now().Unix())
 
-	putPolicyJson, _ := json.Marshal(p)
-	token = mac.SignWithData(putPolicyJson)
+	putPolicyJSON, _ := json.Marshal(p)
+	token = mac.SignWithData(putPolicyJSON)
 	return
 }
 

@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/qiniu/x/xlog.v7"
 	"io"
 	"os"
 	"sync"
+
+	"github.com/qiniu/x/xlog.v7"
 )
 
+// 分片上传过程中可能遇到的错误
 var (
 	ErrInvalidPutProgress = errors.New("invalid put progress")
 	ErrPutFailed          = errors.New("resumable put failed")
@@ -17,23 +19,27 @@ var (
 	ErrBadToken           = errors.New("invalid token")
 )
 
+// 上传进度过期错误
 const (
 	InvalidCtx = 701 // UP: 无效的上下文(bput)，可能情况：Ctx非法或者已经被淘汰（太久未使用）
 )
 
+// 分片上传默认参数设置
 const (
-	defaultWorkers   = 4
-	defaultChunkSize = 4 * 1024 * 1024 // 1M
-	defaultTryTimes  = 3
+	defaultWorkers   = 4               // 默认的并发上传的块数量
+	defaultChunkSize = 4 * 1024 * 1024 // 默认的分片大小，4MB
+	defaultTryTimes  = 3               // bput 失败重试次数
 )
 
+// Settings 为分片上传设置
 type Settings struct {
 	TaskQsize int // 可选。任务队列大小。为 0 表示取 Workers * 4。
 	Workers   int // 并行 Goroutine 数目。
-	ChunkSize int // 默认的Chunk大小，不设定则为1M
+	ChunkSize int // 默认的Chunk大小，不设定则为4M
 	TryTimes  int // 默认的尝试次数，不设定则为3
 }
 
+// 分片上传的默认设置
 var settings = Settings{
 	TaskQsize: defaultWorkers * 4,
 	Workers:   defaultWorkers,
@@ -41,6 +47,7 @@ var settings = Settings{
 	TryTimes:  defaultTryTimes,
 }
 
+// SetSettings 可以用来设置分片上传参数
 func SetSettings(v *Settings) {
 	settings = *v
 	if settings.Workers == 0 {
@@ -65,7 +72,6 @@ func worker(tasks chan func()) {
 		task()
 	}
 }
-
 func initWorkers() {
 	tasks = make(chan func(), settings.TaskQsize)
 	for i := 0; i < settings.Workers; i++ {
@@ -82,10 +88,12 @@ const (
 	blockMask = (1 << blockBits) - 1
 )
 
+// BlockCount 用来计算文件的分块数量
 func BlockCount(fsize int64) int {
 	return int((fsize + blockMask) >> blockBits)
 }
 
+// BlkputRet 表示分片上传每个片上传完毕的返回值
 type BlkputRet struct {
 	Ctx      string `json:"ctx"`
 	Checksum string `json:"checksum"`
@@ -94,6 +102,7 @@ type BlkputRet struct {
 	Host     string `json:"host"`
 }
 
+// RputExtra 表示分片上传额外可以指定的参数
 type RputExtra struct {
 	Params     map[string]string                             // 可选。用户自定义参数，以"x:"开头 否则忽略
 	MimeType   string                                        // 可选。
@@ -106,7 +115,7 @@ type RputExtra struct {
 
 var once sync.Once
 
-// 上传一个文件，支持断点续传和分块上传。
+// Put 方法用来上传一个文件，支持断点续传和分块上传。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -122,8 +131,8 @@ func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, uptoken strin
 	return
 }
 
-// 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
-// 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// PutWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
+// uptoken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -138,8 +147,8 @@ func (p *ResumeUploader) PutWithoutKey(
 	return
 }
 
-// 上传一个文件，支持断点续传和分块上传。
-// 和 Rput 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
+// PutFile 用来上传一个文件，支持断点续传和分块上传。
+// 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。
 // ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -154,9 +163,9 @@ func (p *ResumeUploader) PutFile(
 	return
 }
 
-// 上传一个文件，支持断点续传和分块上传。文件的访问路径（key）自动生成。
-// 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
-// 和 RputWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
+// PutFileWithoutKey 上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
+// uptoken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// 和 PutWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。
 // ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -207,7 +216,7 @@ func (p *ResumeUploader) rput(
 		return
 	}
 
-	upHost, gErr := p.UpHost(ak, bucket)
+	upHost, gErr := p.upHost(ak, bucket)
 	if gErr != nil {
 		err = gErr
 		return
@@ -273,7 +282,7 @@ func (p *ResumeUploader) rputFile(
 	return p.rput(ctx, ret, uptoken, key, hasKey, f, fi.Size(), extra)
 }
 
-func (m *ResumeUploader) UpHost(ak, bucket string) (upHost string, err error) {
+func (m *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
 	zone, zoneErr := GetZone(ak, bucket)
 	if zoneErr != nil {
 		err = zoneErr

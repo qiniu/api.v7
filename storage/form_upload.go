@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/qiniu/x/rpc.v7"
 	"hash/crc32"
 	"io"
 	"mime/multipart"
@@ -14,15 +13,18 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"github.com/qiniu/x/rpc.v7"
 )
 
+// 文件上传后进行crc32校验的方式
 const (
 	DontCheckCrc    = 0
 	CalcAndCheckCrc = 1
 	CheckCrc        = 2
 )
 
-// 表单上传的额外可选项
+// PutExtra 为表单上传的额外可选项
 type PutExtra struct {
 	// 可选，用户自定义参数，必须以 "x:" 开头。若不以x:开头，则忽略。
 	Params map[string]string
@@ -41,18 +43,21 @@ type PutExtra struct {
 	OnProgress func(fsize, uploaded int64)
 }
 
-// 如果 uptoken 没有指定 ReturnBody，那么返回值是标准的 PutRet 结构
+// PutRet 为七牛标准的上传回复内容。
+// 如果使用了上传回调或者自定义了returnBody，那么需要根据实际情况，自己自定义一个返回值结构体
 type PutRet struct {
 	Hash         string `json:"hash"`
-	PersistentId string `json:"persistentId"`
+	PersistentID string `json:"persistentId"`
 	Key          string `json:"key"`
 }
 
+// FormUploader 表示一个表单上传的对象
 type FormUploader struct {
 	client *rpc.Client
 	cfg    *Config
 }
 
+// NewFormUploader 用来构建一个表单上传的对象
 func NewFormUploader(cfg *Config) *FormUploader {
 	if cfg == nil {
 		cfg = &Config{}
@@ -64,30 +69,29 @@ func NewFormUploader(cfg *Config) *FormUploader {
 	}
 }
 
-// 上传一个文件。
-// 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
+// PutFile 用来以表单方式上传一个文件，和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
 //
 // ctx       是请求的上下文。
-// ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// ret       是上传成功后返回的数据。如果 uptoken 中没有设置 callbackUrl 或 returnBody，那么返回的数据结构是 PutRet 结构。
 // uptoken   是由业务服务器颁发的上传凭证。
 // key       是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
 // localFile 是要上传的文件的本地路径。
-// extra     是上传的一些可选项。详细见 PutExtra 结构的描述。
+// extra     是上传的一些可选项，可以指定为nil。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) PutFile(
 	ctx context.Context, ret interface{}, uptoken, key, localFile string, extra *PutExtra) (err error) {
 	return p.putFile(ctx, ret, uptoken, key, true, localFile, extra)
 }
 
-// 上传一个文件。文件的访问路径（key）自动生成。
-// 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
-// 和 RputWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
+// PutFileWithoutKey 用来以表单方式上传一个文件。不指定文件上传后保存的key的情况下，文件命名方式首先看看
+// uptoken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
 //
 // ctx       是请求的上下文。
 // ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
 // uptoken   是由业务服务器颁发的上传凭证。
 // localFile 是要上传的文件的本地路径。
-// extra     是上传的一些可选项。详细见 PutExtra 结构的描述。
+// extra     是上传的一些可选项。可以指定为nil。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) PutFileWithoutKey(
 	ctx context.Context, ret interface{}, uptoken, localFile string, extra *PutExtra) (err error) {
@@ -119,15 +123,15 @@ func (p *FormUploader) putFile(
 	return p.put(ctx, ret, uptoken, key, hasKey, f, fsize, extra, filepath.Base(localFile))
 }
 
-// 上传一个文件。
+// Put 用来以表单方式上传一个文件。
 //
 // ctx     是请求的上下文。
-// ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// ret     是上传成功后返回的数据。如果 uptoken 中没有设置 callbackUrl 或 returnBody，那么返回的数据结构是 PutRet 结构。
 // uptoken 是由业务服务器颁发的上传凭证。
 // key     是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
 // data    是文件内容的访问接口（io.Reader）。
 // fsize   是要上传的文件大小。
-// extra   是上传的一些可选项。详细见 PutExtra 结构的描述。
+// extra   是上传的一些可选项。可以指定为nil。详细见 PutExtra 结构的描述。
 //
 func (p *FormUploader) Put(
 	ctx context.Context, ret interface{}, uptoken, key string, data io.Reader, size int64, extra *PutExtra) (err error) {
@@ -135,8 +139,8 @@ func (p *FormUploader) Put(
 	return
 }
 
-// 上传一个文件。文件的访问路径（key）自动生成。
-// 如果 uptoken 中设置了 SaveKey，那么按 SaveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// PutWithoutKey 用来以表单方式上传一个文件。不指定文件上传后保存的key的情况下，文件命名方式首先看看 uptoken 中是否设置了 saveKey，
+// 如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 //
 // ctx     是请求的上下文。
 // ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
@@ -162,7 +166,7 @@ func (p *FormUploader) put(
 	}
 
 	var upHost string
-	upHost, err = p.UpHost(ak, bucket)
+	upHost, err = p.upHost(ak, bucket)
 	if err != nil {
 		return
 	}
@@ -203,8 +207,7 @@ func (p *FormUploader) put(
 	return
 }
 
-// 获取上传域名
-func (m *FormUploader) UpHost(ak, bucket string) (upHost string, err error) {
+func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
 	zone, zoneErr := GetZone(ak, bucket)
 	if zoneErr != nil {
 		err = zoneErr
@@ -212,12 +215,12 @@ func (m *FormUploader) UpHost(ak, bucket string) (upHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHttps {
+	if p.cfg.UseHttps {
 		scheme = "https://"
 	}
 
 	host := zone.SrcUpHosts[0]
-	if m.cfg.UseCdnDomains {
+	if p.cfg.UseCdnDomains {
 		host = zone.CdnUpHosts[0]
 	}
 

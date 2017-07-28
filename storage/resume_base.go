@@ -4,20 +4,23 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/qiniu/x/bytes.v7"
-	"github.com/qiniu/x/rpc.v7"
-	"github.com/qiniu/x/xlog.v7"
 	"hash/crc32"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/qiniu/x/bytes.v7"
+	"github.com/qiniu/x/rpc.v7"
+	"github.com/qiniu/x/xlog.v7"
 )
 
+// ResumeUploader 表示一个分片上传的对象
 type ResumeUploader struct {
 	client *rpc.Client
 	cfg    *Config
 }
 
+// NewResumeUploader 表示构建一个新的分片上传的对象
 func NewResumeUploader(cfg *Config) *ResumeUploader {
 	if cfg == nil {
 		cfg = &Config{}
@@ -63,6 +66,7 @@ func (p *ResumeUploader) mkblk(
 	return p.client.CallWith(ctx, ret, "POST", url, "application/octet-stream", body, size)
 }
 
+// 发送bput请求
 func (p *ResumeUploader) bput(
 	ctx context.Context, ret *BlkputRet, body io.Reader, size int) error {
 
