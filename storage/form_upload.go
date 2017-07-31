@@ -208,10 +208,16 @@ func (p *FormUploader) put(
 }
 
 func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
-	zone, zoneErr := GetZone(ak, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if m.cfg.Zone != nil {
+		zone = m.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"

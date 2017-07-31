@@ -160,10 +160,16 @@ func (m *OperationManager) Prefop(persistentID string) (ret PrefopRet, err error
 }
 
 func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
-	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if m.cfg.Zone != nil {
+		zone = m.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"

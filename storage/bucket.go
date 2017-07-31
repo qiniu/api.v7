@@ -344,10 +344,16 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 }
 
 func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
-	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if m.cfg.Zone != nil {
+		zone = m.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"
@@ -360,10 +366,16 @@ func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
 }
 
 func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
-	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if m.cfg.Zone != nil {
+		zone = m.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"
@@ -376,10 +388,16 @@ func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
 }
 
 func (m *BucketManager) iovipHost(bucket string) (iovipHost string, err error) {
-	zone, zoneErr := GetZone(m.mac.AccessKey, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if m.cfg.Zone != nil {
+		zone = m.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"

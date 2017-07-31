@@ -283,10 +283,16 @@ func (p *ResumeUploader) rputFile(
 }
 
 func (p *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
-	zone, zoneErr := GetZone(ak, bucket)
-	if zoneErr != nil {
-		err = zoneErr
-		return
+	var zone *Zone
+	if p.cfg.Zone != nil {
+		zone = p.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
 	}
 
 	scheme := "http://"
