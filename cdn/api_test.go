@@ -1,10 +1,11 @@
 package cdn
 
 import (
-	"github.com/qiniu/api.v7/auth/qbox"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/qiniu/api.v7/auth/qbox"
 )
 
 //global variables
@@ -214,7 +215,7 @@ func TestPrefetchUrls(t *testing.T) {
 func TestGetCdnLogList(t *testing.T) {
 	type args struct {
 		date    string
-		domains string
+		domains []string
 	}
 
 	testCases := []struct {
@@ -225,7 +226,7 @@ func TestGetCdnLogList(t *testing.T) {
 			name: "CdnManager_TestGetCdnLogList",
 			args: args{
 				date:    logDate,
-				domains: domain,
+				domains: []string{domain},
 			},
 		},
 	}
@@ -234,7 +235,7 @@ func TestGetCdnLogList(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := cdnManager.GetCdnLogList(tc.args.date, tc.args.domains)
 			if err != nil {
-				t.Errorf("GetCdnLogList() error = %v, %v", err)
+				t.Errorf("GetCdnLogList() error = %v", err)
 				return
 			}
 		})

@@ -222,11 +222,12 @@ type LogDomainInfo struct {
 }
 
 // GetCdnLogList 获取CDN域名访问日志的下载链接
-func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomainInfo, err error) {
+func (m *CdnManager) GetCdnLogList(day string, domains []string) (
+	listLogResult ListLogResult, err error) {
 	//new log query request
 	logReq := ListLogRequest{
-		Day:     date,
-		Domains: domains,
+		Day:     day,
+		Domains: strings.Join(domains, ";"),
 	}
 
 	resData, reqErr := postRequest(m.mac, "/v2/tune/log/list", logReq)
@@ -235,7 +236,6 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 		return
 	}
 
-	listLogResult := ListLogResult{}
 	if decodeErr := json.Unmarshal(resData, &listLogResult); decodeErr != nil {
 		err = fmt.Errorf("get response error, %s", decodeErr)
 		return
@@ -246,15 +246,7 @@ func (m *CdnManager) GetCdnLogList(date, domains string) (domainLogs []LogDomain
 		return
 	}
 
-	domainItems := strings.Split(domains, ";")
-
-	for _, domain := range domainItems {
-		for _, v := range listLogResult.Data[domain] {
-			domainLogs = append(domainLogs, v)
-		}
-	}
 	return
-
 }
 
 // RequestWithBody 带body对api发出请求并且返回response body
