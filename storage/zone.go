@@ -94,6 +94,12 @@ var ZoneBeimei = Zone{
 	IovipHost: "iovip-na0.qbox.me",
 }
 
+// for programmers
+var Zone_z0 = ZoneHuadong
+var Zone_z1 = ZoneHuabei
+var Zone_z2 = ZoneHuanan
+var Zone_na0 = ZoneBeimei
+
 // UcHost 为查询空间相关域名的API服务地址
 const UcHost = "https://uc.qbox.me"
 
