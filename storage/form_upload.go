@@ -209,10 +209,10 @@ func (p *FormUploader) put(
 
 func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
 	var zone *Zone
-	if m.cfg.Zone != nil {
-		zone = m.cfg.Zone
+	if p.cfg.Zone != nil {
+		zone = p.cfg.Zone
 	} else {
-		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
 			err = zoneErr
 			return
 		} else {
