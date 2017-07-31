@@ -13,8 +13,8 @@ import (
 // PutPolicy 表示文件上传的上传策略
 type PutPolicy struct {
 	Scope               string `json:"scope"`
-	IsPrefixalScope     int    `json:"isPrefixalScope"`
-	Expires             uint32 `json:"deadline"`             // 截止时间（以秒为单位）
+	Expires             uint32 `json:"deadline"` // 截止时间（以秒为单位）
+	IsPrefixalScope     int    `json:"isPrefixalScope,omitempty"`
 	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
 	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
 	FsizeLimit          int64  `json:"fsizeLimit,omitempty"`
