@@ -95,16 +95,17 @@ func BlockCount(fsize int64) int {
 
 // BlkputRet 表示分片上传每个片上传完毕的返回值
 type BlkputRet struct {
-	Ctx      string `json:"ctx"`
-	Checksum string `json:"checksum"`
-	Crc32    uint32 `json:"crc32"`
-	Offset   uint32 `json:"offset"`
-	Host     string `json:"host"`
+	Ctx       string `json:"ctx"`
+	Checksum  string `json:"checksum"`
+	Crc32     uint32 `json:"crc32"`
+	Offset    uint32 `json:"offset"`
+	Host      string `json:"host"`
+	ExpiredAt int64  `json:"expired_at"`
 }
 
 // RputExtra 表示分片上传额外可以指定的参数
 type RputExtra struct {
-	Params     map[string]string                             // 可选。用户自定义参数，以"x:"开头 否则忽略
+	Params     map[string]string                             // 可选。用户自定义参数，以"x:"开头，而且值不能为空，否则忽略
 	MimeType   string                                        // 可选。
 	ChunkSize  int                                           // 可选。每次上传的Chunk大小
 	TryTimes   int                                           // 可选。尝试次数

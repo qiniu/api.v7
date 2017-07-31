@@ -164,7 +164,7 @@ func (p *ResumeUploader) mkfile(
 		url += fmt.Sprintf("/%s/%s", k, encode(v))
 	}
 
-	buf := make([]byte, 0, 176*len(extra.Progresses))
+	buf := make([]byte, 0, 196*len(extra.Progresses))
 	for _, prog := range extra.Progresses {
 		buf = append(buf, prog.Ctx...)
 		buf = append(buf, ',')

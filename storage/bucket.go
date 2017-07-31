@@ -319,6 +319,11 @@ type listFilesRet struct {
 // 列举的位置 marker，以及每次返回的文件的最大数量limit，其中limit最大为1000。
 func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	limit int) (entries []ListItem, commonPrefixes []string, nextMarker string, hasNext bool, err error) {
+	if limit <= 0 || limit > 1000 {
+		err = errors.New("invalid list limit, only allow [1, 1000]")
+		return
+	}
+
 	ctx := context.TODO()
 	reqHost, reqErr := m.rsfHost(bucket)
 	if reqErr != nil {

@@ -5,23 +5,24 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
-	"github.com/qiniu/x/bytes.v7/seekable"
 	"io"
 	"net/http"
+
+	"github.com/qiniu/x/bytes.v7/seekable"
 )
 
-// 七牛AK/SK的对象，AK/SK可以从 https://portal.qiniu.com/user/key 获取。
+// Mac 七牛AK/SK的对象，AK/SK可以从 https://portal.qiniu.com/user/key 获取。
 type Mac struct {
 	AccessKey string
 	SecretKey []byte
 }
 
-// 构建一个新的拥有AK/SK的对象
+// NewMac 构建一个新的拥有AK/SK的对象
 func NewMac(accessKey, secretKey string) (mac *Mac) {
 	return &Mac{accessKey, []byte(secretKey)}
 }
 
-// 对数据进行签名，一般用于私有空间下载用途
+// Sign 对数据进行签名，一般用于私有空间下载用途
 func (mac *Mac) Sign(data []byte) (token string) {
 	h := hmac.New(sha1.New, mac.SecretKey)
 	h.Write(data)
@@ -30,7 +31,7 @@ func (mac *Mac) Sign(data []byte) (token string) {
 	return fmt.Sprintf("%s:%s", mac.AccessKey, sign)
 }
 
-// 对数据进行签名，一般用于上传凭证的生成用途
+// SignWithData 对数据进行签名，一般用于上传凭证的生成用途
 func (mac *Mac) SignWithData(b []byte) (token string) {
 	encodedData := base64.URLEncoding.EncodeToString(b)
 	h := hmac.New(sha1.New, mac.SecretKey)
@@ -40,7 +41,7 @@ func (mac *Mac) SignWithData(b []byte) (token string) {
 	return fmt.Sprintf("%s:%s:%s", mac.AccessKey, sign, encodedData)
 }
 
-// 对数据进行签名，一般用于管理凭证的生成
+// SignRequest 对数据进行签名，一般用于管理凭证的生成
 func (mac *Mac) SignRequest(req *http.Request) (token string, err error) {
 	h := hmac.New(sha1.New, mac.SecretKey)
 
@@ -70,7 +71,7 @@ func incBody(req *http.Request) bool {
 		req.Header.Get("Content-Type") == "application/x-www-form-urlencoded"
 }
 
-// 验证上传回调请求是否来自七牛
+// VerifyCallback 验证上传回调请求是否来自七牛
 func (mac *Mac) VerifyCallback(req *http.Request) (bool, error) {
 	auth := req.Header.Get("Authorization")
 	if auth == "" {
@@ -85,10 +86,17 @@ func (mac *Mac) VerifyCallback(req *http.Request) (bool, error) {
 	return auth == "QBox "+token, nil
 }
 
+// Sign 一般用于下载凭证的签名
 func Sign(mac *Mac, data []byte) string {
 	return mac.Sign(data)
 }
 
+// SignWithData 一般用于上传凭证的签名
 func SignWithData(mac *Mac, data []byte) string {
 	return mac.SignWithData(data)
+}
+
+// VerifyCallback 验证上传回调请求是否来自七牛
+func VerifyCallback(mac *Mac, req *http.Request) (bool, error) {
+	return mac.VerifyCallback(req)
 }
