@@ -114,7 +114,12 @@ func (p *FormUploader) putFile(
 	}
 	fsize := fi.Size()
 
-	if extra != nil && extra.CheckCrc == 1 {
+	if extra == nil {
+		extra = &PutExtra{}
+	}
+
+	//if not set, enable the crc32 check
+	if extra.CheckCrc == DontCheckCrc || extra.CheckCrc == CalcAndCheckCrc {
 		extra.Crc32, err = getFileCrc32(f)
 		if err != nil {
 			return
