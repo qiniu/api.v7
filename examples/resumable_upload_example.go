@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	accessKey = "your access key"
-	secretKey = "your secret key"
+	accessKey = os.Getenv("QINIU_ACCESS_KEY")
+	secretKey = os.Getenv("QINIU_SECRET_KEY")
+	bucket    = os.Getenv("QINIU_TEST_BUCKET")
 )
 
 func md5Hex(str string) string {
@@ -33,7 +34,6 @@ type ProgressRecord struct {
 func main() {
 
 	localFile := "your local file path"
-	bucket := "your bucket name"
 	key := "your file save key"
 
 	putPolicy := storage.PutPolicy{
