@@ -229,7 +229,7 @@ func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error
 // Batch 接口提供了资源管理的批量操作，支持 stat，copy，move，delete，chgm，chtype，deleteAfterDays几个接口
 func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err error) {
 	if len(operations) > 1000 {
-		err = errors.New("batch operation cmd count cannot larger than 1000")
+		err = errors.New("batch operation count exceeds the limit of 1000")
 		return
 	}
 	ctx := context.TODO()

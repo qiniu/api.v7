@@ -6,10 +6,6 @@ go:
 env:
   global:
     - QINIU_KODO_TEST=1
-    - QINIU_ACCESS_KEY="QWYn5TFQsLLU1pL5MFEmX3s5DmHdUThav9WyOWOm"
-    - QINIU_SECRET_KEY="Bxckh6FA-Fbs9Yt3i3cbKVK22UPBmAOHJcL95pGz"
-    - QINIU_TEST_BUCKET="gosdk"
-    - QINIU_TEST_DOMAIN="gosdk.qiniudn.com"
 
 install:
   - export QINIU_SRC=$HOME/gopath/src

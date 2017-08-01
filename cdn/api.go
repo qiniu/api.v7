@@ -3,6 +3,7 @@ package cdn
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -135,6 +136,15 @@ type RefreshResp struct {
 // dirs	要刷新的目录url列表，单次方法调用总数不超过10条；目录dir，即表示一个目录级的url，
 // 例如：http://bar.foo.com/dir/，
 func (m *CdnManager) RefreshUrlsAndDirs(urls, dirs []string) (result RefreshResp, err error) {
+	if len(urls) > 100 {
+		err = errors.New("urls count exceeds the limit of 100")
+		return
+	}
+	if len(dirs) > 10 {
+		err = errors.New("dirs count exceeds the limit of 10")
+		return
+	}
+
 	reqBody := RefreshReq{
 		Urls: urls,
 		Dirs: dirs,
@@ -181,6 +191,11 @@ type PrefetchResp struct {
 
 // PrefetchUrls 预取文件链接，每次最多不可以超过100条
 func (m *CdnManager) PrefetchUrls(urls []string) (result PrefetchResp, err error) {
+	if len(urls) > 100 {
+		err = errors.New("urls count exceeds the limit of 100")
+		return
+	}
+
 	reqBody := PrefetchReq{
 		Urls: urls,
 	}
