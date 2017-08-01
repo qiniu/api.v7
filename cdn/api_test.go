@@ -22,12 +22,12 @@ var (
 	logDate   = now.AddDate(0, 0, -1).Format(layout)
 
 	testUrls = []string{
-		"http://qdisk.qiniudn.com/qiniu1.png",
-		"http://qdisk.qiniudn.com/qiniu2.png",
+		"http://gosdk.qiniudn.com/qiniu1.png",
+		"http://gosdk.qiniudn.com/qiniu2.png",
 	}
 	testDirs = []string{
-		"http://qdisk.qiniudn.com/dir1/",
-		"http://qdisk.qiniudn.com/dir2/",
+		"http://gosdk.qiniudn.com/dir1/",
+		"http://gosdk.qiniudn.com/dir2/",
 	}
 )
 

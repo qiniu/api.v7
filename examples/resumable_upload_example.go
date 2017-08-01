@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
@@ -98,10 +99,13 @@ func main() {
 
 	resumeUploader := storage.NewResumeUploader(&cfg)
 	ret := storage.PutRet{}
+	progressLock := sync.RWMutex{}
 
 	putExtra := storage.RputExtra{
 		Progresses: progressRecord.Progresses,
 		Notify: func(blkIdx int, blkSize int, ret *storage.BlkputRet) {
+			progressLock.Lock()
+			defer progressLock.Unlock()
 			//将进度序列化，然后写入文件
 			progressRecord.Progresses[blkIdx] = *ret
 			progressBytes, _ := json.Marshal(progressRecord)

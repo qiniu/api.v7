@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"testing"
 )
 
 var (
-	testLocalFile = "/Users/jemy/Documents/qiniu.mp4"
+	testLocalFile = filepath.Join(os.Getenv("TRAVIS_BUILD_DIR"), "qiniu.mp4")
 )
 
 func TestFormUploadPutFile(t *testing.T) {

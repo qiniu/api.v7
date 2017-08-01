@@ -67,7 +67,7 @@ func TestBuckets(t *testing.T) {
 
 //Test get file info
 func TestStat(t *testing.T) {
-	keysToStat := []string{"qiniu.jpg"}
+	keysToStat := []string{"qiniu.png"}
 
 	for _, eachKey := range keysToStat {
 		info, err := bucketManager.Stat(testBucket, eachKey)
@@ -81,7 +81,7 @@ func TestStat(t *testing.T) {
 }
 
 func TestCopyMoveDelete(t *testing.T) {
-	keysCopyTarget := []string{"qiniu_1.jpg", "qiniu_2.jpg", "qiniu_3.jpg"}
+	keysCopyTarget := []string{"qiniu_1.png", "qiniu_2.png", "qiniu_3.png"}
 	keysToDelete := make([]string, 0, len(keysCopyTarget))
 	for _, eachKey := range keysCopyTarget {
 		err := bucketManager.Copy(testBucket, testKey, testBucket, eachKey, true)
