@@ -514,24 +514,16 @@ func EncodedEntryWithoutKey(bucket string) string {
 }
 
 // MakePublicURL 用来生成公开空间资源下载链接
-func MakePublicURL(domain, key string) (finalUrl string, err error) {
+func MakePublicURL(domain, key string) (finalUrl string) {
 	srcUrl := fmt.Sprintf("%s/%s", domain, key)
-	srcUri, pErr := url.Parse(srcUrl)
-	if pErr != nil {
-		err = pErr
-		return
-	}
+	srcUri, _ := url.Parse(srcUrl)
 	finalUrl = srcUri.String()
 	return
 }
 
 // MakePrivateURL 用来生成私有空间资源下载链接
-func MakePrivateURL(mac *qbox.Mac, domain, key string, deadline int64) (privateURL string, err error) {
-	publicURL, mErr := MakePublicURL(domain, key)
-	if mErr != nil {
-		err = mErr
-		return
-	}
+func MakePrivateURL(mac *qbox.Mac, domain, key string, deadline int64) (privateURL string) {
+	publicURL := MakePublicURL(domain, key)
 	urlToSign := publicURL
 	if strings.Contains(publicURL, "?") {
 		urlToSign = fmt.Sprintf("%s&e=%d", urlToSign, deadline)
