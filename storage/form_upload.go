@@ -6,22 +6,15 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/textproto"
 	"os"
 	"path"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/qiniu/x/rpc.v7"
-)
-
-// 文件上传后进行crc32校验的方式
-const (
-	DontCheckCrc    = 0
-	CalcAndCheckCrc = 1
-	CheckCrc        = 2
 )
 
 // PutExtra 为表单上传的额外可选项
@@ -31,13 +24,6 @@ type PutExtra struct {
 
 	// 可选，当为 "" 时候，服务端自动判断。
 	MimeType string
-
-	Crc32 uint32
-
-	// CheckCrc == 0 (DontCheckCrc): 表示不进行 crc32 校验
-	// CheckCrc == 1 (CalcAndCheckCrc): 对于 Put 等同于 CheckCrc = 2；对于 PutFile 会自动计算 crc32 值
-	// CheckCrc == 2 (CheckCrc): 表示进行 crc32 校验，且 crc32 值就是上面的 Crc32 变量
-	CheckCrc uint32
 
 	// 上传事件：进度通知。这个事件的回调函数应该尽可能快地结束。
 	OnProgress func(fsize, uploaded int64)
@@ -118,13 +104,6 @@ func (p *FormUploader) putFile(
 		extra = &PutExtra{}
 	}
 
-	//if not set, enable the crc32 check
-	if extra.CheckCrc == DontCheckCrc || extra.CheckCrc == CalcAndCheckCrc {
-		extra.Crc32, err = getFileCrc32(f)
-		if err != nil {
-			return
-		}
-	}
 	return p.put(ctx, ret, uptoken, key, hasKey, f, fsize, extra, filepath.Base(localFile))
 }
 
@@ -192,6 +171,32 @@ func (p *FormUploader) put(
 		return
 	}
 
+	//read data
+	var dataBytes []byte
+	dataBytes, err = ioutil.ReadAll(data)
+	if err != nil {
+		return
+	}
+
+	h := crc32.NewIEEE()
+	h.Write(dataBytes)
+	crc32 := h.Sum32()
+
+	//write crc32
+	writer.WriteField("crc2", fmt.Sprintf("%d", crc32))
+	//write file
+	head := make(textproto.MIMEHeader)
+	head.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`,
+		escapeQuotes(fileName)))
+	if extra.MimeType != "" {
+		head.Set("Content-Type", extra.MimeType)
+	}
+
+	_, err = writer.CreatePart(head)
+	if err != nil {
+		return
+	}
+
 	lastLine := fmt.Sprintf("\r\n--%s--\r\n", writer.Boundary())
 	r := strings.NewReader(lastLine)
 
@@ -199,7 +204,9 @@ func (p *FormUploader) put(
 	if size >= 0 {
 		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
 	}
-	mr := io.MultiReader(&b, data, r)
+
+	dataReader := bytes.NewReader(dataBytes)
+	mr := io.MultiReader(&b, dataReader, r)
 
 	contentType := writer.FormDataContentType()
 	err = p.client.CallWith64(ctx, ret, "POST", upHost, contentType, mr, bodyLen)
@@ -256,8 +263,8 @@ func (p *readerWithProgress) Read(b []byte) (n int, err error) {
 	return
 }
 
-func writeMultipart(
-	writer *multipart.Writer, uptoken, key string, hasKey bool, extra *PutExtra, fileName string) (err error) {
+func writeMultipart(writer *multipart.Writer, uptoken, key string, hasKey bool,
+	extra *PutExtra, fileName string) (err error) {
 
 	//token
 	if err = writer.WriteField("token", uptoken); err != nil {
@@ -283,22 +290,6 @@ func writeMultipart(
 		}
 	}
 
-	//extra.CheckCrc
-	if extra.CheckCrc != 0 {
-		err = writer.WriteField("crc32", strconv.FormatInt(int64(extra.Crc32), 10))
-		if err != nil {
-			return
-		}
-	}
-
-	//file
-	head := make(textproto.MIMEHeader)
-	head.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`, escapeQuotes(fileName)))
-	if extra.MimeType != "" {
-		head.Set("Content-Type", extra.MimeType)
-	}
-
-	_, err = writer.CreatePart(head)
 	return err
 }
 
@@ -306,12 +297,4 @@ var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
 func escapeQuotes(s string) string {
 	return quoteEscaper.Replace(s)
-}
-
-func getFileCrc32(f *os.File) (uint32, error) {
-	h := crc32.NewIEEE()
-	_, err := io.Copy(h, f)
-	f.Seek(0, 0)
-
-	return h.Sum32(), err
 }
