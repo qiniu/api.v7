@@ -36,6 +36,7 @@ func init() {
 	}
 	mac = qbox.NewMac(testAK, testSK)
 	cfg := Config{}
+	cfg.Zone = &Zone_z0
 	bucketManager = NewBucketManager(mac, &cfg)
 	operationManager = NewOperationManager(mac, &cfg)
 	formUploader = NewFormUploader(&cfg)
