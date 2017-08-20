@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.2.1 (2017-08-20)
+* 设置FormUpload默认支持crc32校验
+* ResumeUpload从API层面即支持crc32校验
+
 ## 7.2.0 (2017-07-28)
 * 重构了v7 SDK的所有代码
 
