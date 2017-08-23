@@ -173,7 +173,11 @@ func TestRefreshDirs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ret, err := cdnManager.RefreshDirs(tc.args.dirs)
 			if err != nil || ret.Code != tc.wantCode {
-				t.Errorf("RefreshDirs() error = %v, %v", err, ret.Error)
+				if ret.Error == "refresh dir limit error" {
+					t.Logf("RefreshDirs() error=%v", ret.Error)
+				} else {
+					t.Errorf("RefreshDirs() error = %v, %v", err, ret.Error)
+				}
 				return
 			}
 		})
