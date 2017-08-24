@@ -55,6 +55,22 @@ func NewFormUploader(cfg *Config) *FormUploader {
 	}
 }
 
+// NewFormUploaderEx 用来构建一个表单上传的对象
+func NewFormUploaderEx(cfg *Config, client *rpc.Client) *FormUploader {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if client == nil {
+		client = &rpc.DefaultClient
+	}
+
+	return &FormUploader{
+		client: client,
+		cfg:    cfg,
+	}
+}
+
 // PutFile 用来以表单方式上传一个文件，和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.Reader 来访问。
 //
 // ctx       是请求的上下文。

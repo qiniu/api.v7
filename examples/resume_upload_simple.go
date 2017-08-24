@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 var (
@@ -33,7 +37,27 @@ func main() {
 	// 上传是否使用CDN上传加速
 	cfg.UseCdnDomains = false
 
-	resumeUploader := storage.NewResumeUploader(&cfg)
+	//设置代理
+	proxyURL := "http://localhost:8888"
+	proxyURI, _ := url.Parse(proxyURL)
+
+	//绑定网卡
+	nicIP := "100.100.33.138"
+	dialer := &net.Dialer{
+		LocalAddr: &net.TCPAddr{
+			IP: net.ParseIP(nicIP),
+		},
+	}
+
+	//构建代理client对象
+	client := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(proxyURI),
+			Dial:  dialer.Dial,
+		},
+	}
+
+	resumeUploader := storage.NewResumeUploaderEx(&cfg, &rpc.Client{Client: &client})
 	upToken := putPolicy.UploadToken(mac)
 
 	ret := storage.PutRet{}
