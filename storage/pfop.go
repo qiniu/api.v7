@@ -30,6 +30,23 @@ func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 	}
 }
 
+// NewOperationManager 用来构建一个新的数据处理对象
+func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *rpc.Client) *OperationManager {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if client == nil {
+		client = NewClient(mac, nil)
+	}
+
+	return &OperationManager{
+		client: client,
+		mac:    mac,
+		cfg:    cfg,
+	}
+}
+
 // PfopRet 为数据处理请求的回复内容
 type PfopRet struct {
 	PersistentID string `json:"persistentId,omitempty"`

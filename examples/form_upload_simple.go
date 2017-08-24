@@ -3,10 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+
+	"net/http"
+	"net/url"
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
+	"github.com/qiniu/x/rpc.v7"
 )
 
 var (
@@ -30,8 +35,29 @@ func main() {
 	cfg.UseHTTPS = false
 	// 上传是否使用CDN上传加速
 	cfg.UseCdnDomains = false
+
+	//设置代理
+	proxyURL := "http://localhost:8888"
+	proxyURI, _ := url.Parse(proxyURL)
+
+	//绑定网卡
+	nicIP := "100.100.33.138"
+	dialer := &net.Dialer{
+		LocalAddr: &net.TCPAddr{
+			IP: net.ParseIP(nicIP),
+		},
+	}
+
+	//构建代理client对象
+	client := http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL(proxyURI),
+			Dial:  dialer.Dial,
+		},
+	}
+
 	// 构建表单上传的对象
-	formUploader := storage.NewFormUploader(&cfg)
+	formUploader := storage.NewFormUploaderEx(&cfg, &rpc.Client{Client: &client})
 	ret := storage.PutRet{}
 	// 可选配置
 	putExtra := storage.PutExtra{

@@ -31,6 +31,22 @@ func NewResumeUploader(cfg *Config) *ResumeUploader {
 	}
 }
 
+// NewResumeUploaderEx 表示构建一个新的分片上传的对象
+func NewResumeUploaderEx(cfg *Config, client *rpc.Client) *ResumeUploader {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if client == nil {
+		client = &rpc.DefaultClient
+	}
+
+	return &ResumeUploader{
+		client: client,
+		cfg:    cfg,
+	}
+}
+
 // 分片上传请求
 type uptokenTransport struct {
 	token     string
