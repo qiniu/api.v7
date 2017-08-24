@@ -229,7 +229,7 @@ func (p *ResumeUploader) rput(
 	last := blockCnt - 1
 	blkSize := 1 << blockBits
 	nfails := 0
-	p.client = newUptokenClient(uptoken, nil)
+	p.client = newUptokenClient(p.client, uptoken)
 
 	for i := 0; i < blockCnt; i++ {
 		blkIdx := i
