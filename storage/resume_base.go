@@ -27,7 +27,8 @@ func NewResumeUploader(cfg *Config) *ResumeUploader {
 	}
 
 	return &ResumeUploader{
-		cfg: cfg,
+		cfg:    cfg,
+		client: &rpc.DefaultClient,
 	}
 }
 
@@ -69,9 +70,10 @@ func newUptokenTransport(token string, transport http.RoundTripper) *uptokenTran
 	return &uptokenTransport{"UpToken " + token, transport}
 }
 
-func newUptokenClient(token string, transport http.RoundTripper) *rpc.Client {
-	t := newUptokenTransport(token, transport)
-	return &rpc.Client{&http.Client{Transport: t}}
+func newUptokenClient(client *rpc.Client, token string) *rpc.Client {
+	t := newUptokenTransport(token, client.Transport)
+	client.Transport = t
+	return client
 }
 
 // 创建块请求
