@@ -27,6 +27,9 @@ type PutExtra struct {
 
 	// 上传事件：进度通知。这个事件的回调函数应该尽可能快地结束。
 	OnProgress func(fsize, uploaded int64)
+
+	//设置是否进行Crc32校验，默认必须进行Crc32校验
+	NoCrc32Check bool
 }
 
 // PutRet 为七牛标准的上传回复内容。
@@ -187,19 +190,27 @@ func (p *FormUploader) put(
 		return
 	}
 
-	//read data
-	var dataBytes []byte
-	dataBytes, err = ioutil.ReadAll(data)
-	if err != nil {
-		return
+	var dataReader io.Reader
+	if extra.NoCrc32Check {
+		dataReader = data
+	} else {
+		//read data
+		var dataBytes []byte
+		dataBytes, err = ioutil.ReadAll(data)
+		if err != nil {
+			return
+		}
+
+		h := crc32.NewIEEE()
+		h.Write(dataBytes)
+		crc32 := h.Sum32()
+
+		//write crc32
+		writer.WriteField("crc2", fmt.Sprintf("%d", crc32))
+
+		dataReader = bytes.NewReader(dataBytes)
 	}
 
-	h := crc32.NewIEEE()
-	h.Write(dataBytes)
-	crc32 := h.Sum32()
-
-	//write crc32
-	writer.WriteField("crc2", fmt.Sprintf("%d", crc32))
 	//write file
 	head := make(textproto.MIMEHeader)
 	head.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`,
@@ -221,7 +232,6 @@ func (p *FormUploader) put(
 		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
 	}
 
-	dataReader := bytes.NewReader(dataBytes)
 	mr := io.MultiReader(&b, dataReader, r)
 
 	contentType := writer.FormDataContentType()

@@ -24,8 +24,9 @@ func main() {
 	localFile := "/Users/jemy/Documents/github.png"
 	key := "github-x.png"
 	putPolicy := storage.PutPolicy{
-		Scope: bucket,
+		Scope: bucket + ":" + key,
 	}
+
 	mac := qbox.NewMac(accessKey, secretKey)
 	upToken := putPolicy.UploadToken(mac)
 	cfg := storage.Config{}
@@ -65,6 +66,7 @@ func main() {
 			"x:name": "github logo",
 		},
 	}
+	//putExtra.NoCrc32Check = true
 	err := formUploader.PutFile(context.Background(), &ret, upToken, key, localFile, &putExtra)
 	if err != nil {
 		fmt.Println(err)
