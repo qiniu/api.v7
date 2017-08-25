@@ -27,7 +27,24 @@ func NewResumeUploader(cfg *Config) *ResumeUploader {
 	}
 
 	return &ResumeUploader{
-		cfg: cfg,
+		cfg:    cfg,
+		client: &rpc.DefaultClient,
+	}
+}
+
+// NewResumeUploaderEx 表示构建一个新的分片上传的对象
+func NewResumeUploaderEx(cfg *Config, client *rpc.Client) *ResumeUploader {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if client == nil {
+		client = &rpc.DefaultClient
+	}
+
+	return &ResumeUploader{
+		client: client,
+		cfg:    cfg,
 	}
 }
 
@@ -53,9 +70,10 @@ func newUptokenTransport(token string, transport http.RoundTripper) *uptokenTran
 	return &uptokenTransport{"UpToken " + token, transport}
 }
 
-func newUptokenClient(token string, transport http.RoundTripper) *rpc.Client {
-	t := newUptokenTransport(token, transport)
-	return &rpc.Client{&http.Client{Transport: t}}
+func newUptokenClient(client *rpc.Client, token string) *rpc.Client {
+	t := newUptokenTransport(token, client.Transport)
+	client.Transport = t
+	return client
 }
 
 // 创建块请求

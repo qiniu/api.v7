@@ -115,6 +115,23 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 	}
 }
 
+// NewBucketManagerEx 用来构建一个新的资源管理对象
+func NewBucketManagerEx(mac *qbox.Mac, cfg *Config, client *rpc.Client) *BucketManager {
+	if cfg == nil {
+		cfg = &Config{}
+	}
+
+	if client == nil {
+		client = NewClient(mac, nil)
+	}
+
+	return &BucketManager{
+		client: client,
+		mac:    mac,
+		cfg:    cfg,
+	}
+}
+
 // Buckets 用来获取空间列表，如果指定了 shared 参数为 true，那么一同列表被授权访问的空间
 func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	ctx := context.TODO()
