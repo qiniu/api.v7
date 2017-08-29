@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"hash"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/textproto"
 	"os"
@@ -15,6 +15,10 @@ import (
 	"strings"
 
 	"github.com/qiniu/x/rpc.v7"
+)
+
+const (
+	crc32Len = 10
 )
 
 // PutExtra 为表单上传的额外可选项
@@ -191,24 +195,14 @@ func (p *FormUploader) put(
 	}
 
 	var dataReader io.Reader
+	var crcReader *crc32Reader
+
 	if extra.NoCrc32Check {
 		dataReader = data
 	} else {
-		//read data
-		var dataBytes []byte
-		dataBytes, err = ioutil.ReadAll(data)
-		if err != nil {
-			return
-		}
-
 		h := crc32.NewIEEE()
-		h.Write(dataBytes)
-		crc32 := h.Sum32()
-
-		//write crc32
-		writer.WriteField("crc2", fmt.Sprintf("%d", crc32))
-
-		dataReader = bytes.NewReader(dataBytes)
+		dataReader = io.TeeReader(data, h)
+		crcReader = &crc32Reader{h: h, boundary: writer.Boundary()}
 	}
 
 	//write file
@@ -229,10 +223,9 @@ func (p *FormUploader) put(
 
 	bodyLen := int64(-1)
 	if size >= 0 {
-		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
+		bodyLen = int64(b.Len()) + size + int64(len(lastLine)) + crcReader.length()
 	}
-
-	mr := io.MultiReader(&b, dataReader, r)
+	mr := io.MultiReader(&b, dataReader, crcReader, r)
 
 	contentType := writer.FormDataContentType()
 	err = p.client.CallWith64(ctx, ret, "POST", upHost, contentType, mr, bodyLen)
@@ -242,7 +235,33 @@ func (p *FormUploader) put(
 	if extra.OnProgress != nil {
 		extra.OnProgress(size, size)
 	}
+
 	return
+}
+
+type crc32Reader struct {
+	h        hash.Hash32
+	boundary string
+	r        io.Reader
+	flag     bool
+}
+
+func (r *crc32Reader) Read(p []byte) (int, error) {
+	if r.flag == false {
+		crc32 := r.h.Sum32()
+		crc32Line := fmt.Sprintf("\r\n--%s\r\n", r.boundary) + `Content-Disposition: form-data; name="crc32"` + "\r\n\r\n"
+		crc32Line += fmt.Sprintf("%010d", crc32)
+		r.r = strings.NewReader(crc32Line)
+		r.flag = true
+	}
+	return r.r.Read(p)
+}
+
+func (r crc32Reader) length() (length int64) {
+	return int64(len(r.boundary+"\r\n--\r\n") +
+		len(`Content-Disposition: form-data; name="crc32"`) +
+		len("\r\n\r\n") +
+		crc32Len)
 }
 
 func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
