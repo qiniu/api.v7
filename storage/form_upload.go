@@ -250,7 +250,7 @@ func (r *crc32Reader) Read(p []byte) (int, error) {
 	if r.flag == false {
 		crc32 := r.h.Sum32()
 		crc32Line := fmt.Sprintf("\r\n--%s\r\n", r.boundary) + `Content-Disposition: form-data; name="crc32"` + "\r\n\r\n"
-		crc32Line += fmt.Sprintf("%010d", crc32)
+		crc32Line += fmt.Sprintf("%010d", crc32) //padding crc32 results to 10 digits
 		r.r = strings.NewReader(crc32Line)
 		r.flag = true
 	}
@@ -258,7 +258,7 @@ func (r *crc32Reader) Read(p []byte) (int, error) {
 }
 
 func (r crc32Reader) length() (length int64) {
-	return int64(len(r.boundary+"\r\n--\r\n") +
+	return int64(len(fmt.Sprintf("\r\n--%s\r\n", r.boundary)) +
 		len(`Content-Disposition: form-data; name="crc32"`) +
 		len("\r\n\r\n") +
 		crc32Len)
