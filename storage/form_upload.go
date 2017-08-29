@@ -17,11 +17,6 @@ import (
 	"github.com/qiniu/x/rpc.v7"
 )
 
-const (
-	// crc32 结果长度固定为10位
-	crc32Len = 10
-)
-
 // PutExtra 为表单上传的额外可选项
 type PutExtra struct {
 	// 可选，用户自定义参数，必须以 "x:" 开头。若不以x:开头，则忽略。
@@ -32,9 +27,6 @@ type PutExtra struct {
 
 	// 上传事件：进度通知。这个事件的回调函数应该尽可能快地结束。
 	OnProgress func(fsize, uploaded int64)
-
-	//设置是否进行Crc32校验，默认必须进行Crc32校验
-	NoCrc32Check bool
 }
 
 // PutRet 为七牛标准的上传回复内容。
@@ -196,16 +188,10 @@ func (p *FormUploader) put(
 	}
 
 	var dataReader io.Reader
-	var crcReader *crc32Reader
 
-	if extra.NoCrc32Check {
-		dataReader = data
-	} else {
-		h := crc32.NewIEEE()
-		dataReader = io.TeeReader(data, h)
-		crcReader = &crc32Reader{h: h, boundary: writer.Boundary()}
-	}
-
+	h := crc32.NewIEEE()
+	dataReader = io.TeeReader(data, h)
+	crcReader := newCrc32Reader(writer.Boundary(), h)
 	//write file
 	head := make(textproto.MIMEHeader)
 	head.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename="%s"`,
@@ -225,16 +211,10 @@ func (p *FormUploader) put(
 	bodyLen := int64(-1)
 	if size >= 0 {
 		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
-		if !extra.NoCrc32Check {
-			bodyLen += crcReader.length()
-		}
+		bodyLen += crcReader.length()
 	}
-	var mr io.Reader
-	if extra.NoCrc32Check {
-		mr = io.MultiReader(&b, dataReader, r)
-	} else {
-		mr = io.MultiReader(&b, dataReader, crcReader, r)
-	}
+
+	mr := io.MultiReader(&b, dataReader, crcReader, r)
 
 	contentType := writer.FormDataContentType()
 	err = p.client.CallWith64(ctx, ret, "POST", upHost, contentType, mr, bodyLen)
@@ -249,17 +229,31 @@ func (p *FormUploader) put(
 }
 
 type crc32Reader struct {
-	h        hash.Hash32
-	boundary string
-	r        io.Reader
-	flag     bool
+	h                hash.Hash32
+	boundary         string
+	r                io.Reader
+	flag             bool
+	nlDashBoundaryNl string
+	header           string
+	crc32PadLen      int64
+}
+
+func newCrc32Reader(boundary string, h hash.Hash32) *crc32Reader {
+	nlDashBoundaryNl := fmt.Sprintf("\r\n--%s\r\n", boundary)
+	header := `Content-Disposition: form-data; name="crc32"` + "\r\n\r\n"
+	return &crc32Reader{
+		h:                h,
+		boundary:         boundary,
+		nlDashBoundaryNl: nlDashBoundaryNl,
+		header:           header,
+		crc32PadLen:      10,
+	}
 }
 
 func (r *crc32Reader) Read(p []byte) (int, error) {
 	if r.flag == false {
 		crc32 := r.h.Sum32()
-		crc32Line := fmt.Sprintf("\r\n--%s\r\n", r.boundary) + `Content-Disposition: form-data; name="crc32"` + "\r\n\r\n"
-		crc32Line += fmt.Sprintf("%010d", crc32) //padding crc32 results to 10 digits
+		crc32Line := r.nlDashBoundaryNl + r.header + fmt.Sprintf("%010d", crc32) //padding crc32 results to 10 digits
 		r.r = strings.NewReader(crc32Line)
 		r.flag = true
 	}
@@ -267,10 +261,7 @@ func (r *crc32Reader) Read(p []byte) (int, error) {
 }
 
 func (r crc32Reader) length() (length int64) {
-	return int64(len(fmt.Sprintf("\r\n--%s\r\n", r.boundary)) +
-		len(`Content-Disposition: form-data; name="crc32"`) +
-		len("\r\n\r\n") +
-		crc32Len)
+	return int64(len(r.nlDashBoundaryNl+r.header)) + r.crc32PadLen
 }
 
 func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
