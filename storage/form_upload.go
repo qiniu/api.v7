@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// crc32 结果长度固定为10位
 	crc32Len = 10
 )
 
@@ -223,9 +224,17 @@ func (p *FormUploader) put(
 
 	bodyLen := int64(-1)
 	if size >= 0 {
-		bodyLen = int64(b.Len()) + size + int64(len(lastLine)) + crcReader.length()
+		bodyLen = int64(b.Len()) + size + int64(len(lastLine))
+		if !extra.NoCrc32Check {
+			bodyLen += crcReader.length()
+		}
 	}
-	mr := io.MultiReader(&b, dataReader, crcReader, r)
+	var mr io.Reader
+	if extra.NoCrc32Check {
+		mr = io.MultiReader(&b, dataReader, r)
+	} else {
+		mr = io.MultiReader(&b, dataReader, crcReader, r)
+	}
 
 	contentType := writer.FormDataContentType()
 	err = p.client.CallWith64(ctx, ret, "POST", upHost, contentType, mr, bodyLen)
