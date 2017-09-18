@@ -2,13 +2,14 @@ package conf
 
 import (
 	"fmt"
-	"github.com/qiniu/x/ctype.v7"
-	"github.com/qiniu/x/rpc.v7"
 	"runtime"
 	"syscall"
+
+	"github.com/qiniu/x/ctype.v7"
+	"github.com/qiniu/x/rpc.v7"
 )
 
-var version = "7.2.0"
+var version = "7.2.1"
 
 const (
 	ctypeAppName = ctype.ALPHA | ctype.DIGIT | ctype.UNDERLINE | ctype.SPACE_BAR | ctype.SUB | ctype.DOT
