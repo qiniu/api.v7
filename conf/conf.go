@@ -9,7 +9,7 @@ import (
 	"github.com/qiniu/x/rpc.v7"
 )
 
-var version = "7.2.1"
+var version = "7.2.2"
 
 const (
 	ctypeAppName = ctype.ALPHA | ctype.DIGIT | ctype.UNDERLINE | ctype.SPACE_BAR | ctype.SUB | ctype.DOT
