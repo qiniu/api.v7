@@ -29,6 +29,7 @@ var bucketManager *BucketManager
 var operationManager *OperationManager
 var formUploader *FormUploader
 var resumeUploader *ResumeUploader
+var base64Uploader *Base64Uploader
 
 func init() {
 	if testAK == "" || testSK == "" {
@@ -42,6 +43,7 @@ func init() {
 	operationManager = NewOperationManager(mac, &cfg)
 	formUploader = NewFormUploader(&cfg)
 	resumeUploader = NewResumeUploader(&cfg)
+	base64Uploader = NewBase64Uploader(&cfg)
 	rand.Seed(time.Now().Unix())
 }
 
