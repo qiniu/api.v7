@@ -56,12 +56,12 @@ type Base64PutExtra struct {
 
 // Put 用来以Base64方式上传一个文件
 //
-// ctx       是请求的上下文。
-// ret       是上传成功后返回的数据。如果 uptoken 中没有设置 callbackUrl 或 returnBody，那么返回的数据结构是 PutRet 结构。
-// uptoken   是由业务服务器颁发的上传凭证。
-// key       是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
-// localFile 是要上传的文件的本地路径。
-// extra     是上传的一些可选项，可以指定为nil。详细见 PutExtra 结构的描述。
+// ctx        是请求的上下文。
+// ret        是上传成功后返回的数据。如果 uptoken 中没有设置 callbackUrl 或 returnBody，那么返回的数据结构是 PutRet 结构。
+// uptoken    是由业务服务器颁发的上传凭证。
+// key        是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+// base64Data 是要上传的Base64数据，一般为图片数据的Base64编码字符串
+// extra      是上传的一些可选项，可以指定为nil。详细见 Base64PutExtra 结构的描述。
 //
 func (p *Base64Uploader) Put(
 	ctx context.Context, ret interface{}, uptoken, key string, base64Data string, extra *Base64PutExtra) (err error) {
