@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"strconv"
 	"strings"
 
@@ -95,27 +96,20 @@ func (p *Base64Uploader) put(
 		extra = &Base64PutExtra{}
 	}
 
-	base64DataLen := len(base64Data)
-	rawData := make([]byte, base64.StdEncoding.DecodedLen(base64DataLen))
-	numWritten, decodeErr := base64.StdEncoding.Decode(rawData, base64Data)
+	//calc crc32
+	h := crc32.NewIEEE()
+	rawReader := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(base64Data))
+	fsize, decodeErr := io.Copy(h, rawReader)
 	if decodeErr != nil {
 		err = fmt.Errorf("invalid base64 data, %s", decodeErr.Error())
 		return
 	}
-
-	//update
-	rawData = rawData[:numWritten]
-	fsize := len(rawData)
-
-	//calc crc32
-	h := crc32.NewIEEE()
-	h.Write(rawData)
 	fCrc32 := h.Sum32()
 
 	postPath := bytes.NewBufferString("/putb64")
 	//add fsize
 	postPath.WriteString("/")
-	postPath.WriteString(strconv.Itoa(fsize))
+	postPath.WriteString(strconv.Itoa(int(fsize)))
 
 	//add key
 	if hasKey {
@@ -147,7 +141,7 @@ func (p *Base64Uploader) put(
 	postURL := fmt.Sprintf("%s%s", upHost, postPath.String())
 	postClient := newUptokenClient(p.client, uptoken)
 	return postClient.CallWith(ctx, ret, "POST", postURL, "application/octet-stream",
-		bytes.NewReader(base64Data), base64DataLen)
+		bytes.NewReader(base64Data), len(base64Data))
 }
 
 func (p *Base64Uploader) upHost(ak, bucket string) (upHost string, err error) {
