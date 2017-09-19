@@ -12,6 +12,7 @@ import (
 	"github.com/qiniu/x/rpc.v7"
 )
 
+// Base64Uploader 表示一个Base64上传对象
 type Base64Uploader struct {
 	client *rpc.Client
 	cfg    *Config
@@ -64,18 +65,18 @@ type Base64PutExtra struct {
 // extra      是上传的一些可选项，可以指定为nil。详细见 Base64PutExtra 结构的描述。
 //
 func (p *Base64Uploader) Put(
-	ctx context.Context, ret interface{}, uptoken, key string, base64Data string, extra *Base64PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken, key string, base64Data []byte, extra *Base64PutExtra) (err error) {
 	return p.put(ctx, ret, uptoken, key, true, base64Data, extra)
 }
 
 // PutWithoutKey 用来以Base64方式上传一个文件，保存的文件名以文件的内容hash作为文件名
 func (p *Base64Uploader) PutWithoutKey(
-	ctx context.Context, ret interface{}, uptoken string, base64Data string, extra *Base64PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken string, base64Data []byte, extra *Base64PutExtra) (err error) {
 	return p.put(ctx, ret, uptoken, "", false, base64Data, extra)
 }
 
 func (p *Base64Uploader) put(
-	ctx context.Context, ret interface{}, uptoken, key string, hasKey bool, base64Data string, extra *Base64PutExtra) (err error) {
+	ctx context.Context, ret interface{}, uptoken, key string, hasKey bool, base64Data []byte, extra *Base64PutExtra) (err error) {
 	//get up host
 	ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
 	if gErr != nil {
@@ -94,12 +95,16 @@ func (p *Base64Uploader) put(
 		extra = &Base64PutExtra{}
 	}
 
-	rawData, decodeErr := base64.StdEncoding.DecodeString(base64Data)
+	base64DataLen := len(base64Data)
+	rawData := make([]byte, base64.StdEncoding.DecodedLen(base64DataLen))
+	numWritten, decodeErr := base64.StdEncoding.Decode(rawData, base64Data)
 	if decodeErr != nil {
 		err = fmt.Errorf("invalid base64 data, %s", decodeErr.Error())
 		return
 	}
 
+	//update
+	rawData = rawData[:numWritten]
 	fsize := len(rawData)
 
 	//calc crc32
@@ -142,7 +147,7 @@ func (p *Base64Uploader) put(
 	postURL := fmt.Sprintf("%s%s", upHost, postPath.String())
 	postClient := newUptokenClient(p.client, uptoken)
 	return postClient.CallWith(ctx, ret, "POST", postURL, "application/octet-stream",
-		bytes.NewReader([]byte(base64Data)), len(base64Data))
+		bytes.NewReader(base64Data), base64DataLen)
 }
 
 func (p *Base64Uploader) upHost(ak, bucket string) (upHost string, err error) {
