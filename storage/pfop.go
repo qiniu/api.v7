@@ -2,10 +2,7 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
-
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
 )
@@ -165,12 +162,7 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 // Prefop 持久化处理状态查询
 func (m *OperationManager) Prefop(persistentID string) (ret PrefopRet, err error) {
 	ctx := context.TODO()
-	reqHost, reqErr := m.prefopApiHost(persistentID)
-	if reqErr != nil {
-		err = reqErr
-		return
-	}
-
+	reqHost := m.prefopApiHost(persistentID)
 	reqURL := fmt.Sprintf("%s/status/get/prefop?id=%s", reqHost, persistentID)
 	err = m.client.Call(ctx, &ret, "GET", reqURL)
 	return
@@ -198,17 +190,10 @@ func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 	return
 }
 
-func (m *OperationManager) prefopApiHost(persistentID string) (apiHost string, err error) {
-	if strings.Contains(persistentID, "z1.") {
-		apiHost = ZoneHuabei.ApiHost
-	} else if strings.Contains(persistentID, "z2.") {
-		apiHost = ZoneHuanan.ApiHost
-	} else if strings.Contains(persistentID, "na0.") {
-		apiHost = ZoneBeimei.ApiHost
-	} else if strings.Contains(persistentID, "z0.") {
-		apiHost = DefaultAPIHost
-	} else {
-		err = errors.New("invalid persistent id")
+func (m *OperationManager) prefopApiHost(persistentID string) (apiHost string) {
+	apiHost = "api.qiniu.com"
+	if m.cfg.Zone != nil {
+		apiHost = m.cfg.Zone.ApiHost
 	}
 
 	if m.cfg.UseHTTPS {
