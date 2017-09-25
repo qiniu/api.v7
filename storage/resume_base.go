@@ -77,7 +77,7 @@ func newUptokenClient(client *rpc.Client, token string) *rpc.Client {
 }
 
 // 创建块请求
-func (p *ResumeUploader) mkblk(
+func (p *ResumeUploader) Mkblk(
 	ctx context.Context, upHost string, ret *BlkputRet, blockSize int, body io.Reader, size int) error {
 
 	url := upHost + "/mkblk/" + strconv.Itoa(blockSize)
@@ -85,7 +85,7 @@ func (p *ResumeUploader) mkblk(
 }
 
 // 发送bput请求
-func (p *ResumeUploader) bput(
+func (p *ResumeUploader) Bput(
 	ctx context.Context, ret *BlkputRet, body io.Reader, size int) error {
 
 	url := ret.Host + "/bput/" + ret.Ctx + "/" + strconv.FormatUint(uint64(ret.Offset), 10)
@@ -114,7 +114,7 @@ func (p *ResumeUploader) resumableBput(
 		body1 := io.NewSectionReader(f, offbase, int64(bodyLength))
 		body := io.TeeReader(body1, h)
 
-		err = p.mkblk(ctx, upHost, ret, blkSize, body, bodyLength)
+		err = p.Mkblk(ctx, upHost, ret, blkSize, body, bodyLength)
 		if err != nil {
 			return
 		}
@@ -140,7 +140,7 @@ func (p *ResumeUploader) resumableBput(
 		body1 := io.NewSectionReader(f, offbase+int64(ret.Offset), int64(bodyLength))
 		body := io.TeeReader(body1, h)
 
-		err = p.bput(ctx, ret, body, bodyLength)
+		err = p.Bput(ctx, ret, body, bodyLength)
 		if err == nil {
 			if ret.Crc32 == h.Sum32() {
 				extra.Notify(blkIdx, blkSize, ret)
@@ -167,7 +167,7 @@ func (p *ResumeUploader) resumableBput(
 }
 
 // 创建文件请求
-func (p *ResumeUploader) mkfile(
+func (p *ResumeUploader) Mkfile(
 	ctx context.Context, upHost string, ret interface{}, key string, hasKey bool, fsize int64, extra *RputExtra) (err error) {
 
 	url := upHost + "/mkfile/" + strconv.FormatInt(fsize, 10)

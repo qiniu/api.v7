@@ -262,7 +262,7 @@ func (p *ResumeUploader) rput(
 		return ErrPutFailed
 	}
 
-	return p.mkfile(ctx, upHost, ret, key, hasKey, fsize, extra)
+	return p.Mkfile(ctx, upHost, ret, key, hasKey, fsize, extra)
 }
 
 func (p *ResumeUploader) rputFile(
