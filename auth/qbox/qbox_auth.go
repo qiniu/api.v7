@@ -65,10 +65,60 @@ func (mac *Mac) SignRequest(req *http.Request) (token string, err error) {
 	return
 }
 
+// SignRequestV2 对数据进行签名，一般用于高级管理凭证的生成
+func (mac *Mac) SignRequestV2(req *http.Request) (token string, err error) {
+	h := hmac.New(sha1.New, mac.SecretKey)
+
+	u := req.URL
+
+	//write method path?query
+	io.WriteString(h, fmt.Sprintf("%s %s", req.Method, u.Path))
+	if u.RawQuery != "" {
+		io.WriteString(h, "?")
+		io.WriteString(h, u.RawQuery)
+	}
+
+	//write host and posrt
+	io.WriteString(h, "\nHost: ")
+	io.WriteString(h, req.Host)
+	if req.URL.Port() != "" {
+		io.WriteString(h, ":")
+		io.WriteString(h, req.URL.Port())
+	}
+
+	//write content type
+	contentType := req.Header.Get("Content-Type")
+	if contentType != "" {
+		io.WriteString(h, "\n")
+		io.WriteString(h, fmt.Sprintf("Content-Type: %s", contentType))
+	}
+
+	io.WriteString(h, "\n\n")
+
+	//write body
+	if incBodyV2(req) {
+		s2, err2 := seekable.New(req)
+		if err2 != nil {
+			return "", err2
+		}
+		h.Write(s2.Bytes())
+	}
+
+	sign := base64.URLEncoding.EncodeToString(h.Sum(nil))
+	token = fmt.Sprintf("%s:%s", mac.AccessKey, sign)
+	return
+}
+
 // 管理凭证生成时，是否同时对request body进行签名
 func incBody(req *http.Request) bool {
 	return req.Body != nil &&
 		req.Header.Get("Content-Type") == "application/x-www-form-urlencoded"
+}
+
+func incBodyV2(req *http.Request) bool {
+	contentType := req.Header.Get("Content-Type")
+	return req.Body != nil && (contentType == "application/x-www-form-urlencoded" ||
+		contentType == "application/json")
 }
 
 // VerifyCallback 验证上传回调请求是否来自七牛
