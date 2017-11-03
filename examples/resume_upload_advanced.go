@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"sync"
 
+	"context"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
-	"golang.org/x/net/context"
 )
 
 var (
