@@ -11,6 +11,7 @@ import (
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
+	"qbox.us/zone"
 )
 
 // 资源管理相关的默认域名
@@ -365,69 +366,86 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	return
 }
 
+type AsyncFetchParam struct {
+	Url              string `json:"url"`
+	Host             string `json:"host,omitempty"`
+	Bucket           string `json:"bucket"`
+	Key              string `json:"key,omitempty"`
+	Md5              string `json:"md5,omitempty"`
+	Etag             string `json:"etag,omitempty"`
+	CallbackURL      string `json:"callbackurl,omitempty"`
+	CallbackBody     string `json:"callbackbody,omitempty"`
+	CallbackBodyType string `json:"callbackbodytype,omitempty"`
+	FileType         int    `json:"file_type,omitempty"`
+}
+
+type AsyncFetchRet struct {
+	Id   string `json:"id"`
+	Wait int    `json:"wait"`
+}
+
+func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, err error) {
+
+	reqUrl, err := m.apiHost(param.Bucket)
+	if err != nil {
+		return
+	}
+
+	reqUrl += "/sisyphus/fetch"
+
+	ctx := context.TODO()
+	err = m.client.CallWithJson(ctx, &ret, "POST", reqUrl, param)
+	return
+}
+
 func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
-	var zone *Zone
-	if m.cfg.Zone != nil {
-		zone = m.cfg.Zone
-	} else {
-		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
-			err = zoneErr
-			return
-		} else {
-			zone = v
-		}
+	zone, err := m.Zone(bucket)
+	if err != nil {
+		return
 	}
 
-	scheme := "http://"
-	if m.cfg.UseHTTPS {
-		scheme = "https://"
-	}
-
-	rsHost = fmt.Sprintf("%s%s", scheme, zone.RsHost)
+	rsHost = zone.GetRsHost(m.cfg.UseHTTPS)
 	return
 }
 
 func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
-	var zone *Zone
-	if m.cfg.Zone != nil {
-		zone = m.cfg.Zone
-	} else {
-		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
-			err = zoneErr
-			return
-		} else {
-			zone = v
-		}
+	zone, err := m.Zone(bucket)
+	if err != nil {
+		return
 	}
 
-	scheme := "http://"
-	if m.cfg.UseHTTPS {
-		scheme = "https://"
-	}
-
-	rsfHost = fmt.Sprintf("%s%s", scheme, zone.RsfHost)
+	rsfHost = zone.GetRsfHost(m.cfg.UseHTTPS)
 	return
 }
 
 func (m *BucketManager) iovipHost(bucket string) (iovipHost string, err error) {
-	var zone *Zone
+	zone, err := m.Zone(bucket)
+	if err != nil {
+		return
+	}
+
+	iovipHost = zone.GetIoHost(m.cfg.UseHTTPS)
+	return
+}
+
+func (m *BucketManager) apiHost(bucket string) (apiHost string, err error) {
+	zone, err := m.Zone(bucket)
+	if err != nil {
+		return
+	}
+
+	apiHost = zone.GetApiHost(m.cfg.UseHTTPS)
+	return
+}
+
+func (m *BucketManager) Zone(bucket string) (z *Zone, err error) {
+
 	if m.cfg.Zone != nil {
-		zone = m.cfg.Zone
-	} else {
-		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
-			err = zoneErr
-			return
-		} else {
-			zone = v
-		}
+		z = m.cfg.Zone
+		return
 	}
 
-	scheme := "http://"
-	if m.cfg.UseHTTPS {
-		scheme = "https://"
-	}
-
-	iovipHost = fmt.Sprintf("%s%s", scheme, zone.IovipHost)
+	z, err = GetZone(m.mac.AccessKey, bucket)
 	return
 }
 
