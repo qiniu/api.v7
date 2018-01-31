@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/qiniu/x/rpc.v7"
-	"qbox.us/zone"
 )
 
 // Zone 为空间对应的机房属性，主要包括了上传，资源管理等操作的域名
