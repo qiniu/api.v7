@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/qiniu/x/rpc.v7"
+	"qbox.us/zone"
 )
 
 // Zone 为空间对应的机房属性，主要包括了上传，资源管理等操作的域名
@@ -28,6 +29,46 @@ func (z *Zone) String() string {
 	str += fmt.Sprintf("RsfHost: %s\n", z.RsfHost)
 	str += fmt.Sprintf("ApiHost: %s\n", z.ApiHost)
 	return str
+}
+
+func (z *Zone) GetRsfHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.RsfHost)
+}
+
+func (z *Zone) GetIoHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.IovipHost)
+}
+
+func (z *Zone) GetRsHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.RsHost)
+}
+
+func (z *Zone) GetApiHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.ApiHost)
 }
 
 // ZoneHuadong 表示华东机房
