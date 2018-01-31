@@ -11,7 +11,6 @@ import (
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/x/rpc.v7"
-	"qbox.us/zone"
 )
 
 // 资源管理相关的默认域名
