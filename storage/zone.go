@@ -94,11 +94,26 @@ var ZoneBeimei = Zone{
 	IovipHost: "iovip-na0.qbox.me",
 }
 
+// ZoneBeimei 表示新加坡机房
+var ZoneXinjiapo = Zone{
+	SrcUpHosts: []string{
+		"up-as0.qiniu.com",
+	},
+	CdnUpHosts: []string{
+		"upload-as0.qiniu.com",
+	},
+	RsHost:    "rs-as0.qiniu.com",
+	RsfHost:   "rsf-as0.qiniu.com",
+	ApiHost:   "api-as0.qiniu.com",
+	IovipHost: "iovip-as0.qbox.me",
+}
+
 // for programmers
 var Zone_z0 = ZoneHuadong
 var Zone_z1 = ZoneHuabei
 var Zone_z2 = ZoneHuanan
 var Zone_na0 = ZoneBeimei
+var Zone_as0 = ZoneXinjiapo
 
 // UcHost 为查询空间相关域名的API服务地址
 const UcHost = "https://uc.qbox.me"
@@ -186,5 +201,9 @@ func setSpecificHosts(ioHost string, zone *Zone) {
 		zone.RsHost = "rs-na0.qiniu.com"
 		zone.RsfHost = "rsf-na0.qiniu.com"
 		zone.ApiHost = "api-na0.qiniu.com"
+	} else if strings.Contains(ioHost, "-as0") {
+		zone.RsHost = "rs-as0.qiniu.com"
+		zone.RsfHost = "rsf-as0.qiniu.com"
+		zone.ApiHost = "api-as0.qiniu.com"
 	}
 }
