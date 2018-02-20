@@ -30,6 +30,46 @@ func (z *Zone) String() string {
 	return str
 }
 
+func (z *Zone) GetRsfHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.RsfHost)
+}
+
+func (z *Zone) GetIoHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.IovipHost)
+}
+
+func (z *Zone) GetRsHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.RsHost)
+}
+
+func (z *Zone) GetApiHost(useHttps bool) string {
+
+	scheme := "http://"
+	if useHttps {
+		scheme = "https://"
+	}
+
+	return fmt.Sprintf("%s%s", scheme, z.ApiHost)
+}
+
 // ZoneHuadong 表示华东机房
 var ZoneHuadong = Zone{
 	SrcUpHosts: []string{
