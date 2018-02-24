@@ -78,13 +78,9 @@ func (mac *Mac) SignRequestV2(req *http.Request) (token string, err error) {
 		io.WriteString(h, u.RawQuery)
 	}
 
-	//write host and posrt
+	//write host and post
 	io.WriteString(h, "\nHost: ")
 	io.WriteString(h, req.Host)
-	if req.URL.Port() != "" {
-		io.WriteString(h, ":")
-		io.WriteString(h, req.URL.Port())
-	}
 
 	//write content type
 	contentType := req.Header.Get("Content-Type")

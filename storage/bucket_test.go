@@ -125,6 +125,18 @@ func TestFetch(t *testing.T) {
 	}
 }
 
+func TestAsyncFetch(t *testing.T) {
+
+	param := AsyncFetchParam{Url: testFetchUrl, Bucket: testBucket}
+	ret, err := bucketManager.AsyncFetch(param)
+	if err != nil {
+		t.Logf("Fetch() error, %s", err)
+		t.Fail()
+	} else {
+		t.Logf("FetchRet:\n %#v", ret)
+	}
+}
+
 func TestFetchWithoutKey(t *testing.T) {
 	ret, err := bucketManager.FetchWithoutKey(testFetchUrl, testBucket)
 	if err != nil {
