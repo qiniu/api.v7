@@ -94,7 +94,7 @@ var ZoneBeimei = Zone{
 	IovipHost: "iovip-na0.qbox.me",
 }
 
-// ZoneBeimei 表示新加坡机房
+// ZoneXinjiapo 表示新加坡机房
 var ZoneXinjiapo = Zone{
 	SrcUpHosts: []string{
 		"up-as0.qiniu.com",
