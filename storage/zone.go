@@ -83,10 +83,10 @@ var ZoneHuanan = Zone{
 // ZoneBeimei 表示北美机房
 var ZoneBeimei = Zone{
 	SrcUpHosts: []string{
-		"up-na0.qiniu.com",
+		"up-na0.qiniup.com",
 	},
 	CdnUpHosts: []string{
-		"upload-na0.qiniu.com",
+		"upload-na0.qiniup.com",
 	},
 	RsHost:    "rs-na0.qiniu.com",
 	RsfHost:   "rsf-na0.qiniu.com",
@@ -97,10 +97,10 @@ var ZoneBeimei = Zone{
 // ZoneXinjiapo 表示新加坡机房
 var ZoneXinjiapo = Zone{
 	SrcUpHosts: []string{
-		"up-as0.qiniu.com",
+		"up-as0.qiniup.com",
 	},
 	CdnUpHosts: []string{
-		"upload-as0.qiniu.com",
+		"upload-as0.qiniup.com",
 	},
 	RsHost:    "rs-as0.qiniu.com",
 	RsfHost:   "rsf-as0.qiniu.com",
