@@ -47,26 +47,22 @@ type MergePublishRtmp struct {
 // AppID: app 的唯一标识，创建的时候由系统生成。
 type App struct {
 	AppID string `json:"appId"`
-	AppReq
+	AppInitConf
 	MergePublishRtmp MergePublishRtmp `json:"mergePublishRtmp,omitempty"`
 	CreatedAt        time.Time        `json:"createdAt"`
 	UpdatedAt        time.Time        `json:"updatedAt"`
 }
 
-// AppReq 创建 App 请求参数
+// AppInitConf 创建 App 请求参数
 // Title: app 的名称， 可选。
 // Hub: 绑定的直播 hub，可选，用于合流后 rtmp 推流。
 // MaxUsers: int 类型，可选，连麦房间支持的最大在线人数。
-// NoAutoCloseRoom: bool 指针类型，可选，true 表示禁止自动关闭房间。
-// NoAutoCreateRoom: bool 指针指型，可选，true 表示禁止自动创建房间。
 // NoAutoKickUser: bool 类型，可选，禁止自动踢人。
-type AppReq struct {
-	Hub              string `json:"hub,omitempty"`
-	Title            string `json:"title,omitempty"`
-	MaxUsers         int    `json:"maxUsers,omitempty"`
-	NoAutoCloseRoom  bool   `json:"noAutoCloseRoom,omitempty"`
-	NoAutoCreateRoom bool   `json:"noAutoCreateRoom,omitempty"`
-	NoAutoKickUser   bool   `json:"noAutoKickUser,omitempty"`
+type AppInitConf struct {
+	Hub            string `json:"hub,omitempty"`
+	Title          string `json:"title,omitempty"`
+	MaxUsers       int    `json:"maxUsers,omitempty"`
+	NoAutoKickUser bool   `json:"noAutoKickUser,omitempty"`
 }
 
 // MergePublishRtmpInfo 连麦合流转推 RTMP 的配置更改信息
@@ -87,8 +83,6 @@ type AppUpdateInfo struct {
 	Hub              *string               `json:"hub,omitempty"`
 	Title            *string               `json:"title,omitempty"`
 	MaxUsers         *int                  `json:"maxUsers,omitempty"`
-	NoAutoCloseRoom  *bool                 `json:"noAutoCloseRoom,omitempty"`
-	NoAutoCreateRoom *bool                 `json:"noAutoCreateRoom,omitempty"`
 	NoAutoKickUser   *bool                 `json:"noAutoKickUser,omitempty"`
 	MergePublishRtmp *MergePublishRtmpInfo `json:"mergePublishRtmp,omitempty"`
 }
@@ -105,56 +99,56 @@ func NewManager(mac *qbox.Mac) *Manager {
 }
 
 // CreateApp 新建实时音视频云
-func (r *Manager) CreateApp(appReq AppReq) (App, ResInfo, error) {
+func (r *Manager) CreateApp(appReq AppInitConf) (App, error) {
 	url := buildURL("/v3/apps")
 	ret := App{}
 	info := postReq(r.httpClient, r.mac, url, &appReq, &ret)
-	return ret, *info, info.Err
+	return ret, info.Err
 }
 
 // GetApp 根据 appID 获取 实时音视频云 信息
-func (r *Manager) GetApp(appID string) (App, ResInfo, error) {
+func (r *Manager) GetApp(appID string) (App, error) {
 	url := buildURL("/v3/apps/" + appID)
 	ret := App{}
 	info := getReq(r.httpClient, r.mac, url, &ret)
-	return ret, *info, info.Err
+	return ret, info.Err
 }
 
 // DeleteApp 根据 appID 删除 实时音视频云
-func (r *Manager) DeleteApp(appID string) (ResInfo, error) {
+func (r *Manager) DeleteApp(appID string) error {
 	url := buildURL("/v3/apps/" + appID)
 	info := delReq(r.httpClient, r.mac, url, nil)
-	return *info, info.Err
+	return info.Err
 }
 
 // UpdateApp 根据 appID, App 更改实时音视频云 信息
-func (r *Manager) UpdateApp(appID string, appInfo AppUpdateInfo) (App, ResInfo, error) {
+func (r *Manager) UpdateApp(appID string, appInfo AppUpdateInfo) (App, error) {
 	url := buildURL("/v3/apps/" + appID)
 	ret := App{}
 	info := postReq(r.httpClient, r.mac, url, &appInfo, &ret)
-	return ret, *info, info.Err
+	return ret, info.Err
 }
 
 // ListUser 根据 appID, roomName 获取连麦房间里在线的用户
 // appID: 连麦房间所属的 app 。
 // roomName: 操作所查询的连麦房间。
-func (r *Manager) ListUser(appID, roomName string) ([]User, ResInfo, error) {
+func (r *Manager) ListUser(appID, roomName string) ([]User, error) {
 	url := buildURL("/v3/apps/" + appID + "/rooms/" + roomName + "/users")
 	users := struct {
 		Users []User `json:"users"`
 	}{}
 	info := getReq(r.httpClient, r.mac, url, &users)
-	return users.Users, *info, info.Err
+	return users.Users, info.Err
 }
 
 // KickUser 根据 appID, roomName, UserID 剔除在线的用户
 // appID: 连麦房间所属的 app 。
 // roomName: 连麦房间。
 // userID: 操作所剔除的用户。
-func (r *Manager) KickUser(appID, roomName, userID string) (ResInfo, error) {
+func (r *Manager) KickUser(appID, roomName, userID string) error {
 	url := buildURL("/v3/apps/" + appID + "/rooms/" + roomName + "/users/" + userID)
 	info := delReq(r.httpClient, r.mac, url, nil)
-	return *info, info.Err
+	return info.Err
 }
 
 // RoomQuery 房间查询响应结果
@@ -175,7 +169,41 @@ type RoomName string
 // roomNamePrefix: 所查询房间名的前缀索引，可以为空。
 // offset: int 类型，分页查询的位移标记。
 // limit: int 类型，此次查询的最大长度。
-func (r *Manager) ListActiveRoom(appID, roomNamePrefix string, offset, limit int) (RoomQuery, ResInfo, error) {
+func (r *Manager) ListActiveRoom(appID, roomNamePrefix string, offset, limit int) (RoomQuery, error) {
+	ret, _, err := r.doListActiveRoom(appID, roomNamePrefix, offset, limit)
+	return ret, err
+}
+
+// ListAllActiveRoom 根据 appID, roomNamePrefix 查询当前活跃的房间
+// appID: 连麦房间所属的 app 。
+// roomNamePrefix: 所查询房间名的前缀索引，可以为空。
+func (r *Manager) ListAllActiveRoom(appID, roomNamePrefix string) ([]RoomName, error) {
+	ns := []RoomName{}
+	var err error = nil
+	q := RoomQuery{}
+	q.IsEnd = false
+	q.Offset = 0
+	q.Rooms = []RoomName{""}
+	info := resInfo{Code: 200}
+	for err == nil && info.Code == 200 &&
+		len(q.Rooms) > 0 && !q.IsEnd {
+		q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
+		if err != nil && info.Code != 401 {
+			time.Sleep(100 * time.Millisecond)
+			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
+		}
+		if err != nil && info.Code != 401 {
+			time.Sleep(500 * time.Millisecond)
+			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
+		}
+		if err == nil {
+			ns = append(ns, q.Rooms...)
+		}
+	}
+	return ns, err
+}
+
+func (r *Manager) doListActiveRoom(appID, roomNamePrefix string, offset, limit int) (RoomQuery, resInfo, error) {
 	query := ""
 	roomNamePrefix = strings.TrimSpace(roomNamePrefix)
 	if len(roomNamePrefix) != 0 {
@@ -186,34 +214,6 @@ func (r *Manager) ListActiveRoom(appID, roomNamePrefix string, offset, limit int
 	ret := RoomQuery{}
 	info := getReq(r.httpClient, r.mac, url, &ret)
 	return ret, *info, info.Err
-}
-
-// ListAllActiveRoom 根据 appID, roomNamePrefix 查询当前活跃的房间
-// appID: 连麦房间所属的 app 。
-// roomNamePrefix: 所查询房间名的前缀索引，可以为空。
-func (r *Manager) ListAllActiveRoom(appID, roomNamePrefix string) ([]RoomName, ResInfo, error) {
-	ns := []RoomName{}
-	var err error = nil
-	q := RoomQuery{}
-	q.IsEnd = false
-	q.Rooms = []RoomName{""}
-	info := ResInfo{Code: 200}
-	for offset := 0; err == nil && info.Code == 200 &&
-		len(q.Rooms) > 0 && !q.IsEnd; offset += 100 {
-		q, info, err = r.ListActiveRoom(appID, roomNamePrefix, offset, 100)
-		if err != nil && info.Code != 401 {
-			time.Sleep(100 * time.Millisecond)
-			q, info, err = r.ListActiveRoom(appID, roomNamePrefix, offset, 100)
-		}
-		if err != nil && info.Code != 401 {
-			time.Sleep(500 * time.Millisecond)
-			q, info, err = r.ListActiveRoom(appID, roomNamePrefix, offset, 100)
-		}
-		if err == nil {
-			ns = append(ns, q.Rooms...)
-		}
-	}
-	return ns, info, err
 }
 
 // RoomAccess 房间管理凭证

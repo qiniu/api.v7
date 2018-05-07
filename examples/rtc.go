@@ -25,131 +25,126 @@ func init() {
 	manager = rtc.NewManager(mac)
 }
 
-func roomToken(appId string) {
-	token, err := manager.RoomToken(rtc.RoomAccess{AppID: appId, RoomName: "sdhfuexx", UserID: "ghjkdfie", ExpireAt: time.Now().Unix() + 3600})
-	url := fmt.Sprintf("https://rtc.qiniuapi.com/v3/apps/%v/rooms/%v/auth?user=%v&token=%v", appId, "sdhfuexx", "ghjkdfie", token)
+func roomToken(appId, roomName, userID string) (token string, err error) {
+	token, err = manager.RoomToken(rtc.RoomAccess{AppID: appId, RoomName: roomName, UserID: userID, ExpireAt: time.Now().Unix() + 3600})
+	return
+}
+
+func dosomethingbyRoomToken(token string, appId, roomName, userID string) (err error) {
+	url := fmt.Sprintf("https://rtc.qiniuapi.com/v3/apps/%v/rooms/%v/auth?user=%v&token=%v", appId, "roomName", "userID", token)
 	req, err := http.NewRequest("GET", url, strings.NewReader(""))
-	fmt.Println(req.URL.RequestURI())
-	fmt.Println(err)
+	if err != nil {
+		return
+	}
 	res, err := http.DefaultClient.Do(req)
-	fmt.Println(err)
+	if err != nil {
+		return
+	}
 	resData, err := ioutil.ReadAll(res.Body)
-	fmt.Println(err)
+	if err != nil {
+		return
+	}
 	fmt.Println(string(resData))
 	jn, err := json.MarshalIndent(res.Header, "  ", "  ")
-	fmt.Println(err)
 	fmt.Println(string(jn))
+	return
+
 }
 
-func createApp() *rtc.App {
-	appReq := rtc.AppReq{Hub: "hailong", Title: "gosdk-test", MaxUsers: 3, NoAutoCloseRoom: true, NoAutoCreateRoom: true, NoAutoKickUser: true}
-	app, info, err := manager.CreateApp(appReq)
-	j, _ := json.MarshalIndent(app, "  ", "  ")
-	fmt.Println(string(j))
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println(err)
-	fmt.Println()
-
-	return &app
+func createApp() (rtc.App, error) {
+	hubName := "hailong"
+	appReq := rtc.AppInitConf{Hub: hubName, Title: "gosdk-test", MaxUsers: 3, NoAutoKickUser: true}
+	app, err := manager.CreateApp(appReq)
+	return app, err
 }
 
-func delApp(appId string) {
-	info, err := manager.DeleteApp(appId)
-	fmt.Println(err)
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println()
-}
-
-func getApp(appId string) {
-	app, info, err := manager.GetApp(appId)
-	fmt.Println(err)
-	j, _ := json.MarshalIndent(app, "  ", "  ")
-	fmt.Println(string(j))
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println()
-}
-
-func updateApp(appId string) {
+func updateApp(appID string) (rtc.App, error) {
 	appInfo := rtc.AppUpdateInfo{}
 	mergePublishRtmp := rtc.MergePublishRtmpInfo{}
 	mergePublishRtmp.Enable = &(&struct{ x bool }{true}).x
 
 	appInfo.NoAutoKickUser = &(&struct{ x bool }{false}).x
-	appInfo.NoAutoCreateRoom = &(&struct{ x bool }{true}).x
 	appInfo.MergePublishRtmp = &mergePublishRtmp
-	j, _ := json.MarshalIndent(appInfo, "  ", "  ")
-	fmt.Println(string(j))
 
-	app, info, err := manager.UpdateApp(appId, appInfo)
-	fmt.Println(err)
-	j, _ = json.MarshalIndent(app, "  ", "  ")
-	fmt.Println(string(j))
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Printf("app.MaxUsers == 3 is %v\n", app.MaxUsers == 3)
-	fmt.Printf("false app.NoAutoKickUser is %v\n", app.NoAutoKickUser)
-	fmt.Printf("true app.NoAutoCreateRoom  is %v\n", app.NoAutoCreateRoom)
-	fmt.Println()
-
+	app, err := manager.UpdateApp(appID, appInfo)
+	return app, err
 }
 
-func listUser(appId string) {
-	rooms, info, err := manager.ListAllActiveRoom(appId, "l")
-	fmt.Println(err)
-	j, _ := json.MarshalIndent(rooms, "  ", "  ")
-	fmt.Println(string(j))
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println()
-}
-
-func listUser1(appId string) {
-	rooms, info, err := manager.ListActiveRoom(appId, "l", 0, 1)
-	fmt.Println(err)
-	j, _ := json.MarshalIndent(rooms, "  ", "  ")
-	fmt.Println(string(j))
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println()
-}
-
-func kickUser(appId string) {
-	info, err := manager.KickUser(appId, "lhurugt", "mvnrutirejur")
-	fmt.Println(err)
-	i, _ := json.MarshalIndent(info, "  ", "  ")
-	fmt.Println(string(i))
-	fmt.Println()
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
 }
 
 func main() {
 	fmt.Println("\napp := createApp()")
-	app := createApp()
+	app, err := createApp()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	fmt.Println("\nroomToken(app.AppID)")
-	roomToken(app.AppID)
+	token, err := roomToken(app.AppID, "roomName", "userID")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		err = dosomethingbyRoomToken(token, app.AppID, "roomName", "userID")
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
 	fmt.Println("\ngetApp(app.AppID)")
-	getApp(app.AppID)
+	app, err = manager.GetApp(app.AppID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		j, _ := json.MarshalIndent(app, "  ", "  ")
+		fmt.Println(string(j))
+	}
+
 	fmt.Println("\nlistUser(app.AppID)")
-	listUser(app.AppID)
+	rooms, err := manager.ListAllActiveRoom(app.AppID, "l")
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		fmt.Printf("Rooms: %v\n", rooms[:min(10, len(rooms))])
+	}
+
 	fmt.Println("\nlistUser1(app.AppID)")
-	listUser1(app.AppID)
+	roomQuery, err := manager.ListActiveRoom(app.AppID, "l", 0, 1)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		j, _ := json.MarshalIndent(roomQuery, "  ", "  ")
+		fmt.Println(string(j))
+	}
+
 	fmt.Println("\nkickUser(app.AppID)")
-	kickUser(app.AppID)
+	err = manager.KickUser(app.AppID, "roomName", "userID")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	fmt.Println("\nupdateApp(app.AppID)")
-	updateApp(app.AppID)
+	app, err = updateApp(app.AppID)
+	if err != nil {
+		fmt.Println(err)
+	}
+	if err == nil {
+		j, _ := json.MarshalIndent(app, "  ", "  ")
+		fmt.Println(string(j))
+	}
 
 	fmt.Println("\ndelApp(app.AppID)")
-	delApp(app.AppID)
-	fmt.Println("\ngetApp(app.AppID)")
-	getApp(app.AppID)
-	fmt.Println("\nlistUser1(app.AppID)")
-	listUser(app.AppID)
-	listUser1(app.AppID)
-	fmt.Println("\nkickUser(app.AppID)")
-	kickUser(app.AppID)
-
-	updateApp(app.AppID)
+	err = manager.DeleteApp(app.AppID)
+	if err != nil {
+		fmt.Println(err)
+	}
 }

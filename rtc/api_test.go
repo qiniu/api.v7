@@ -26,38 +26,46 @@ func init() {
 func TestApp(t *testing.T) {
 	app := checkCreateApp(t)
 	checkGetApp(t, app.AppID)
-	checkAllActiveRoom(t, app.AppID)
-	checkListUser(t, app.AppID)
-	checkKickUser(t, app.AppID)
+	rooms := checkAllActiveRoom(t, app.AppID)
+	room := "roomName"
+	if len(rooms) > 0 {
+		room = string(rooms[0])
+	}
+	users := checkListUser(t, app.AppID, room)
+	userID := "userID"
+	if len(users) > 0 {
+		userID = users[0].UserID
+	}
+	checkKickUser(t, app.AppID, room, userID)
 	checkUpdate(t, app.AppID)
 	checkRoomToken(t, app.AppID)
 	checkDel(t, app.AppID)
 }
 
 func checkApp(t *testing.T, app *App) {
-	if app.Title != "gosdk-test" || !app.NoAutoCloseRoom || app.NoAutoCreateRoom || !app.NoAutoKickUser {
+	if app.Title != "gosdk-test" || !app.NoAutoKickUser {
 		t.Error(app)
 	}
 }
 
-func checkInfo(t *testing.T, info *ResInfo, err error) {
-	if err != nil || info.Code != 200 {
-		t.Error(info)
+func checkInfo(t *testing.T, err error) {
+	if err != nil {
+		t.Error(err)
 	}
 }
 
 func checkCreateApp(t *testing.T) *App {
-	appReq := AppReq{Hub: "hailong", Title: "gosdk-test", MaxUsers: 3, NoAutoCloseRoom: true, NoAutoCreateRoom: false, NoAutoKickUser: true}
-	app, info, err := manager.CreateApp(appReq)
+	appInitConf := AppInitConf{Hub: "hailong", Title: "gosdk-test", MaxUsers: 3, NoAutoKickUser: true}
+	app, err := manager.CreateApp(appInitConf)
 	checkApp(t, &app)
-	checkInfo(t, &info, err)
+	checkInfo(t, err)
 	return &app
 }
 
 func checkGetApp(t *testing.T, appID string) {
-	app, info, err := manager.GetApp(appID)
+	app, err := manager.GetApp(appID)
 	checkApp(t, &app)
-	checkInfo(t, &info, err)
+	checkInfo(t, err)
 }
 
 func checkUpdate(t *testing.T, appID string) {
@@ -71,7 +79,6 @@ func checkUpdate(t *testing.T, appID string) {
 	mergePublishRtmp.StreamTitle = &StreamTitle
 
 	appInfo.NoAutoKickUser = &(&struct{ x bool }{false}).x
-	appInfo.NoAutoCreateRoom = func(i bool) *bool { return &i }(true)
 	appInfo.MergePublishRtmp = &mergePublishRtmp
 
 	m := struct2JsonMap(appInfo)
@@ -80,41 +87,50 @@ func checkUpdate(t *testing.T, appID string) {
 		t.Errorf("m[\"Title\"] should be nil, but %v. and m is %v\n", m["Title"], m)
 	}
 
-	app, info, err := manager.UpdateApp(appID, appInfo)
-	checkInfo(t, &info, err)
-	if app.MaxUsers != 3 || !app.NoAutoCreateRoom || app.NoAutoKickUser || !app.MergePublishRtmp.AudioOnly || app.MergePublishRtmp.StreamTitle != StreamTitle || app.MergePublishRtmp.URL != "" {
+	app, err := manager.UpdateApp(appID, appInfo)
+	checkInfo(t, err)
+	if app.MaxUsers != 3 || app.NoAutoKickUser || !app.MergePublishRtmp.AudioOnly || app.MergePublishRtmp.StreamTitle != StreamTitle || app.MergePublishRtmp.URL != "" {
 		t.Error(app)
 	}
 
 	appInfo = AppUpdateInfo{}
 	appInfo.MaxUsers = &(&struct{ x int }{4}).x
-	app, info, err = manager.UpdateApp(appID, appInfo)
-	checkInfo(t, &info, err)
-	if app.MaxUsers != 4 || !app.NoAutoCreateRoom || app.NoAutoKickUser || !app.MergePublishRtmp.AudioOnly || app.MergePublishRtmp.StreamTitle != StreamTitle || app.MergePublishRtmp.URL != "" {
+	app, err = manager.UpdateApp(appID, appInfo)
+	checkInfo(t, err)
+	if app.MaxUsers != 4 || app.NoAutoKickUser || !app.MergePublishRtmp.AudioOnly || app.MergePublishRtmp.StreamTitle != StreamTitle || app.MergePublishRtmp.URL != "" {
 		t.Error(app)
 	}
 }
 
-func checkAllActiveRoom(t *testing.T, appID string) {
-	rooms, info, err := manager.ListAllActiveRoom(appID, "l")
-	checkInfo(t, &info, err)
-	if len(rooms) > 0 {
-		t.Log(rooms)
-	}
+func checkAllActiveRoom(t *testing.T, appID string) []RoomName {
+	rooms, err := manager.ListAllActiveRoom(appID, "l")
+	checkInfo(t, err)
+	t.Logf("Rooms: %v", rooms[:min(10, len(rooms))])
+	return rooms
 }
 
-func checkListUser(t *testing.T, appID string) {
-	users, info, err := manager.ListUser(appID, "roomName")
-	checkInfo(t, &info, err)
-	if len(users) > 0 {
-		t.Log(users)
-	}
+func checkListUser(t *testing.T, appID, roomName string) []User {
+	users, err := manager.ListUser(appID, roomName)
+	checkInfo(t, err)
+	t.Logf("Users: %v", users[:min(10, len(users))])
+	return users
 }
 
-func checkKickUser(t *testing.T, appID string) {
-	info, err := manager.KickUser(appID, "roomName", "userID")
-	if err != nil || (info.Code != 200 && info.Code/100 != 6) {
-		t.Error(info)
+func min(a, b int) int {
+	if a > b {
+		return b
+	}
+	return a
+}
+
+func checkKickUser(t *testing.T, appID, roomName, userID string) {
+	err := manager.KickUser(appID, roomName, userID)
+	// 615   {"error":"room not active"}
+	if err != nil {
+		t.Log(err)
+		if strings.Index(err.Error(), "room not active") == -1 {
+			t.Error(err)
+		}
 	}
 }
 
@@ -139,9 +155,9 @@ func checkRoomToken(t *testing.T, appID string) {
 }
 
 func checkDel(t *testing.T, appID string) {
-	info, err := manager.DeleteApp(appID)
-	if err != nil || (info.Code != 200 && info.Code/100 != 6) {
-		t.Error(info)
+	err := manager.DeleteApp(appID)
+	if err != nil {
+		t.Error(err)
 	}
 }
 

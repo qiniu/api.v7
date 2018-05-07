@@ -11,29 +11,25 @@ import (
 	"github.com/qiniu/api.v7/auth/qbox"
 )
 
-// ResInfo is httpresponse infomation
-type ResInfo struct {
-	URL    string
-	Method string
-	Code   int
-	Err    error
-	Msg    string
-	Header map[string][]string
+// resInfo is httpresponse infomation
+type resInfo struct {
+	Code int
+	Err  error
 }
 
-func NewResInfo() ResInfo {
-	info := ResInfo{}
-	info.Header = make(map[string][]string)
+func newResInfo() resInfo {
+	info := resInfo{}
 	return info
 }
 
-func CopyHttpHeader(src *http.Header, t *ResInfo) {
+func getReqid(src *http.Header) string {
 	for k, v := range *src {
 		K := strings.Title(k)
-		if strings.Contains(K, "Reqid") || K == "Content-Length" {
-			t.Header[k] = v
+		if strings.Contains(K, "Reqid") {
+			return strings.Join(v, ", ")
 		}
 	}
+	return ""
 }
 
 func buildURL(path string) string {
@@ -44,8 +40,8 @@ func buildURL(path string) string {
 }
 
 func postReq(httpClient *http.Client, mac *qbox.Mac, url string,
-	reqParam interface{}, ret interface{}) *ResInfo {
-	info := NewResInfo()
+	reqParam interface{}, ret interface{}) *resInfo {
+	info := newResInfo()
 	var reqData []byte
 	var err error
 
@@ -75,8 +71,8 @@ func postReq(httpClient *http.Client, mac *qbox.Mac, url string,
 	return callReq(httpClient, req, mac, &info, ret)
 }
 
-func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *ResInfo {
-	info := NewResInfo()
+func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *resInfo {
+	info := newResInfo()
 	req, err := http.NewRequest("GET", url, strings.NewReader(""))
 	if err != nil {
 		info.Err = err
@@ -85,8 +81,8 @@ func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{})
 	return callReq(httpClient, req, mac, &info, ret)
 }
 
-func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *ResInfo {
-	info := NewResInfo()
+func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *resInfo {
+	info := newResInfo()
 	req, err := http.NewRequest("DELETE", url, strings.NewReader(""))
 	if err != nil {
 		info.Err = err
@@ -96,7 +92,7 @@ func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{})
 }
 
 func callReq(httpClient *http.Client, req *http.Request, mac *qbox.Mac,
-	info *ResInfo, ret interface{}) (oinfo *ResInfo) {
+	info *resInfo, ret interface{}) (oinfo *resInfo) {
 	oinfo = info
 	accessToken, err := mac.SignRequestV2(req)
 	if err != nil {
@@ -115,29 +111,31 @@ func callReq(httpClient *http.Client, req *http.Request, mac *qbox.Mac,
 	}
 
 	defer resp.Body.Close()
-	info.Method = req.Method
-	info.URL = req.URL.RequestURI()
 	info.Code = resp.StatusCode
-	CopyHttpHeader(&resp.Header, info)
+	reqid := getReqid(&resp.Header)
+
+	rebuildErr := func(msg string) error {
+		return fmt.Errorf("Code: %v, Reqid: %v, %v", info.Code, reqid, msg)
+	}
+
 	if resp.ContentLength > 2*1024*1024 {
-		err = fmt.Errorf("response is too long. Content-Length: %v", resp.ContentLength)
+		err = rebuildErr(fmt.Sprintf("response is too long. Content-Length: %v", resp.ContentLength))
 		info.Err = err
 		return
 	}
 	resData, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		info.Err = err
+		info.Err = rebuildErr(err.Error())
 		return
 	}
 	if info.Code != 200 {
-		info.Msg = string(resData)
+		info.Err = rebuildErr(string(resData))
 		return
 	}
 	if ret != nil {
 		err = json.Unmarshal(resData, ret)
-		info.Err = err
 		if err != nil {
-			info.Msg = string(resData)
+			info.Err = rebuildErr(fmt.Sprintf("err: %v, res: %v", err, resData))
 		}
 	}
 	return
