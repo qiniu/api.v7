@@ -107,7 +107,7 @@ func main() {
 		fmt.Println(string(j))
 	}
 
-	fmt.Println("\nlistUser(app.AppID)")
+	fmt.Println("\nlistAllUser(app.AppID)")
 	rooms, err := manager.ListAllActiveRoom(app.AppID, "l")
 	if err != nil {
 		fmt.Println(err)
@@ -116,7 +116,7 @@ func main() {
 		fmt.Printf("Rooms: %v\n", rooms[:min(10, len(rooms))])
 	}
 
-	fmt.Println("\nlistUser1(app.AppID)")
+	fmt.Println("\nlistUser(app.AppID)")
 	roomQuery, err := manager.ListActiveRoom(app.AppID, "l", 0, 1)
 	if err != nil {
 		fmt.Println(err)
@@ -140,11 +140,5 @@ func main() {
 	if err == nil {
 		j, _ := json.MarshalIndent(app, "  ", "  ")
 		fmt.Println(string(j))
-	}
-
-	fmt.Println("\ndelApp(app.AppID)")
-	err = manager.DeleteApp(app.AppID)
-	if err != nil {
-		fmt.Println(err)
 	}
 }
