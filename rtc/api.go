@@ -179,28 +179,22 @@ func (r *Manager) ListActiveRoom(appID, roomNamePrefix string, offset, limit int
 // roomNamePrefix: 所查询房间名的前缀索引，可以为空。
 func (r *Manager) ListAllActiveRoom(appID, roomNamePrefix string) ([]RoomName, error) {
 	ns := []RoomName{}
-	var err error = nil
-	q := RoomQuery{}
-	q.IsEnd = false
-	q.Offset = 0
-	q.Rooms = []RoomName{""}
-	info := resInfo{Code: 200}
-	for err == nil && info.Code == 200 &&
-		len(q.Rooms) > 0 && !q.IsEnd {
-		q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
-		if err != nil && info.Code != 401 {
-			time.Sleep(100 * time.Millisecond)
-			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
-		}
+	var outErr error
+	for offset := 0; ; {
+		q, info, err := r.doListActiveRoom(appID, roomNamePrefix, offset, 100)
 		if err != nil && info.Code != 401 {
 			time.Sleep(500 * time.Millisecond)
-			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, q.Offset, 100)
+			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, offset, 100)
 		}
-		if err == nil {
-			ns = append(ns, q.Rooms...)
+
+		if err != nil || q.IsEnd || len(q.Rooms) == 0 {
+			outErr = err
+			break
 		}
+		offset = q.Offset
+		ns = append(ns, q.Rooms...)
 	}
-	return ns, err
+	return ns, outErr
 }
 
 func (r *Manager) doListActiveRoom(appID, roomNamePrefix string, offset, limit int) (RoomQuery, resInfo, error) {
