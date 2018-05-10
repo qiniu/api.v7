@@ -83,7 +83,7 @@ func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{})
 
 func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *resInfo {
 	info := newResInfo()
-	req, err := http.NewRequest("DELETE", url, strings.NewReader(""))
+	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		info.Err = err
 		return &info
