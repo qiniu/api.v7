@@ -26,7 +26,7 @@ func init() {
 func TestApp(t *testing.T) {
 	app := checkCreateApp(t)
 	checkGetApp(t, app.AppID)
-	rooms := checkAllActiveRoom(t, app.AppID)
+	rooms := checkAllActiveRooms(t, app.AppID)
 	room := "roomName"
 	if len(rooms) > 0 {
 		room = string(rooms[0])
@@ -102,8 +102,8 @@ func checkUpdate(t *testing.T, appID string) {
 	}
 }
 
-func checkAllActiveRoom(t *testing.T, appID string) []RoomName {
-	rooms, err := manager.ListAllActiveRoom(appID, "l")
+func checkAllActiveRooms(t *testing.T, appID string) []RoomName {
+	rooms, err := manager.ListAllActiveRooms(appID, "l")
 	checkInfo(t, err)
 	t.Logf("Rooms: %v", rooms[:min(10, len(rooms))])
 	return rooms
@@ -137,7 +137,7 @@ func checkKickUser(t *testing.T, appID, roomName, userID string) {
 func checkRoomToken(t *testing.T, appID string) {
 	roomName := "sdhfuexx"
 	userID := "ghjkdfie"
-	token, err := manager.RoomToken(RoomAccess{AppID: appID, RoomName: roomName, UserID: userID, ExpireAt: time.Now().Unix() + 3600})
+	token, err := manager.GetRoomToken(RoomAccess{AppID: appID, RoomName: roomName, UserID: userID, ExpireAt: time.Now().Unix() + 3600})
 	url := fmt.Sprintf("https://rtc.qiniuapi.com/v3/apps/%v/rooms/%v/auth?user=%v&token=%v", appID, roomName, userID, token)
 	req, err := http.NewRequest("GET", url, strings.NewReader(""))
 	res, err := http.DefaultClient.Do(req)

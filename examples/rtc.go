@@ -25,8 +25,8 @@ func init() {
 	manager = rtc.NewManager(mac)
 }
 
-func roomToken(appId, roomName, userID string) (token string, err error) {
-	token, err = manager.RoomToken(rtc.RoomAccess{AppID: appId, RoomName: roomName, UserID: userID, ExpireAt: time.Now().Unix() + 3600})
+func getRoomToken(appId, roomName, userID string) (token string, err error) {
+	token, err = manager.GetRoomToken(rtc.RoomAccess{AppID: appId, RoomName: roomName, UserID: userID, ExpireAt: time.Now().Unix() + 3600})
 	return
 }
 
@@ -86,7 +86,7 @@ func main() {
 	}
 
 	fmt.Println("\nroomToken(app.AppID)")
-	token, err := roomToken(app.AppID, "roomName", "userID")
+	token, err := getRoomToken(app.AppID, "roomName", "userID")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -108,7 +108,7 @@ func main() {
 	}
 
 	fmt.Println("\nlistAllUser(app.AppID)")
-	rooms, err := manager.ListAllActiveRoom(app.AppID, "l")
+	rooms, err := manager.ListAllActiveRooms(app.AppID, "l")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -117,7 +117,7 @@ func main() {
 	}
 
 	fmt.Println("\nlistUser(app.AppID)")
-	roomQuery, err := manager.ListActiveRoom(app.AppID, "l", 0, 1)
+	roomQuery, err := manager.ListActiveRooms(app.AppID, "l", 0, 1)
 	if err != nil {
 		fmt.Println(err)
 	}

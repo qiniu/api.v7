@@ -164,20 +164,20 @@ type RoomQuery struct {
 // RoomName 房间名
 type RoomName string
 
-// ListActiveRoom 根据 appID, roomNamePrefix, offset, limit 查询当前活跃的房间
+// ListActiveRooms 根据 appID, roomNamePrefix, offset, limit 查询当前活跃的房间
 // appID: 连麦房间所属的 app 。
 // roomNamePrefix: 所查询房间名的前缀索引，可以为空。
 // offset: int 类型，分页查询的位移标记。
 // limit: int 类型，此次查询的最大长度。
-func (r *Manager) ListActiveRoom(appID, roomNamePrefix string, offset, limit int) (RoomQuery, error) {
+func (r *Manager) ListActiveRooms(appID, roomNamePrefix string, offset, limit int) (RoomQuery, error) {
 	ret, _, err := r.doListActiveRoom(appID, roomNamePrefix, offset, limit)
 	return ret, err
 }
 
-// ListAllActiveRoom 根据 appID, roomNamePrefix 查询当前活跃的房间
+// ListAllActiveRooms 根据 appID, roomNamePrefix 查询当前活跃的房间
 // appID: 连麦房间所属的 app 。
 // roomNamePrefix: 所查询房间名的前缀索引，可以为空。
-func (r *Manager) ListAllActiveRoom(appID, roomNamePrefix string) ([]RoomName, error) {
+func (r *Manager) ListAllActiveRooms(appID, roomNamePrefix string) ([]RoomName, error) {
 	ns := []RoomName{}
 	var outErr error
 	for offset := 0; ; {
@@ -224,8 +224,8 @@ type RoomAccess struct {
 	Permission string `json:"permission"`
 }
 
-// RoomToken 生成房间管理鉴权，连麦用户终端通过房间管理鉴权获取七牛连麦服务。
-func (r *Manager) RoomToken(roomAccess RoomAccess) (token string, err error) {
+// GetRoomToken 生成房间管理鉴权，连麦用户终端通过房间管理鉴权获取七牛连麦服务。
+func (r *Manager) GetRoomToken(roomAccess RoomAccess) (token string, err error) {
 	roomAccessByte, err := json.Marshal(roomAccess)
 	if err != nil {
 		return
