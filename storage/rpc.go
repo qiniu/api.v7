@@ -101,17 +101,17 @@ func (r Client) DoRequestWithForm(ctx Context, method, reqUrl string, headers ht
 	}
 	headers.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	requestURI := url.Values(data).Encode()
+	requestData := url.Values(data).Encode()
 	if method == "GET" || method == "HEAD" || method == "DELETE" {
 		if strings.ContainsRune(reqUrl, '?') {
 			reqUrl += "&"
 		} else {
 			reqUrl += "?"
 		}
-		return r.DoRequest(ctx, method, reqUrl+requestURI, headers)
+		return r.DoRequest(ctx, method, reqUrl+requestData, headers)
 	}
 
-	return r.DoRequestWith(ctx, method, reqUrl, headers, strings.NewReader(requestURI), len(requestURI))
+	return r.DoRequestWith(ctx, method, reqUrl, headers, strings.NewReader(requestData), len(requestData))
 }
 
 func (r Client) DoRequestWithJson(ctx Context, method, reqUrl string, headers http.Header,
