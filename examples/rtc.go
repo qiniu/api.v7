@@ -37,14 +37,10 @@ func dosomethingbyRoomToken(token string, appId, roomName, userID string) (err e
 		return
 	}
 	res, err := http.DefaultClient.Do(req)
-	defer func() {
-		if res != nil {
-			res.Body.Close()
-		}
-	}()
 	if err != nil {
 		return
 	}
+	defer res.Body.Close()
 	resData, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return

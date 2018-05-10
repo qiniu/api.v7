@@ -105,15 +105,11 @@ func callReq(httpClient *http.Client, req *http.Request, mac *qbox.Mac,
 		client = http.DefaultClient
 	}
 	resp, err := client.Do(req)
-	defer func() {
-		if resp != nil {
-			resp.Body.Close()
-		}
-	}()
 	if err != nil {
 		info.Err = err
 		return
 	}
+	defer resp.Body.Close()
 	info.Code = resp.StatusCode
 	reqid := getReqid(&resp.Header)
 
