@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
- )
+)
 
 // Zone 为空间对应的机房属性，主要包括了上传，资源管理等操作的域名
 type Zone struct {
@@ -192,7 +192,7 @@ func GetZone(ak, bucket string) (zone *Zone, err error) {
 	reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
 	var ret UcQueryRet
 	ctx := context.TODO()
-	qErr := DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil ,nil)
+	qErr := DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil, nil)
 	if qErr != nil {
 		err = fmt.Errorf("query zone error, %s", qErr.Error())
 		return
