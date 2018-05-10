@@ -8,13 +8,12 @@ import (
 	"hash/crc32"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/textproto"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/qiniu/x/rpc.v7"
 )
 
 // PutExtra 为表单上传的额外可选项
@@ -39,7 +38,7 @@ type PutRet struct {
 
 // FormUploader 表示一个表单上传的对象
 type FormUploader struct {
-	client *rpc.Client
+	client *Client
 	cfg    *Config
 }
 
@@ -50,19 +49,19 @@ func NewFormUploader(cfg *Config) *FormUploader {
 	}
 
 	return &FormUploader{
-		client: &rpc.DefaultClient,
+		client: &DefaultClient,
 		cfg:    cfg,
 	}
 }
 
 // NewFormUploaderEx 用来构建一个表单上传的对象
-func NewFormUploaderEx(cfg *Config, client *rpc.Client) *FormUploader {
+func NewFormUploaderEx(cfg *Config, client *Client) *FormUploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
 	if client == nil {
-		client = &rpc.DefaultClient
+		client = &DefaultClient
 	}
 
 	return &FormUploader{
@@ -217,7 +216,9 @@ func (p *FormUploader) put(
 	mr := io.MultiReader(&b, dataReader, crcReader, r)
 
 	contentType := writer.FormDataContentType()
-	err = p.client.CallWith64(ctx, ret, "POST", upHost, contentType, mr, bodyLen)
+	headers := http.Header{}
+	headers.Add("Content-Type", contentType)
+	err = p.client.CallWith64(ctx, ret, "POST", upHost, headers, mr, bodyLen)
 	if err != nil {
 		return
 	}
@@ -252,8 +253,8 @@ func newCrc32Reader(boundary string, h hash.Hash32) *crc32Reader {
 
 func (r *crc32Reader) Read(p []byte) (int, error) {
 	if r.flag == false {
-		crc32 := r.h.Sum32()
-		crc32Line := r.nlDashBoundaryNl + r.header + fmt.Sprintf("%010d", crc32) //padding crc32 results to 10 digits
+		crc32Sum := r.h.Sum32()
+		crc32Line := r.nlDashBoundaryNl + r.header + fmt.Sprintf("%010d", crc32Sum) //padding crc32 results to 10 digits
 		r.r = strings.NewReader(crc32Line)
 		r.flag = true
 	}

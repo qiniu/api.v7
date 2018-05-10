@@ -11,7 +11,6 @@ import (
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
-	"github.com/qiniu/x/rpc.v7"
 )
 
 var (
@@ -58,7 +57,7 @@ func main() {
 	}
 
 	// 构建表单上传的对象
-	formUploader := storage.NewFormUploaderEx(&cfg, &rpc.Client{Client: &client})
+	formUploader := storage.NewFormUploaderEx(&cfg, &storage.Client{Client: &client})
 	ret := storage.PutRet{}
 	// 可选配置
 	putExtra := storage.PutExtra{

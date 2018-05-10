@@ -1,30 +1,9 @@
 package conf
 
-import (
-	"fmt"
-	"runtime"
-	"syscall"
-
-	"github.com/qiniu/x/ctype.v7"
-	"github.com/qiniu/x/rpc.v7"
-)
-
-var version = "7.2.3"
+const Version = "7.3.0"
 
 const (
-	ctypeAppName = ctype.ALPHA | ctype.DIGIT | ctype.UNDERLINE | ctype.SPACE_BAR | ctype.SUB | ctype.DOT
+	CONTENT_TYPE_JSON  = "application/json"
+	CONTENT_TYPE_FORM  = "application/x-www-form-urlencoded"
+	CONTENT_TYPE_OCTET = "application/octet-stream"
 )
-
-// userApp should be [A-Za-z0-9_\ \-\.]*
-func SetAppName(userApp string) error {
-	if userApp != "" && !ctype.IsType(ctypeAppName, userApp) {
-		return syscall.EINVAL
-	}
-	rpc.UserAgent = fmt.Sprintf(
-		"QiniuGo/%s (%s; %s; %s) %s", version, runtime.GOOS, runtime.GOARCH, userApp, runtime.Version())
-	return nil
-}
-
-func init() {
-	SetAppName("")
-}

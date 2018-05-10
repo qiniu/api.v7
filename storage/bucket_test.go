@@ -196,6 +196,10 @@ func TestPrefetchAndImage(t *testing.T) {
 		t.Fatalf("SetImage() error, %s", err)
 	}
 
+	t.Log("set image success for bucket", testBucket)
+	//wait for image set to take effect
+	time.Sleep(time.Second * 2)
+
 	err = bucketManager.Prefetch(testBucket, testKey)
 	if err != nil {
 		t.Fatalf("Prefetch() error, %s", err)
@@ -205,6 +209,8 @@ func TestPrefetchAndImage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("UnsetImage() error, %s", err)
 	}
+
+	t.Log("unset image success for bucket", testBucket)
 }
 
 func TestListFiles(t *testing.T) {

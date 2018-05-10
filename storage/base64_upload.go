@@ -7,15 +7,14 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"net/http"
 	"strconv"
 	"strings"
-
-	"github.com/qiniu/x/rpc.v7"
 )
 
 // Base64Uploader 表示一个Base64上传对象
 type Base64Uploader struct {
-	client *rpc.Client
+	client *Client
 	cfg    *Config
 }
 
@@ -26,19 +25,19 @@ func NewBase64Uploader(cfg *Config) *Base64Uploader {
 	}
 
 	return &Base64Uploader{
-		client: &rpc.DefaultClient,
+		client: &DefaultClient,
 		cfg:    cfg,
 	}
 }
 
 // NewBase64UploaderEx 用来构建一个Base64上传的对象
-func NewBase64UploaderEx(cfg *Config, client *rpc.Client) *Base64Uploader {
+func NewBase64UploaderEx(cfg *Config, client *Client) *Base64Uploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
 	if client == nil {
-		client = &rpc.DefaultClient
+		client = &DefaultClient
 	}
 
 	return &Base64Uploader{
@@ -139,9 +138,11 @@ func (p *Base64Uploader) put(
 	}
 
 	postURL := fmt.Sprintf("%s%s", upHost, postPath.String())
-	postClient := newUptokenClient(p.client, uptoken)
-	return postClient.CallWith(ctx, ret, "POST", postURL, "application/octet-stream",
-		bytes.NewReader(base64Data), len(base64Data))
+	headers := http.Header{}
+	headers.Add("Content-Type", "application/octet-stream")
+	headers.Add("Authorization", "UpToken "+uptoken)
+
+	return p.client.CallWith(ctx, ret, "POST", postURL, headers, bytes.NewReader(base64Data), len(base64Data))
 }
 
 func (p *Base64Uploader) upHost(ak, bucket string) (upHost string, err error) {
