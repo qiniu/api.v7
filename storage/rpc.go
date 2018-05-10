@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/x/reqid.v7"
 	. "golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"qiniupkg.com/x/reqid.v7"
 	"runtime"
 	"strings"
 )
