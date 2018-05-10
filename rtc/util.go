@@ -112,7 +112,6 @@ func callReq(httpClient *http.Client, req *http.Request, mac *qbox.Mac,
 	defer resp.Body.Close()
 	info.Code = resp.StatusCode
 	reqid := getReqid(&resp.Header)
-
 	rebuildErr := func(msg string) error {
 		return fmt.Errorf("Code: %v, Reqid: %v, %v", info.Code, reqid, msg)
 	}
