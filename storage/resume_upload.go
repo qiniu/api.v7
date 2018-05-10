@@ -119,32 +119,32 @@ var once sync.Once
 // Put 方法用来上传一个文件，支持断点续传和分块上传。
 //
 // ctx     是请求的上下文。
-// ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
-// uptoken 是由业务服务器颁发的上传凭证。
+// ret     是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken 是由业务服务器颁发的上传凭证。
 // key     是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
 // f       是文件内容的访问接口。考虑到需要支持分块上传和断点续传，要的是 io.ReaderAt 接口，而不是 io.Reader。
 // fsize   是要上传的文件大小。
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
-func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, uptoken string, key string, f io.ReaderAt,
+func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, upToken string, key string, f io.ReaderAt,
 	fsize int64, extra *RputExtra) (err error) {
-	err = p.rput(ctx, ret, uptoken, key, true, f, fsize, extra)
+	err = p.rput(ctx, ret, upToken, key, true, f, fsize, extra)
 	return
 }
 
 // PutWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
-// uptoken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// upToken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 //
 // ctx     是请求的上下文。
-// ret     是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
-// uptoken 是由业务服务器颁发的上传凭证。
+// ret     是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken 是由业务服务器颁发的上传凭证。
 // f       是文件内容的访问接口。考虑到需要支持分块上传和断点续传，要的是 io.ReaderAt 接口，而不是 io.Reader。
 // fsize   是要上传的文件大小。
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
 func (p *ResumeUploader) PutWithoutKey(
-	ctx context.Context, ret interface{}, uptoken string, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
-	err = p.rput(ctx, ret, uptoken, "", false, f, fsize, extra)
+	ctx context.Context, ret interface{}, upToken string, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
+	err = p.rput(ctx, ret, upToken, "", false, f, fsize, extra)
 	return
 }
 
@@ -152,35 +152,35 @@ func (p *ResumeUploader) PutWithoutKey(
 // 和 Put 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。
-// ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
-// uptoken   是由业务服务器颁发的上传凭证。
+// ret       是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken   是由业务服务器颁发的上传凭证。
 // key       是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
 // localFile 是要上传的文件的本地路径。
 // extra     是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
 func (p *ResumeUploader) PutFile(
-	ctx context.Context, ret interface{}, uptoken, key, localFile string, extra *RputExtra) (err error) {
-	err = p.rputFile(ctx, ret, uptoken, key, true, localFile, extra)
+	ctx context.Context, ret interface{}, upToken, key, localFile string, extra *RputExtra) (err error) {
+	err = p.rputFile(ctx, ret, upToken, key, true, localFile, extra)
 	return
 }
 
 // PutFileWithoutKey 上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
-// uptoken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+// upToken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 // 和 PutWithoutKey 不同的只是一个通过提供文件路径来访问文件内容，一个通过 io.ReaderAt 来访问。
 //
 // ctx       是请求的上下文。
-// ret       是上传成功后返回的数据。如果 uptoken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
-// uptoken   是由业务服务器颁发的上传凭证。
+// ret       是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken   是由业务服务器颁发的上传凭证。
 // localFile 是要上传的文件的本地路径。
 // extra     是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
 func (p *ResumeUploader) PutFileWithoutKey(
-	ctx context.Context, ret interface{}, uptoken, localFile string, extra *RputExtra) (err error) {
-	return p.rputFile(ctx, ret, uptoken, "", false, localFile, extra)
+	ctx context.Context, ret interface{}, upToken, localFile string, extra *RputExtra) (err error) {
+	return p.rputFile(ctx, ret, upToken, "", false, localFile, extra)
 }
 
 func (p *ResumeUploader) rput(
-	ctx context.Context, ret interface{}, uptoken string,
+	ctx context.Context, ret interface{}, upToken string,
 	key string, hasKey bool, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
 
 	once.Do(initWorkers)
@@ -211,7 +211,7 @@ func (p *ResumeUploader) rput(
 	}
 	//get up host
 
-	ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
+	ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
 	if gErr != nil {
 		err = gErr
 		return
@@ -229,7 +229,6 @@ func (p *ResumeUploader) rput(
 	last := blockCnt - 1
 	blkSize := 1 << blockBits
 	nfails := 0
-	p.client = newUptokenClient(p.client, uptoken)
 
 	for i := 0; i < blockCnt; i++ {
 		blkIdx := i
@@ -242,7 +241,7 @@ func (p *ResumeUploader) rput(
 			defer wg.Done()
 			tryTimes := extra.TryTimes
 		lzRetry:
-			err := p.resumableBput(ctx, upHost, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
+			err := p.resumableBput(ctx, upToken, upHost, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
@@ -262,11 +261,11 @@ func (p *ResumeUploader) rput(
 		return ErrPutFailed
 	}
 
-	return p.Mkfile(ctx, upHost, ret, key, hasKey, fsize, extra)
+	return p.Mkfile(ctx, upToken, upHost, ret, key, hasKey, fsize, extra)
 }
 
 func (p *ResumeUploader) rputFile(
-	ctx context.Context, ret interface{}, uptoken string,
+	ctx context.Context, ret interface{}, upToken string,
 	key string, hasKey bool, localFile string, extra *RputExtra) (err error) {
 
 	f, err := os.Open(localFile)
@@ -280,7 +279,7 @@ func (p *ResumeUploader) rputFile(
 		return
 	}
 
-	return p.rput(ctx, ret, uptoken, key, hasKey, f, fi.Size(), extra)
+	return p.rput(ctx, ret, upToken, key, hasKey, f, fi.Size(), extra)
 }
 
 func (p *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {

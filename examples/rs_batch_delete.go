@@ -6,7 +6,6 @@ import (
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
-	"github.com/qiniu/x/rpc.v7"
 )
 
 var (
@@ -42,7 +41,7 @@ func main() {
 	rets, err := bucketManager.Batch(deleteOps)
 	if err != nil {
 		// 遇到错误
-		if _, ok := err.(*rpc.ErrorInfo); ok {
+		if _, ok := err.(*storage.ErrorInfo); ok {
 			for _, ret := range rets {
 				// 200 为成功
 				fmt.Printf("%d\n", ret.Code)

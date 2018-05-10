@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7/seekable"
 )
 
@@ -107,14 +108,12 @@ func (mac *Mac) SignRequestV2(req *http.Request) (token string, err error) {
 
 // 管理凭证生成时，是否同时对request body进行签名
 func incBody(req *http.Request) bool {
-	return req.Body != nil &&
-		req.Header.Get("Content-Type") == "application/x-www-form-urlencoded"
+	return req.Body != nil && req.Header.Get("Content-Type") == conf.CONTENT_TYPE_FORM
 }
 
 func incBodyV2(req *http.Request) bool {
 	contentType := req.Header.Get("Content-Type")
-	return req.Body != nil && (contentType == "application/x-www-form-urlencoded" ||
-		contentType == "application/json")
+	return req.Body != nil && (contentType == conf.CONTENT_TYPE_FORM || contentType == conf.CONTENT_TYPE_JSON)
 }
 
 // VerifyCallback 验证上传回调请求是否来自七牛

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/x/rpc.v7"
+	"github.com/qiniu/api.v7/conf"
+	"net/http"
 )
 
 // OperationManager 提供了数据处理相关的方法
 type OperationManager struct {
-	client *rpc.Client
+	client *Client
 	mac    *qbox.Mac
 	cfg    *Config
 }
@@ -21,20 +22,20 @@ func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 	}
 
 	return &OperationManager{
-		client: NewClient(mac, nil),
+		client: &DefaultClient,
 		mac:    mac,
 		cfg:    cfg,
 	}
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
-func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *rpc.Client) *OperationManager {
+func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
 	if client == nil {
-		client = NewClient(mac, nil)
+		client = &DefaultClient
 	}
 
 	return &OperationManager{
@@ -143,14 +144,16 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 		pfopParams["force"] = []string{"1"}
 	}
 	var ret PfopRet
-	ctx := context.TODO()
+	ctx := context.WithValue(context.TODO(), "mac", m.mac)
 	reqHost, reqErr := m.apiHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
 	}
 	reqURL := fmt.Sprintf("%s/pfop/", reqHost)
-	err = m.client.CallWithForm(ctx, &ret, "POST", reqURL, pfopParams)
+	headers := http.Header{}
+	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
+	err = m.client.CallWithForm(ctx, &ret, "POST", reqURL, headers, pfopParams)
 	if err != nil {
 		return
 	}
@@ -164,7 +167,9 @@ func (m *OperationManager) Prefop(persistentID string) (ret PrefopRet, err error
 	ctx := context.TODO()
 	reqHost := m.prefopApiHost(persistentID)
 	reqURL := fmt.Sprintf("%s/status/get/prefop?id=%s", reqHost, persistentID)
-	err = m.client.Call(ctx, &ret, "GET", reqURL)
+	headers := http.Header{}
+	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
+	err = m.client.Call(ctx, &ret, "GET", reqURL, headers)
 	return
 }
 
