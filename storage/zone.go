@@ -80,8 +80,8 @@ var ZoneHuadong = Zone{
 		"upload-nb.qiniup.com",
 		"upload-xs.qiniup.com",
 	},
-	RsHost:    "rs.qiniu.com",
-	RsfHost:   "rsf.qiniu.com",
+	RsHost:    "rs.qbox.me",
+	RsfHost:   "rsf.qbox.me",
 	ApiHost:   "api.qiniu.com",
 	IovipHost: "iovip.qbox.me",
 }
@@ -94,8 +94,8 @@ var ZoneHuabei = Zone{
 	CdnUpHosts: []string{
 		"upload-z1.qiniup.com",
 	},
-	RsHost:    "rs-z1.qiniu.com",
-	RsfHost:   "rsf-z1.qiniu.com",
+	RsHost:    "rs-z1.qbox.me",
+	RsfHost:   "rsf-z1.qbox.me",
 	ApiHost:   "api-z1.qiniu.com",
 	IovipHost: "iovip-z1.qbox.me",
 }
@@ -112,8 +112,8 @@ var ZoneHuanan = Zone{
 		"upload-gz.qiniup.com",
 		"upload-fs.qiniup.com",
 	},
-	RsHost:    "rs-z2.qiniu.com",
-	RsfHost:   "rsf-z2.qiniu.com",
+	RsHost:    "rs-z2.qbox.me",
+	RsfHost:   "rsf-z2.qbox.me",
 	ApiHost:   "api-z2.qiniu.com",
 	IovipHost: "iovip-z2.qbox.me",
 }
@@ -126,8 +126,8 @@ var ZoneBeimei = Zone{
 	CdnUpHosts: []string{
 		"upload-na0.qiniup.com",
 	},
-	RsHost:    "rs-na0.qiniu.com",
-	RsfHost:   "rsf-na0.qiniu.com",
+	RsHost:    "rs-na0.qbox.me",
+	RsfHost:   "rsf-na0.qbox.me",
 	ApiHost:   "api-na0.qiniu.com",
 	IovipHost: "iovip-na0.qbox.me",
 }
@@ -140,8 +140,8 @@ var ZoneXinjiapo = Zone{
 	CdnUpHosts: []string{
 		"upload-as0.qiniup.com",
 	},
-	RsHost:    "rs-as0.qiniu.com",
-	RsfHost:   "rsf-as0.qiniu.com",
+	RsHost:    "rs-as0.qbox.me",
+	RsfHost:   "rsf-as0.qbox.me",
 	ApiHost:   "api-as0.qiniu.com",
 	IovipHost: "iovip-as0.qbox.me",
 }
@@ -228,20 +228,20 @@ func GetZone(ak, bucket string) (zone *Zone, err error) {
 
 func setSpecificHosts(ioHost string, zone *Zone) {
 	if strings.Contains(ioHost, "-z1") {
-		zone.RsHost = "rs-z1.qiniu.com"
-		zone.RsfHost = "rsf-z1.qiniu.com"
+		zone.RsHost = "rs-z1.qbox.me"
+		zone.RsfHost = "rsf-z1.qbox.me"
 		zone.ApiHost = "api-z1.qiniu.com"
 	} else if strings.Contains(ioHost, "-z2") {
-		zone.RsHost = "rs-z2.qiniu.com"
-		zone.RsfHost = "rsf-z2.qiniu.com"
+		zone.RsHost = "rs-z2.qbox.me"
+		zone.RsfHost = "rsf-z2.qbox.me"
 		zone.ApiHost = "api-z2.qiniu.com"
 	} else if strings.Contains(ioHost, "-na0") {
-		zone.RsHost = "rs-na0.qiniu.com"
-		zone.RsfHost = "rsf-na0.qiniu.com"
+		zone.RsHost = "rs-na0.qbox.me"
+		zone.RsfHost = "rsf-na0.qbox.me"
 		zone.ApiHost = "api-na0.qiniu.com"
 	} else if strings.Contains(ioHost, "-as0") {
-		zone.RsHost = "rs-as0.qiniu.com"
-		zone.RsfHost = "rsf-as0.qiniu.com"
+		zone.RsHost = "rs-as0.qbox.me"
+		zone.RsfHost = "rsf-as0.qbox.me"
 		zone.ApiHost = "api-as0.qiniu.com"
 	}
 }
