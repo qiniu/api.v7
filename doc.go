@@ -15,5 +15,6 @@ import (
 	_ "github.com/qiniu/api.v7/auth/qbox"
 	_ "github.com/qiniu/api.v7/cdn"
 	_ "github.com/qiniu/api.v7/conf"
+	_ "github.com/qiniu/api.v7/rtc"
 	_ "github.com/qiniu/api.v7/storage"
 )
