@@ -132,6 +132,21 @@ func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, upToken strin
 	return
 }
 
+// PutWithoutSize 方法用来上传一个文件，支持断点续传和分块上传。
+//
+// ctx     是请求的上下文。
+// ret     是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken 是由业务服务器颁发的上传凭证。
+// key     是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+// f       是文件内容的访问接口。支持 io.Reader。
+// extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
+//
+func (p *ResumeUploader) PutWithoutSize(ctx context.Context, ret interface{}, upToken string, key string,
+	f io.Reader, extra *RputExtra) (err error) {
+	err = p.rputWithoutSize(ctx, ret, upToken, key, true, f, extra)
+	return
+}
+
 // PutWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
 // upToken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 //
@@ -259,6 +274,76 @@ func (p *ResumeUploader) rput(
 	wg.Wait()
 	if nfails != 0 {
 		return ErrPutFailed
+	}
+
+	return p.Mkfile(ctx, upToken, upHost, ret, key, hasKey, fsize, extra)
+}
+
+func (p *ResumeUploader) rputWithoutSize(
+	ctx context.Context, ret interface{}, upToken string,
+	key string, hasKey bool, r io.Reader, extra *RputExtra) (err error) {
+
+	log := xlog.NewWith(ctx)
+
+	if extra == nil {
+		extra = new(RputExtra)
+	}
+	if extra.Progresses != nil {
+		return ErrInvalidPutProgress
+	}
+
+	if extra.ChunkSize == 0 {
+		extra.ChunkSize = settings.ChunkSize
+	}
+	if extra.TryTimes == 0 {
+		extra.TryTimes = settings.TryTimes
+	}
+	if extra.Notify == nil {
+		extra.Notify = notifyNil
+	}
+	if extra.NotifyErr == nil {
+		extra.NotifyErr = notifyErrNil
+	}
+
+	ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
+	if gErr != nil {
+		err = gErr
+		return
+	}
+
+	upHost, gErr := p.upHost(ak, bucket)
+	if gErr != nil {
+		err = gErr
+		return
+	}
+
+	blkIdx := 0
+	var fsize int64
+	for {
+		br, err := newBlockReader(r, blkIdx)
+		if err != nil {
+			extra.NotifyErr(blkIdx, 0, err)
+			return ErrPutFailed
+		}
+		extra.Progresses = append(extra.Progresses, BlkputRet{})
+		tryTimes := extra.TryTimes
+	lzRetry:
+		err = p.resumableBputWithoutSize(ctx, upToken, upHost, &extra.Progresses[blkIdx], br, extra)
+		if err != nil {
+			if tryTimes > 1 {
+				tryTimes--
+				log.Info("resumable.Put retrying ...", blkIdx, "reason:", err)
+				goto lzRetry
+			}
+			log.Warn("resumable.Put", blkIdx, "failed:", err)
+			extra.NotifyErr(blkIdx, br.blkSize, err)
+			return ErrPutFailed
+		}
+		fsize += int64(br.blkSize)
+		if br.blkSize != 1<<blockBits {
+			break
+		}
+		blkIdx++
 	}
 
 	return p.Mkfile(ctx, upToken, upHost, ret, key, hasKey, fsize, extra)

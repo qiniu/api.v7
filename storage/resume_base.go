@@ -1,6 +1,7 @@
 package storage
 
 import (
+	by "bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -70,6 +71,33 @@ func (p *ResumeUploader) Bput(
 	headers.Add("Authorization", "UpToken "+upToken)
 
 	return p.client.CallWith(ctx, ret, "POST", reqUrl, headers, body, size)
+}
+
+type blockReader struct {
+	*by.Reader
+	blkIdx  int
+	blkSize int
+}
+
+func newBlockReader(r io.Reader, blkIdx int) (*blockReader, error) {
+	maxBlockSize := 1 << blockBits
+	b := make([]byte, maxBlockSize)
+	n, e := io.ReadFull(r, b)
+	if n != maxBlockSize && e != io.EOF && e != io.ErrUnexpectedEOF {
+		return nil, e
+	}
+	return &blockReader{by.NewReader(b[:n]), blkIdx, n}, nil
+}
+
+func (br *blockReader) ReadAt(p []byte, off int64) (int, error) {
+	off -= int64(br.blkIdx) << blockBits
+	return br.Reader.ReadAt(p, off)
+}
+
+func (p *ResumeUploader) resumableBputWithoutSize(
+	ctx context.Context, upToken, upHost string, ret *BlkputRet, br *blockReader, extra *RputExtra) error {
+
+	return p.resumableBput(ctx, upToken, upHost, ret, br, br.blkIdx, br.blkSize, extra)
 }
 
 // 分片上传请求
