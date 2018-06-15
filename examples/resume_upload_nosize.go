@@ -16,7 +16,7 @@ var (
 	bucket    = os.Getenv("QINIU_TEST_BUCKET")
 )
 
-const FILESIZE = 1 << 24
+const FILESIZE = 1 << 25
 
 type dummyReader struct{}
 

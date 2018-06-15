@@ -283,6 +283,8 @@ func (p *ResumeUploader) rputWithoutSize(
 	ctx context.Context, ret interface{}, upToken string,
 	key string, hasKey bool, r io.Reader, extra *RputExtra) (err error) {
 
+	once.Do(initWorkers)
+
 	log := xlog.NewWith(ctx)
 
 	if extra == nil {
@@ -317,33 +319,55 @@ func (p *ResumeUploader) rputWithoutSize(
 		return
 	}
 
+	var wg sync.WaitGroup
 	blkIdx := 0
 	var fsize int64
-	for {
+	nfails := 0
+	progressPointers := make([]*BlkputRet, 0)
+	for nfails == 0 {
 		br, err := newBlockReader(r, blkIdx)
 		if err != nil {
 			extra.NotifyErr(blkIdx, 0, err)
 			return ErrPutFailed
 		}
-		extra.Progresses = append(extra.Progresses, BlkputRet{})
-		tryTimes := extra.TryTimes
-	lzRetry:
-		err = p.resumableBputWithoutSize(ctx, upToken, upHost, &extra.Progresses[blkIdx], br, extra)
-		if err != nil {
-			if tryTimes > 1 {
-				tryTimes--
-				log.Info("resumable.Put retrying ...", blkIdx, "reason:", err)
-				goto lzRetry
-			}
-			log.Warn("resumable.Put", blkIdx, "failed:", err)
-			extra.NotifyErr(blkIdx, br.blkSize, err)
-			return ErrPutFailed
+		if br.blkSize == 0 {
+			break
 		}
+		wg.Add(1)
+		prog := &BlkputRet{}
+		progressPointers = append(progressPointers, prog)
+		task := func() {
+			defer wg.Done()
+			br := br
+			tryTimes := extra.TryTimes
+		lzRetry:
+			err := p.resumableBputWithoutSize(ctx, upToken, upHost, prog, br, extra)
+			if err != nil {
+				if tryTimes > 1 {
+					tryTimes--
+					log.Info("resumable.Put retrying ...", br.blkIdx, "reason:", err)
+					goto lzRetry
+				}
+				log.Warn("resumable.Put", br.blkIdx, "failed:", err)
+				extra.NotifyErr(br.blkIdx, br.blkSize, err)
+				nfails++
+			}
+		}
+		tasks <- task
 		fsize += int64(br.blkSize)
 		if br.blkSize != 1<<blockBits {
 			break
 		}
 		blkIdx++
+	}
+
+	wg.Wait()
+	if nfails != 0 {
+		return ErrPutFailed
+	}
+	extra.Progresses = make([]BlkputRet, len(progressPointers))
+	for i, p := range progressPointers {
+		extra.Progresses[i] = *p
 	}
 
 	return p.Mkfile(ctx, upToken, upHost, ret, key, hasKey, fsize, extra)
