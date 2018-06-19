@@ -340,18 +340,18 @@ func (p *ResumeUploader) rputWithoutSize(
 		progressPointers = append(progressPointers, prog)
 		task := func() {
 			defer wg.Done()
-			br := br
+			block := br
 			tryTimes := extra.TryTimes
 		lzRetry:
-			err := p.resumableBputWithoutSize(ctx, upToken, upHost, prog, br, extra)
+			err := p.resumableBputWithoutSize(ctx, upToken, upHost, prog, block, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
-					log.Info("resumable.Put retrying ...", br.blkIdx, "reason:", err)
+					log.Info("resumable.Put retrying ...", block.blkIdx, "reason:", err)
 					goto lzRetry
 				}
-				log.Warn("resumable.Put", br.blkIdx, "failed:", err)
-				extra.NotifyErr(br.blkIdx, br.blkSize, err)
+				log.Warn("resumable.Put", block.blkIdx, "failed:", err)
+				extra.NotifyErr(block.blkIdx, block.blkSize, err)
 				putFailed = true
 			}
 		}
