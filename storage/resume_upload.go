@@ -239,13 +239,15 @@ func (p *ResumeUploader) rput(
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(blockCnt)
-
 	last := blockCnt - 1
 	blkSize := 1 << blockBits
-	nfails := 0
+	putFailed := false
 
 	for i := 0; i < blockCnt; i++ {
+		if putFailed {
+			break
+		}
+		wg.Add(1)
 		blkIdx := i
 		blkSize1 := blkSize
 		if i == last {
@@ -265,14 +267,14 @@ func (p *ResumeUploader) rput(
 				}
 				log.Warn("resumable.Put", blkIdx, "failed:", err)
 				extra.NotifyErr(blkIdx, blkSize1, err)
-				nfails++
+				putFailed = true
 			}
 		}
 		tasks <- task
 	}
 
 	wg.Wait()
-	if nfails != 0 {
+	if putFailed {
 		return ErrPutFailed
 	}
 
@@ -322,9 +324,9 @@ func (p *ResumeUploader) rputWithoutSize(
 	var wg sync.WaitGroup
 	blkIdx := 0
 	var fsize int64
-	nfails := 0
+	putFailed := false
 	progressPointers := make([]*BlkputRet, 0)
-	for nfails == 0 {
+	for !putFailed {
 		br, err := newBlockReader(r, blkIdx)
 		if err != nil {
 			extra.NotifyErr(blkIdx, 0, err)
@@ -350,7 +352,7 @@ func (p *ResumeUploader) rputWithoutSize(
 				}
 				log.Warn("resumable.Put", br.blkIdx, "failed:", err)
 				extra.NotifyErr(br.blkIdx, br.blkSize, err)
-				nfails++
+				putFailed = true
 			}
 		}
 		tasks <- task
@@ -362,7 +364,7 @@ func (p *ResumeUploader) rputWithoutSize(
 	}
 
 	wg.Wait()
-	if nfails != 0 {
+	if putFailed {
 		return ErrPutFailed
 	}
 	extra.Progresses = make([]BlkputRet, len(progressPointers))
