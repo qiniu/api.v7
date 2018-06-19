@@ -127,9 +127,8 @@ var once sync.Once
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
 func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, upToken string, key string, f io.ReaderAt,
-	fsize int64, extra *RputExtra) (err error) {
-	err = p.rput(ctx, ret, upToken, key, true, f, fsize, extra)
-	return
+	fsize int64, extra *RputExtra) error {
+	return p.rput(ctx, ret, upToken, key, true, f, fsize, extra)
 }
 
 // PutWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
@@ -143,9 +142,36 @@ func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, upToken strin
 // extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
 //
 func (p *ResumeUploader) PutWithoutKey(
-	ctx context.Context, ret interface{}, upToken string, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
-	err = p.rput(ctx, ret, upToken, "", false, f, fsize, extra)
-	return
+	ctx context.Context, ret interface{}, upToken string, f io.ReaderAt, fsize int64, extra *RputExtra) error {
+	return p.rput(ctx, ret, upToken, "", false, f, fsize, extra)
+}
+
+// PutReader 方法用来上传一个文件，支持断点续传和分块上传。
+//
+// ctx     是请求的上下文。
+// ret     是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken 是由业务服务器颁发的上传凭证。
+// key     是要上传的文件访问路径。比如："foo/bar.jpg"。注意我们建议 key 不要以 '/' 开头。另外，key 为空字符串是合法的。
+// f       是文件内容的访问接口。支持 io.Reader。
+// extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
+//
+func (p *ResumeUploader) PutReader(ctx context.Context, ret interface{}, upToken string, key string,
+	f io.Reader, extra *RputExtra) error {
+	return p.rputReader(ctx, ret, upToken, key, true, f, extra)
+}
+
+// PutReaderWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
+// upToken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
+//
+// ctx     是请求的上下文。
+// ret     是上传成功后返回的数据。如果 upToken 中没有设置 CallbackUrl 或 ReturnBody，那么返回的数据结构是 PutRet 结构。
+// upToken 是由业务服务器颁发的上传凭证。
+// f       是文件内容的访问接口。支持 io.Reader。
+// extra   是上传的一些可选项。详细见 RputExtra 结构的描述。
+//
+func (p *ResumeUploader) PutReaderWithoutKey(
+	ctx context.Context, ret interface{}, upToken string, f io.Reader, extra *RputExtra) error {
+	return p.rputReader(ctx, ret, upToken, "", false, f, extra)
 }
 
 // PutFile 用来上传一个文件，支持断点续传和分块上传。
@@ -181,22 +207,22 @@ func (p *ResumeUploader) PutFileWithoutKey(
 
 func (p *ResumeUploader) rput(
 	ctx context.Context, ret interface{}, upToken string,
-	key string, hasKey bool, f io.ReaderAt, fsize int64, extra *RputExtra) (err error) {
+	key string, hasKey bool, f io.ReaderAt, fsize int64, extra *RputExtra) error {
+	r := io.NewSectionReader(f, 0, fsize)
+	return p.rputReader(ctx, ret, upToken, key, hasKey, r, extra)
+}
+
+func (p *ResumeUploader) rputReader(
+	ctx context.Context, ret interface{}, upToken string,
+	key string, hasKey bool, r io.Reader, extra *RputExtra) (err error) {
 
 	once.Do(initWorkers)
 
 	log := xlog.NewWith(ctx)
-	blockCnt := BlockCount(fsize)
 
 	if extra == nil {
 		extra = new(RputExtra)
 	}
-	if extra.Progresses == nil {
-		extra.Progresses = make([]BlkputRet, blockCnt)
-	} else if len(extra.Progresses) != blockCnt {
-		return ErrInvalidPutProgress
-	}
-
 	if extra.ChunkSize == 0 {
 		extra.ChunkSize = settings.ChunkSize
 	}
@@ -209,7 +235,6 @@ func (p *ResumeUploader) rput(
 	if extra.NotifyErr == nil {
 		extra.NotifyErr = notifyErrNil
 	}
-	//get up host
 
 	ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
 	if gErr != nil {
@@ -224,41 +249,56 @@ func (p *ResumeUploader) rput(
 	}
 
 	var wg sync.WaitGroup
-	wg.Add(blockCnt)
-
-	last := blockCnt - 1
-	blkSize := 1 << blockBits
-	nfails := 0
-
-	for i := 0; i < blockCnt; i++ {
-		blkIdx := i
-		blkSize1 := blkSize
-		if i == last {
-			offbase := int64(blkIdx) << blockBits
-			blkSize1 = int(fsize - offbase)
+	blkIdx := 0
+	var fsize int64
+	putFailed := false
+	progressPointers := make([]*BlkputRet, 0)
+	for !putFailed {
+		br, err := newBlockReader(r, blkIdx)
+		if err != nil {
+			extra.NotifyErr(blkIdx, 0, err)
+			return ErrPutFailed
 		}
+		if br.blkSize == 0 {
+			break
+		}
+		wg.Add(1)
+		prog := &BlkputRet{}
+		progressPointers = append(progressPointers, prog)
 		task := func() {
 			defer wg.Done()
+			block := br
 			tryTimes := extra.TryTimes
 		lzRetry:
-			err := p.resumableBput(ctx, upToken, upHost, &extra.Progresses[blkIdx], f, blkIdx, blkSize1, extra)
+			err := p.resumableBputWithoutSize(ctx, upToken, upHost, prog, block, extra)
 			if err != nil {
 				if tryTimes > 1 {
 					tryTimes--
-					log.Info("resumable.Put retrying ...", blkIdx, "reason:", err)
+					log.Info("resumable.Put retrying ...", block.blkIdx, "reason:", err)
 					goto lzRetry
 				}
-				log.Warn("resumable.Put", blkIdx, "failed:", err)
-				extra.NotifyErr(blkIdx, blkSize1, err)
-				nfails++
+				log.Warn("resumable.Put", block.blkIdx, "failed:", err)
+				extra.NotifyErr(block.blkIdx, block.blkSize, err)
+				putFailed = true
 			}
 		}
 		tasks <- task
+		fsize += int64(br.blkSize)
+		if br.blkSize != 1<<blockBits {
+			break
+		}
+		blkIdx++
 	}
 
 	wg.Wait()
-	if nfails != 0 {
+	if putFailed {
 		return ErrPutFailed
+	}
+	if len(extra.Progresses) != len(progressPointers) {
+		extra.Progresses = make([]BlkputRet, len(progressPointers))
+	}
+	for i, p := range progressPointers {
+		extra.Progresses[i] = *p
 	}
 
 	return p.Mkfile(ctx, upToken, upHost, ret, key, hasKey, fsize, extra)
