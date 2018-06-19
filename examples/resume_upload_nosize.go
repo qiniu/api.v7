@@ -45,7 +45,7 @@ func main() {
 	upToken := putPolicy.UploadToken(mac)
 	ret := storage.PutRet{}
 	fmt.Println("resume uploading, size:", FILESIZE)
-	err := resumeUploader.PutWithoutSize(context.Background(), &ret, upToken,
+	err := resumeUploader.PutReader(context.Background(), &ret, upToken,
 		key, &io.LimitedReader{&dummyReader{}, FILESIZE}, nil)
 	if err != nil {
 		fmt.Println(err)
