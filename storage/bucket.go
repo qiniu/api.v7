@@ -15,7 +15,7 @@ import (
 )
 
 // 资源管理相关的默认域名
-const (
+var (
 	DefaultRsHost  = "rs.qiniu.com"
 	DefaultRsfHost = "rsf.qiniu.com"
 	DefaultAPIHost = "api.qiniu.com"
