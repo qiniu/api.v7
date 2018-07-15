@@ -109,6 +109,10 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 		cfg = &Config{}
 	}
 
+	if cfg.CentralRsHost == "" {
+		cfg.CentralRsHost = DefaultRsHost
+	}
+
 	return &BucketManager{
 		client: &DefaultClient,
 		mac:    mac,
@@ -143,7 +147,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 		scheme = "https://"
 	}
 
-	reqHost = fmt.Sprintf("%s%s", scheme, DefaultRsHost)
+	reqHost = fmt.Sprintf("%s%s", scheme, m.cfg.CentralRsHost)
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
@@ -271,7 +275,7 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 	if m.cfg.UseHTTPS {
 		scheme = "https://"
 	}
-	reqURL := fmt.Sprintf("%s%s/batch", scheme, DefaultRsHost)
+	reqURL := fmt.Sprintf("%s%s/batch", scheme, m.cfg.CentralRsHost)
 	params := map[string][]string{
 		"op": operations,
 	}
