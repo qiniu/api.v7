@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/tonycai653/api.v7/auth/qbox"
-	"github.com/tonycai653/api.v7/conf"
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/conf"
 	"net/http"
 )
 

@@ -9,5 +9,5 @@ env:
 
 install:
   - export QINIU_SRC=$HOME/gopath/src
-  - mkdir -p $QINIU_SRC/github.com/tonycai653
-  - go get github.com/tonycai653/x
+  - mkdir -p $QINIU_SRC/github.com/qiniu
+  - go get github.com/qiniu/x
