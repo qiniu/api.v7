@@ -8,8 +8,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/api.v7/storage"
+	"github.com/tonycai653/api.v7/auth/qbox"
+	"github.com/tonycai653/api.v7/storage"
 )
 
 var (

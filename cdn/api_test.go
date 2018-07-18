@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/tonycai653/api.v7/auth/qbox"
 )
 
 //global variables

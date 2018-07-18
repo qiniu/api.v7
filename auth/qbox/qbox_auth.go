@@ -8,8 +8,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7/seekable"
+	"github.com/tonycai653/api.v7/conf"
 )
 
 // Mac 七牛AK/SK的对象，AK/SK可以从 https://portal.qiniu.com/user/key 获取。

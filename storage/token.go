@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/tonycai653/api.v7/auth/qbox"
 )
 
 // PutPolicy 表示文件上传的上传策略

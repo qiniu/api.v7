@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/tonycai653/api.v7/auth/qbox"
 )
 
 // Fusion CDN服务域名

@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7"
 	"github.com/qiniu/x/xlog.v7"
+	"github.com/tonycai653/api.v7/conf"
 )
 
 // ResumeUploader 表示一个分片上传的对象

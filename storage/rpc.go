@@ -1,20 +1,21 @@
 package storage
 
-// The original library rpc.v7 logic in github.com/qiniu/x has its own bugs
+// The original library rpc.v7 logic in github.com/tonycai653/x has its own bugs
 // under the concurrent http calls, we make a fork of the library and fix
 // the bug
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/reqid.v7"
+	"github.com/tonycai653/api.v7/auth/qbox"
+	"github.com/tonycai653/api.v7/conf"
 	. "golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"runtime"
 	"strings"
 )
@@ -247,6 +248,39 @@ func ResponseError(resp *http.Response) (err error) {
 	return e
 }
 
+func CallRetChan(ctx Context, resp *http.Response) (retCh chan *listFilesRet2, err error) {
+
+	retCh = make(chan *listFilesRet2, 100)
+	if resp.StatusCode/100 != 2 || resp.ContentLength == 0 {
+		return nil, ResponseError(resp)
+	}
+
+	go func() {
+		defer resp.Body.Close()
+		defer close(retCh)
+
+		dec := json.NewDecoder(resp.Body)
+
+		for {
+			var ret listFilesRet2
+
+			err = dec.Decode(&ret)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Fprintf(os.Stderr, "decode error: %v\n", err)
+				}
+				return
+			}
+			select {
+			case retCh <- &ret:
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+	return
+}
+
 func CallRet(ctx Context, ret interface{}, resp *http.Response) (err error) {
 
 	defer func() {
@@ -315,6 +349,15 @@ func (r Client) Call(ctx Context, ret interface{}, method, reqUrl string, header
 		return err
 	}
 	return CallRet(ctx, ret, resp)
+}
+
+func (r Client) CallChan(ctx Context, method, reqUrl string, headers http.Header) (chan *listFilesRet2, error) {
+
+	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	return CallRetChan(ctx, resp)
 }
 
 // ---------------------------------------------------------------------------
