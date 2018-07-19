@@ -6,6 +6,7 @@ import (
 
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
+	"strings"
 )
 
 var (
@@ -27,7 +28,7 @@ func main() {
 	bucketManager := storage.NewBucketManager(mac, &cfg)
 
 	//列举所有文件
-	entries, err := bm.ListBucket(bucket, "", "")
+	entries, err := bucketManager.ListBucket(bucket, "", "", "")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListBucket: %v\n", err)
 		os.Exit(1)
