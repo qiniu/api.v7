@@ -409,7 +409,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 }
 
 // ListBucket 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，流式返回每条数据。
-func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan *listFilesRet2, err error) {
+func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
 	reqHost, reqErr := m.rsfHost(bucket)
