@@ -4,6 +4,7 @@ package storage
 // under the concurrent http calls, we make a fork of the library and fix
 // the bug
 import (
+	//	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
