@@ -408,14 +408,8 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	return
 }
 
-// ListFiles2 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，循环列举的时候下次
-// 列举的位置 marker，以及每次返回的文件的最大数量limit，其中limit最大为1000。
-func (m *BucketManager) ListFiles2(bucket, prefix, delimiter, marker string,
-	limit int) (retCh chan *listFilesRet2, err error) {
-	if limit <= 0 || limit > 1000 {
-		err = errors.New("invalid list limit, only allow [1, 1000]")
-		return
-	}
+// ListBucket 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，流式返回每条数据。
+func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
 	reqHost, reqErr := m.rsfHost(bucket)
@@ -424,7 +418,8 @@ func (m *BucketManager) ListFiles2(bucket, prefix, delimiter, marker string,
 		return
 	}
 
-	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker, limit))
+	// limit 0 ==> 列举所有文件
+	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
 	retCh, err = m.client.CallChan(ctx, "POST", reqURL, headers)
@@ -604,7 +599,7 @@ func uriListFiles(bucket, prefix, delimiter, marker string, limit int) string {
 	return fmt.Sprintf("/list?%s", query.Encode())
 }
 
-func uriListFiles2(bucket, prefix, delimiter, marker string, limit int) string {
+func uriListFiles2(bucket, prefix, delimiter, marker string) string {
 	query := make(url.Values)
 	query.Add("bucket", bucket)
 	if prefix != "" {
@@ -615,9 +610,6 @@ func uriListFiles2(bucket, prefix, delimiter, marker string, limit int) string {
 	}
 	if marker != "" {
 		query.Add("marker", marker)
-	}
-	if limit > 0 {
-		query.Add("limit", strconv.FormatInt(int64(limit), 10))
 	}
 	return fmt.Sprintf("/v2/list?%s", query.Encode())
 }
