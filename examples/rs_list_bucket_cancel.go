@@ -29,15 +29,22 @@ func main() {
 
 	//列举所有文件
 	prefix, delimiter, marker := "", "", ""
-	entries, err := bucketManager.ListBucket(bucket, prefix, delimiter, marker)
+	entries, cancelFunc, err := bucketManager.ListBucketCancel(bucket, prefix, delimiter, marker)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListBucket: %v\n", err)
 		os.Exit(1)
 	}
+
+	ind := 0
 	for listItem := range entries {
+		if ind > 3 {
+			fmt.Println("calling cancelFunc()")
+			cancelFunc()
+		}
 		fmt.Println(listItem.Marker)
 		fmt.Println(listItem.Item)
 		fmt.Println(listItem.Dir)
 		fmt.Println(strings.Repeat("-", 30))
+		ind++
 	}
 }
