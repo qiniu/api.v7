@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"context"
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/storage"
 	"strings"
@@ -29,7 +30,9 @@ func main() {
 
 	//列举所有文件
 	prefix, delimiter, marker := "", "", ""
-	entries, cancelFunc, err := bucketManager.ListBucketCancel(bucket, prefix, delimiter, marker)
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	entries, err := bucketManager.ListBucketCancel(ctx, bucket, prefix, delimiter, marker)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListBucket: %v\n", err)
 		os.Exit(1)
