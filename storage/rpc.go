@@ -251,7 +251,7 @@ func ResponseError(resp *http.Response) (err error) {
 
 func CallRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
 
-	retCh = make(chan listFilesRet2, 100)
+	retCh = make(chan listFilesRet2)
 	if resp.StatusCode/100 != 2 || resp.ContentLength == 0 {
 		return nil, ResponseError(resp)
 	}
@@ -272,9 +272,9 @@ func CallRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, er
 				return
 			}
 			select {
-			case retCh <- ret:
 			case <-ctx.Done():
 				return
+			case retCh <- ret:
 			}
 		}
 	}()
