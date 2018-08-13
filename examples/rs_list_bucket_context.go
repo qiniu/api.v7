@@ -32,7 +32,7 @@ func main() {
 	prefix, delimiter, marker := "", "", ""
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	entries, err := bucketManager.ListBucketCancel(ctx, bucket, prefix, delimiter, marker)
+	entries, err := bucketManager.ListBucketContext(ctx, bucket, prefix, delimiter, marker)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ListBucket: %v\n", err)
 		os.Exit(1)

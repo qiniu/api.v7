@@ -427,8 +427,8 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 }
 
 // ListBucketCancel 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，流式返回每条数据。
-// 可以用返回的cancelFunc取消列举操作
-func (m *BucketManager) ListBucketCancel(ctx context.Context, bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
+// 接受的context可以用来取消列举操作
+func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	vctx := context.WithValue(ctx, "mac", m.mac)
 	reqHost, reqErr := m.rsfHost(bucket)
