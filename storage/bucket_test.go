@@ -193,7 +193,7 @@ func TestChangeType(t *testing.T) {
 func TestPrefetchAndImage(t *testing.T) {
 	err := bucketManager.SetImage(testSiteUrl, testBucket)
 	if err != nil {
-		t.Fatalf("SetImage() error, %s", err)
+		t.Fatalf("SetImage() error, %+v", err)
 	}
 
 	t.Log("set image success for bucket", testBucket)

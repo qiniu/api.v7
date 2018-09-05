@@ -8,10 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/api.v7/conf"
-	"github.com/qiniu/x/reqid.v7"
-	. "golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -19,6 +15,11 @@ import (
 	"os"
 	"runtime"
 	"strings"
+
+	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/x/reqid.v7"
+	. "golang.org/x/net/context"
 )
 
 var UserAgent = "Golang qiniu/rpc package"
@@ -53,6 +54,9 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 
 	//check access token
 	mac, ok := ctx.Value("mac").(*qbox.Mac)
+	if !ok {
+		mac, ok = ctx.Value("mac:QBox").(*qbox.Mac)
+	}
 	if ok {
 		token, signErr := mac.SignRequest(req)
 		if signErr != nil {
@@ -60,6 +64,17 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 			return
 		}
 		req.Header.Add("Authorization", "QBox "+token)
+		return
+	}
+	mac, ok = ctx.Value("mac:Qiniu").(*qbox.Mac)
+	if ok {
+		token, signErr := mac.SignRequestV2(req)
+		if signErr != nil {
+			err = signErr
+			return
+		}
+		req.Header.Add("Authorization", "Qiniu "+token)
+		return
 	}
 
 	return

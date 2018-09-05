@@ -10,8 +10,17 @@ import (
 )
 
 var (
-	testLocalFile = filepath.Join(os.Getenv("TRAVIS_BUILD_DIR"), "Makefile")
+	testLocalFile string
 )
+
+func init() {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	exPath := filepath.Dir(pwd)
+	testLocalFile = filepath.Join(exPath, "Makefile")
+}
 
 func TestFormUploadPutFile(t *testing.T) {
 	var putRet PutRet

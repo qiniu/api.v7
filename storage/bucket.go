@@ -9,9 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	"net/http"
+
 	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/conf"
-	"net/http"
 )
 
 // 资源管理相关的默认域名
@@ -19,7 +20,7 @@ const (
 	DefaultRsHost  = "rs.qiniu.com"
 	DefaultRsfHost = "rsf.qiniu.com"
 	DefaultAPIHost = "api.qiniu.com"
-	DefaultPubHost = "pu.qbox.me:10200"
+	DefaultPubHost = "pu.qbox.me"
 )
 
 // FileInfo 文件基本信息
@@ -472,7 +473,7 @@ func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, er
 
 	reqUrl += "/sisyphus/fetch"
 
-	ctx := context.WithValue(context.TODO(), "mac", m.mac)
+	ctx := context.WithValue(context.TODO(), "mac:Qiniu", m.mac)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_JSON)
 	err = m.client.CallWithJson(ctx, &ret, "POST", reqUrl, headers, param)
