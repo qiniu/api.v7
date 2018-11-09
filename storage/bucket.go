@@ -158,7 +158,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 		scheme = "https://"
 	}
 
-	reqHost = fmt.Sprintf("%s%s", scheme, m.cfg.CentralRsHost)
+	reqHost = fmt.Sprintf("%s%s", scheme, m.Cfg.CentralRsHost)
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
@@ -283,10 +283,10 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 	}
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
 	scheme := "http://"
-	if m.cfg.UseHTTPS {
+	if m.Cfg.UseHTTPS {
 		scheme = "https://"
 	}
-	reqURL := fmt.Sprintf("%s%s/batch", scheme, m.cfg.CentralRsHost)
+	reqURL := fmt.Sprintf("%s%s/batch", scheme, m.Cfg.CentralRsHost)
 	params := map[string][]string{
 		"op": operations,
 	}
