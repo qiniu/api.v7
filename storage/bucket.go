@@ -388,7 +388,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	}
 
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.rsfHost(bucket)
+	reqHost, reqErr := m.RsfHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
