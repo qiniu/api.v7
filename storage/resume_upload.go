@@ -105,7 +105,8 @@ type BlkputRet struct {
 
 // RputExtra 表示分片上传额外可以指定的参数
 type RputExtra struct {
-	Params     map[string]string                             // 可选。用户自定义参数，以"x:"开头，而且值不能为空，否则忽略
+	Params     map[string]string // 可选。用户自定义参数，以"x:"开头，而且值不能为空，否则忽略
+	UpHost     string
 	MimeType   string                                        // 可选。
 	ChunkSize  int                                           // 可选。每次上传的Chunk大小
 	TryTimes   int                                           // 可选。尝试次数
@@ -211,16 +212,21 @@ func (p *ResumeUploader) rput(
 	}
 	//get up host
 
-	ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
-	if gErr != nil {
-		err = gErr
-		return
-	}
+	var upHost string
+	if extra.UpHost != "" {
+		upHost = extra.UpHost
+	} else {
+		ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
+		if gErr != nil {
+			err = gErr
+			return
+		}
 
-	upHost, gErr := p.upHost(ak, bucket)
-	if gErr != nil {
-		err = gErr
-		return
+		upHost, gErr = p.UpHost(ak, bucket)
+		if gErr != nil {
+			err = gErr
+			return
+		}
 	}
 
 	var wg sync.WaitGroup
@@ -282,10 +288,10 @@ func (p *ResumeUploader) rputFile(
 	return p.rput(ctx, ret, upToken, key, hasKey, f, fi.Size(), extra)
 }
 
-func (p *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
+func (p *ResumeUploader) UpHost(ak, bucket string) (upHost string, err error) {
 	var zone *Zone
-	if p.cfg.Zone != nil {
-		zone = p.cfg.Zone
+	if p.Cfg.Zone != nil {
+		zone = p.Cfg.Zone
 	} else {
 		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
 			err = zoneErr
@@ -296,12 +302,12 @@ func (p *ResumeUploader) upHost(ak, bucket string) (upHost string, err error) {
 	}
 
 	scheme := "http://"
-	if p.cfg.UseHTTPS {
+	if p.Cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
 	host := zone.SrcUpHosts[0]
-	if p.cfg.UseCdnDomains {
+	if p.Cfg.UseCdnDomains {
 		host = zone.CdnUpHosts[0]
 	}
 

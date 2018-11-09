@@ -75,6 +75,11 @@ type ListItem struct {
 	EndUser  string `json:"endUser"`
 }
 
+// 接口可能返回空的记录
+func (l *ListItem) IsEmpty() (empty bool) {
+	return l.Key == "" && l.Hash == "" && l.Fsize == 0 && l.PutTime == 0
+}
+
 func (l *ListItem) String() string {
 	str := ""
 	str += fmt.Sprintf("Hash:     %s\n", l.Hash)
@@ -104,9 +109,9 @@ type BatchOpRet struct {
 
 // BucketManager 提供了对资源进行管理的操作
 type BucketManager struct {
-	client *Client
-	mac    *qbox.Mac
-	cfg    *Config
+	Client *Client
+	Mac    *qbox.Mac
+	Cfg    *Config
 }
 
 // NewBucketManager 用来构建一个新的资源管理对象
@@ -120,9 +125,9 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 	}
 
 	return &BucketManager{
-		client: &DefaultClient,
-		mac:    mac,
-		cfg:    cfg,
+		Client: &DefaultClient,
+		Mac:    mac,
+		Cfg:    cfg,
 	}
 }
 
@@ -137,9 +142,9 @@ func NewBucketManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *BucketManag
 	}
 
 	return &BucketManager{
-		client: client,
-		mac:    mac,
-		cfg:    cfg,
+		Client: client,
+		Mac:    mac,
+		Cfg:    cfg,
 	}
 }
 
@@ -149,7 +154,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	var reqHost string
 
 	scheme := "http://"
-	if m.cfg.UseHTTPS {
+	if m.Cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
@@ -157,14 +162,14 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &buckets, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &buckets, "POST", reqURL, headers)
 	return
 }
 
 // Stat 用来获取一个文件的基本信息
 func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(bucket)
+	reqHost, reqErr := m.RsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -173,14 +178,14 @@ func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIStat(bucket, key))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &info, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &info, "POST", reqURL, headers)
 	return
 }
 
 // Delete 用来删除空间中的一个文件
 func (m *BucketManager) Delete(bucket, key string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(bucket)
+	reqHost, reqErr := m.RsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -188,14 +193,14 @@ func (m *BucketManager) Delete(bucket, key string) (err error) {
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIDelete(bucket, key))
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
 // Copy 用来创建已有空间中的文件的一个新的副本
 func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(srcBucket)
+	reqHost, reqErr := m.RsHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -204,14 +209,14 @@ func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, forc
 	reqURL := fmt.Sprintf("%s%s", reqHost, URICopy(srcBucket, srcKey, destBucket, destKey, force))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
 // Move 用来将空间中的一个文件移动到新的空间或者重命名
 func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(srcBucket)
+	reqHost, reqErr := m.RsHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -220,14 +225,14 @@ func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, forc
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIMove(srcBucket, srcKey, destBucket, destKey, force))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
 // ChangeMime 用来更新文件的MimeType
 func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(bucket)
+	reqHost, reqErr := m.RsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -235,14 +240,14 @@ func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeMime(bucket, key, newMime))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
 // ChangeType 用来更新文件的存储类型，0表示普通存储，1表示低频存储
 func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(bucket)
+	reqHost, reqErr := m.RsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -250,14 +255,14 @@ func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error)
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeType(bucket, key, fileType))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
 // DeleteAfterDays 用来更新文件生命周期，如果 days 设置为0，则表示取消文件的定期删除功能，永久存储
 func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsHost(bucket)
+	reqHost, reqErr := m.RsHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -266,7 +271,7 @@ func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIDeleteAfterDays(bucket, key, days))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
@@ -287,14 +292,14 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 	}
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.CallWithForm(ctx, &batchOpRet, "POST", reqURL, headers, params)
+	err = m.Client.CallWithForm(ctx, &batchOpRet, "POST", reqURL, headers, params)
 	return
 }
 
 // Fetch 根据提供的远程资源链接来抓取一个文件到空间并已指定文件名保存
 func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.iovipHost(bucket)
+	reqHost, reqErr := m.IovipHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -302,14 +307,14 @@ func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, er
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetch(resURL, bucket, key))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &fetchRet, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, headers)
 	return
 }
 
 // FetchWithoutKey 根据提供的远程资源链接来抓取一个文件到空间并以文件的内容hash作为文件名
 func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRet, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.iovipHost(bucket)
+	reqHost, reqErr := m.IovipHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -317,14 +322,14 @@ func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRe
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resURL, bucket))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &fetchRet, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, headers)
 	return
 }
 
 // Prefetch 用来同步镜像空间的资源和镜像源资源内容
 func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.iovipHost(bucket)
+	reqHost, reqErr := m.IovipHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -332,7 +337,7 @@ func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriPrefetch(bucket, key))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
@@ -342,7 +347,7 @@ func (m *BucketManager) SetImage(siteURL, bucket string) (err error) {
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteURL, bucket))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
@@ -353,7 +358,7 @@ func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err erro
 		uriSetImageWithHost(siteURL, bucket, host))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return
 }
 
@@ -363,7 +368,7 @@ func (m *BucketManager) UnsetImage(bucket string) (err error) {
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
 	return err
 }
 
@@ -393,7 +398,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles(bucket, prefix, delimiter, marker, limit))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &ret, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &ret, "POST", reqURL, headers)
 	if err != nil {
 		return
 	}
@@ -412,7 +417,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.rsfHost(bucket)
+	reqHost, reqErr := m.RsfHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -422,7 +427,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = m.client.CallChan(ctx, "POST", reqURL, headers)
+	retCh, err = m.Client.CallChan(ctx, "POST", reqURL, headers)
 	return
 }
 
@@ -431,7 +436,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	vctx := context.WithValue(ctx, "mac", m.mac)
-	reqHost, reqErr := m.rsfHost(bucket)
+	reqHost, reqErr := m.RsfHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -441,7 +446,7 @@ func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, d
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = m.client.CallChan(vctx, "POST", reqURL, headers)
+	retCh, err = m.Client.CallChan(vctx, "POST", reqURL, headers)
 	return
 }
 
@@ -465,7 +470,7 @@ type AsyncFetchRet struct {
 
 func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, err error) {
 
-	reqUrl, err := m.apiHost(param.Bucket)
+	reqUrl, err := m.ApiHost(param.Bucket)
 	if err != nil {
 		return
 	}
@@ -475,58 +480,58 @@ func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, er
 	ctx := context.WithValue(context.TODO(), "mac", m.mac)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_JSON)
-	err = m.client.CallWithJson(ctx, &ret, "POST", reqUrl, headers, param)
+	err = m.Client.CallWithJson(ctx, &ret, "POST", reqUrl, headers, param)
 	return
 }
 
-func (m *BucketManager) rsHost(bucket string) (rsHost string, err error) {
+func (m *BucketManager) RsHost(bucket string) (rsHost string, err error) {
 	zone, err := m.Zone(bucket)
 	if err != nil {
 		return
 	}
 
-	rsHost = zone.GetRsHost(m.cfg.UseHTTPS)
+	rsHost = zone.GetRsHost(m.Cfg.UseHTTPS)
 	return
 }
 
-func (m *BucketManager) rsfHost(bucket string) (rsfHost string, err error) {
+func (m *BucketManager) RsfHost(bucket string) (rsfHost string, err error) {
 	zone, err := m.Zone(bucket)
 	if err != nil {
 		return
 	}
 
-	rsfHost = zone.GetRsfHost(m.cfg.UseHTTPS)
+	rsfHost = zone.GetRsfHost(m.Cfg.UseHTTPS)
 	return
 }
 
-func (m *BucketManager) iovipHost(bucket string) (iovipHost string, err error) {
+func (m *BucketManager) IovipHost(bucket string) (iovipHost string, err error) {
 	zone, err := m.Zone(bucket)
 	if err != nil {
 		return
 	}
 
-	iovipHost = zone.GetIoHost(m.cfg.UseHTTPS)
+	iovipHost = zone.GetIoHost(m.Cfg.UseHTTPS)
 	return
 }
 
-func (m *BucketManager) apiHost(bucket string) (apiHost string, err error) {
+func (m *BucketManager) ApiHost(bucket string) (apiHost string, err error) {
 	zone, err := m.Zone(bucket)
 	if err != nil {
 		return
 	}
 
-	apiHost = zone.GetApiHost(m.cfg.UseHTTPS)
+	apiHost = zone.GetApiHost(m.Cfg.UseHTTPS)
 	return
 }
 
 func (m *BucketManager) Zone(bucket string) (z *Zone, err error) {
 
-	if m.cfg.Zone != nil {
-		z = m.cfg.Zone
+	if m.Cfg.Zone != nil {
+		z = m.Cfg.Zone
 		return
 	}
 
-	z, err = GetZone(m.mac.AccessKey, bucket)
+	z, err = GetZone(m.Mac.AccessKey, bucket)
 	return
 }
 

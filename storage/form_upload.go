@@ -21,6 +21,8 @@ type PutExtra struct {
 	// 可选，用户自定义参数，必须以 "x:" 开头。若不以x:开头，则忽略。
 	Params map[string]string
 
+	UpHost string
+
 	// 可选，当为 "" 时候，服务端自动判断。
 	MimeType string
 
@@ -38,8 +40,8 @@ type PutRet struct {
 
 // FormUploader 表示一个表单上传的对象
 type FormUploader struct {
-	client *Client
-	cfg    *Config
+	Client *Client
+	Cfg    *Config
 }
 
 // NewFormUploader 用来构建一个表单上传的对象
@@ -49,8 +51,8 @@ func NewFormUploader(cfg *Config) *FormUploader {
 	}
 
 	return &FormUploader{
-		client: &DefaultClient,
-		cfg:    cfg,
+		Client: &DefaultClient,
+		Cfg:    cfg,
 	}
 }
 
@@ -65,8 +67,8 @@ func NewFormUploaderEx(cfg *Config, client *Client) *FormUploader {
 	}
 
 	return &FormUploader{
-		client: client,
-		cfg:    cfg,
+		Client: client,
+		Cfg:    cfg,
 	}
 }
 
@@ -158,16 +160,20 @@ func (p *FormUploader) put(
 	ctx context.Context, ret interface{}, uptoken string,
 	key string, hasKey bool, data io.Reader, size int64, extra *PutExtra, fileName string) (err error) {
 
-	ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
-	if gErr != nil {
-		err = gErr
-		return
-	}
-
 	var upHost string
-	upHost, err = p.upHost(ak, bucket)
-	if err != nil {
-		return
+	if extra.UpHost != "" {
+		upHost = extra.UpHost
+	} else {
+		ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
+		if gErr != nil {
+			err = gErr
+			return
+		}
+
+		upHost, err = p.UpHost(ak, bucket)
+		if err != nil {
+			return
+		}
 	}
 
 	var b bytes.Buffer
@@ -218,7 +224,7 @@ func (p *FormUploader) put(
 	contentType := writer.FormDataContentType()
 	headers := http.Header{}
 	headers.Add("Content-Type", contentType)
-	err = p.client.CallWith64(ctx, ret, "POST", upHost, headers, mr, bodyLen)
+	err = p.Client.CallWith64(ctx, ret, "POST", upHost, headers, mr, bodyLen)
 	if err != nil {
 		return
 	}
@@ -265,10 +271,10 @@ func (r crc32Reader) length() (length int64) {
 	return int64(len(r.nlDashBoundaryNl+r.header)) + r.crc32PadLen
 }
 
-func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
+func (p *FormUploader) UpHost(ak, bucket string) (upHost string, err error) {
 	var zone *Zone
-	if p.cfg.Zone != nil {
-		zone = p.cfg.Zone
+	if p.Cfg.Zone != nil {
+		zone = p.Cfg.Zone
 	} else {
 		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
 			err = zoneErr
@@ -279,12 +285,12 @@ func (p *FormUploader) upHost(ak, bucket string) (upHost string, err error) {
 	}
 
 	scheme := "http://"
-	if p.cfg.UseHTTPS {
+	if p.Cfg.UseHTTPS {
 		scheme = "https://"
 	}
 
 	host := zone.SrcUpHosts[0]
-	if p.cfg.UseCdnDomains {
+	if p.Cfg.UseCdnDomains {
 		host = zone.CdnUpHosts[0]
 	}
 

@@ -10,9 +10,9 @@ import (
 
 // OperationManager 提供了数据处理相关的方法
 type OperationManager struct {
-	client *Client
-	mac    *qbox.Mac
-	cfg    *Config
+	Client *Client
+	Mac    *qbox.Mac
+	Cfg    *Config
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
@@ -22,9 +22,9 @@ func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 	}
 
 	return &OperationManager{
-		client: &DefaultClient,
-		mac:    mac,
-		cfg:    cfg,
+		Client: &DefaultClient,
+		Mac:    mac,
+		Cfg:    cfg,
 	}
 }
 
@@ -39,9 +39,9 @@ func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *Operatio
 	}
 
 	return &OperationManager{
-		client: client,
-		mac:    mac,
-		cfg:    cfg,
+		Client: client,
+		Mac:    mac,
+		Cfg:    cfg,
 	}
 }
 
@@ -144,8 +144,8 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 		pfopParams["force"] = []string{"1"}
 	}
 	var ret PfopRet
-	ctx := context.WithValue(context.TODO(), "mac", m.mac)
-	reqHost, reqErr := m.apiHost(bucket)
+	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	reqHost, reqErr := m.ApiHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -153,7 +153,7 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 	reqURL := fmt.Sprintf("%s/pfop/", reqHost)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.CallWithForm(ctx, &ret, "POST", reqURL, headers, pfopParams)
+	err = m.Client.CallWithForm(ctx, &ret, "POST", reqURL, headers, pfopParams)
 	if err != nil {
 		return
 	}
@@ -165,20 +165,20 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 // Prefop 持久化处理状态查询
 func (m *OperationManager) Prefop(persistentID string) (ret PrefopRet, err error) {
 	ctx := context.TODO()
-	reqHost := m.prefopApiHost(persistentID)
+	reqHost := m.PrefopApiHost(persistentID)
 	reqURL := fmt.Sprintf("%s/status/get/prefop?id=%s", reqHost, persistentID)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.client.Call(ctx, &ret, "GET", reqURL, headers)
+	err = m.Client.Call(ctx, &ret, "GET", reqURL, headers)
 	return
 }
 
-func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
+func (m *OperationManager) ApiHost(bucket string) (apiHost string, err error) {
 	var zone *Zone
-	if m.cfg.Zone != nil {
-		zone = m.cfg.Zone
+	if m.Cfg.Zone != nil {
+		zone = m.Cfg.Zone
 	} else {
-		if v, zoneErr := GetZone(m.mac.AccessKey, bucket); zoneErr != nil {
+		if v, zoneErr := GetZone(m.Mac.AccessKey, bucket); zoneErr != nil {
 			err = zoneErr
 			return
 		} else {
@@ -187,7 +187,7 @@ func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 	}
 
 	scheme := "http://"
-	if m.cfg.UseHTTPS {
+	if m.Cfg.UseHTTPS {
 		scheme = "https://"
 	}
 	apiHost = fmt.Sprintf("%s%s", scheme, zone.ApiHost)
@@ -195,13 +195,13 @@ func (m *OperationManager) apiHost(bucket string) (apiHost string, err error) {
 	return
 }
 
-func (m *OperationManager) prefopApiHost(persistentID string) (apiHost string) {
+func (m *OperationManager) PrefopApiHost(persistentID string) (apiHost string) {
 	apiHost = "api.qiniu.com"
-	if m.cfg.Zone != nil {
-		apiHost = m.cfg.Zone.ApiHost
+	if m.Cfg.Zone != nil {
+		apiHost = m.Cfg.Zone.ApiHost
 	}
 
-	if m.cfg.UseHTTPS {
+	if m.Cfg.UseHTTPS {
 		apiHost = fmt.Sprintf("https://%s", apiHost)
 	} else {
 		apiHost = fmt.Sprintf("http://%s", apiHost)
