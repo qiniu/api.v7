@@ -119,7 +119,6 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
-
 	if cfg.CentralRsHost == "" {
 		cfg.CentralRsHost = DefaultRsHost
 	}
@@ -140,6 +139,9 @@ func NewBucketManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *BucketManag
 	if client == nil {
 		client = &DefaultClient
 	}
+	if cfg.CentralRsHost == "" {
+		cfg.CentralRsHost = DefaultRsHost
+	}
 
 	return &BucketManager{
 		Client: client,
@@ -153,12 +155,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
 	var reqHost string
 
-	scheme := "http://"
-	if m.Cfg.UseHTTPS {
-		scheme = "https://"
-	}
-
-	reqHost = fmt.Sprintf("%s%s", scheme, m.Cfg.CentralRsHost)
+	reqHost = m.Cfg.RsReqHost()
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
@@ -169,7 +166,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 // Stat 用来获取一个文件的基本信息
 func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -185,7 +182,7 @@ func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 // Delete 用来删除空间中的一个文件
 func (m *BucketManager) Delete(bucket, key string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -200,7 +197,7 @@ func (m *BucketManager) Delete(bucket, key string) (err error) {
 // Copy 用来创建已有空间中的文件的一个新的副本
 func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(srcBucket)
+	reqHost, reqErr := m.RsReqHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -216,7 +213,7 @@ func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, forc
 // Move 用来将空间中的一个文件移动到新的空间或者重命名
 func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(srcBucket)
+	reqHost, reqErr := m.RsReqHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -232,7 +229,7 @@ func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, forc
 // ChangeMime 用来更新文件的MimeType
 func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -247,7 +244,7 @@ func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 // ChangeType 用来更新文件的存储类型，0表示普通存储，1表示低频存储
 func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -262,7 +259,7 @@ func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error)
 // DeleteAfterDays 用来更新文件生命周期，如果 days 设置为0，则表示取消文件的定期删除功能，永久存储
 func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsHost(bucket)
+	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -299,9 +296,10 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 // Fetch 根据提供的远程资源链接来抓取一个文件到空间并已指定文件名保存
 func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.IovipHost(bucket)
-	if reqErr != nil {
-		err = reqErr
+
+	reqHost, rErr := m.IoReqHost(bucket)
+	if rErr != nil {
+		err = rErr
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetch(resURL, bucket, key))
@@ -311,12 +309,49 @@ func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, er
 	return
 }
 
+func (m *BucketManager) RsReqHost(bucket string) (reqHost string, err error) {
+	var reqErr error
+
+	if m.Cfg.RsHost == "" {
+		reqHost, reqErr = m.RsHost(bucket)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+	} else {
+		reqHost = m.Cfg.RsHost
+	}
+	if !strings.HasPrefix(reqHost, "http") {
+		reqHost = "http://" + reqHost
+	}
+	return
+}
+
+func (m *BucketManager) IoReqHost(bucket string) (reqHost string, err error) {
+	var reqErr error
+
+	if m.Cfg.IoHost == "" {
+		reqHost, reqErr = m.IovipHost(bucket)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+	} else {
+		reqHost = m.Cfg.IoHost
+	}
+	if !strings.HasPrefix(reqHost, "http") {
+		reqHost = "http://" + reqHost
+	}
+	return
+}
+
 // FetchWithoutKey 根据提供的远程资源链接来抓取一个文件到空间并以文件的内容hash作为文件名
 func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRet, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.IovipHost(bucket)
-	if reqErr != nil {
-		err = reqErr
+
+	reqHost, rErr := m.IoReqHost(bucket)
+	if rErr != nil {
+		err = rErr
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resURL, bucket))
@@ -329,7 +364,7 @@ func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRe
 // Prefetch 用来同步镜像空间的资源和镜像源资源内容
 func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.IovipHost(bucket)
+	reqHost, reqErr := m.IoReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
