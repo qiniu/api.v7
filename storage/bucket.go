@@ -327,6 +327,42 @@ func (m *BucketManager) RsReqHost(bucket string) (reqHost string, err error) {
 	return
 }
 
+func (m *BucketManager) ApiReqHost(bucket string) (reqHost string, err error) {
+	var reqErr error
+
+	if m.Cfg.ApiHost == "" {
+		reqHost, reqErr = m.ApiHost(bucket)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+	} else {
+		reqHost = m.Cfg.ApiHost
+	}
+	if !strings.HasPrefix(reqHost, "http") {
+		reqHost = "http://" + reqHost
+	}
+	return
+}
+
+func (m *BucketManager) RsfReqHost(bucket string) (reqHost string, err error) {
+	var reqErr error
+
+	if m.Cfg.RsfHost == "" {
+		reqHost, reqErr = m.RsfHost(bucket)
+		if reqErr != nil {
+			err = reqErr
+			return
+		}
+	} else {
+		reqHost = m.Cfg.RsfHost
+	}
+	if !strings.HasPrefix(reqHost, "http") {
+		reqHost = "http://" + reqHost
+	}
+	return
+}
+
 func (m *BucketManager) IoReqHost(bucket string) (reqHost string, err error) {
 	var reqErr error
 
@@ -423,7 +459,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 	}
 
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsfHost(bucket)
+	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -452,7 +488,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	reqHost, reqErr := m.RsfHost(bucket)
+	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -471,7 +507,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
 	vctx := context.WithValue(ctx, "mac", m.Mac)
-	reqHost, reqErr := m.RsfHost(bucket)
+	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
 		return
@@ -505,7 +541,7 @@ type AsyncFetchRet struct {
 
 func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, err error) {
 
-	reqUrl, err := m.ApiHost(param.Bucket)
+	reqUrl, err := m.ApiReqHost(param.Bucket)
 	if err != nil {
 		return
 	}
