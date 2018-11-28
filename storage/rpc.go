@@ -361,6 +361,9 @@ func (r Client) CallChan(ctx Context, method, reqUrl string, headers http.Header
 	if err != nil {
 		return nil, err
 	}
+	if resp.StatusCode/100 != 2 {
+		return nil, ResponseError(resp)
+	}
 	return CallRetChan(ctx, resp)
 }
 
