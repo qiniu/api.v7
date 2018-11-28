@@ -287,9 +287,7 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 	params := map[string][]string{
 		"op": operations,
 	}
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.CallWithForm(ctx, &batchOpRet, "POST", reqURL, headers, params)
+	err = m.Client.CallWithForm(ctx, &batchOpRet, "POST", reqURL, nil, params)
 	return
 }
 
