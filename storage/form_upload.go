@@ -161,6 +161,9 @@ func (p *FormUploader) put(
 	key string, hasKey bool, data io.Reader, size int64, extra *PutExtra, fileName string) (err error) {
 
 	var upHost string
+	if extra == nil {
+		extra = &PutExtra{}
+	}
 	if extra.UpHost != "" {
 		upHost = extra.UpHost
 	} else {
