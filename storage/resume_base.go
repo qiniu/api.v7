@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/bytes.v7"
@@ -159,7 +160,9 @@ func (p *ResumeUploader) Mkfile(
 		url += "/key/" + encode(key)
 	}
 	for k, v := range extra.Params {
-		url += fmt.Sprintf("/%s/%s", k, encode(v))
+		if (strings.HasPrefix(k, "x:") || strings.HasPrefix(k, "x-qn-meta-")) && v != "" {
+			url += fmt.Sprintf("/%s/%s", k, encode(v))
+		}
 	}
 
 	buf := make([]byte, 0, 196*len(extra.Progresses))
