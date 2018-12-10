@@ -256,10 +256,6 @@ func CallRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, er
 		return nil, ResponseError(resp)
 	}
 
-	if resp.StatusCode == 200 && resp.ContentLength == 0 {
-		return nil, nil
-	}
-
 	go func() {
 		defer resp.Body.Close()
 		defer close(retCh)
