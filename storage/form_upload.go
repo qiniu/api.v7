@@ -160,6 +160,10 @@ func (p *FormUploader) put(
 	ctx context.Context, ret interface{}, uptoken string,
 	key string, hasKey bool, data io.Reader, size int64, extra *PutExtra, fileName string) (err error) {
 
+	if extra == nil {
+		extra = &PutExtra{}
+	}
+
 	var upHost string
 	if extra.UpHost != "" {
 		upHost = extra.UpHost
@@ -178,10 +182,6 @@ func (p *FormUploader) put(
 
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
-
-	if extra == nil {
-		extra = &PutExtra{}
-	}
 
 	if extra.OnProgress != nil {
 		data = &readerWithProgress{reader: data, fsize: size, onProgress: extra.OnProgress}
