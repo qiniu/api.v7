@@ -187,12 +187,15 @@ func (r *Manager) ListAllActiveRooms(appID, roomNamePrefix string) ([]RoomName, 
 			q, info, err = r.doListActiveRoom(appID, roomNamePrefix, offset, 100)
 		}
 
-		if err != nil || q.IsEnd || len(q.Rooms) == 0 {
+		if err != nil || len(q.Rooms) == 0 {
 			outErr = err
 			break
 		}
 		offset = q.Offset
 		ns = append(ns, q.Rooms...)
+		if q.IsEnd {
+			break
+		}
 	}
 	return ns, outErr
 }
