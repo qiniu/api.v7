@@ -1,14 +1,15 @@
 package qbox
 
 import (
-	"github.com/qiniu.com/api.v7/auth"
+	"github.com/qiniu/api.v7/auth"
+	"net/http"
 )
 
 type Mac = auth.Authorization
 
 // 兼容保留
 func NewMac(accessKey, secretKey string) *Mac {
-	return New(accessKey, secretKey)
+	return auth.New(accessKey, secretKey)
 }
 
 // Sign 一般用于下载凭证的签名

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 )
 
 //global variables
@@ -31,14 +31,14 @@ var (
 	}
 )
 
-var mac *qbox.Mac
+var mac *auth.Authorization
 var cdnManager *CdnManager
 
 func init() {
 	if ak == "" || sk == "" {
 		panic("please run ./test-env.sh first")
 	}
-	mac = qbox.NewMac(ak, sk)
+	mac = auth.New(ak, sk)
 	cdnManager = NewCdnManager(mac)
 }
 

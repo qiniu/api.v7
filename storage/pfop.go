@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
 	"net/http"
 )
@@ -11,12 +11,12 @@ import (
 // OperationManager 提供了数据处理相关的方法
 type OperationManager struct {
 	Client *Client
-	Mac    *qbox.Mac
+	Mac    *auth.Authorization
 	Cfg    *Config
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
-func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
+func NewOperationManager(mac *auth.Authorization, cfg *Config) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -29,7 +29,7 @@ func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
-func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *OperationManager {
+func NewOperationManagerEx(mac *auth.Authorization, cfg *Config, client *Client) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}

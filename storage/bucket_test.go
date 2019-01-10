@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 	testSiteUrl  = "http://devtools.qiniu.com"
 )
 
-var mac *qbox.Mac
+var mac *auth.Authorization
 var bucketManager *BucketManager
 var operationManager *OperationManager
 var formUploader *FormUploader
@@ -35,7 +35,7 @@ func init() {
 	if testAK == "" || testSK == "" {
 		panic("please run ./test-env.sh first")
 	}
-	mac = qbox.NewMac(testAK, testSK)
+	mac = auth.New(testAK, testSK)
 	cfg := Config{}
 	cfg.Zone = &Zone_z0
 	cfg.UseCdnDomains = true

@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/reqid.v7"
 	. "golang.org/x/net/context"
@@ -52,7 +52,7 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 	req.Header = headers
 
 	//check access token
-	mac, ok := ctx.Value("mac").(*qbox.Mac)
+	mac, ok := ctx.Value("mac").(*auth.Authorization)
 	if ok {
 		token, signErr := mac.SignRequest(req)
 		if signErr != nil {

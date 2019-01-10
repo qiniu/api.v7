@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
 	"net/http"
 )
@@ -110,12 +110,12 @@ type BatchOpRet struct {
 // BucketManager 提供了对资源进行管理的操作
 type BucketManager struct {
 	Client *Client
-	Mac    *qbox.Mac
+	Mac    *auth.Authorization
 	Cfg    *Config
 }
 
 // NewBucketManager 用来构建一个新的资源管理对象
-func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
+func NewBucketManager(mac *auth.Authorization, cfg *Config) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -131,7 +131,7 @@ func NewBucketManager(mac *qbox.Mac, cfg *Config) *BucketManager {
 }
 
 // NewBucketManagerEx 用来构建一个新的资源管理对象
-func NewBucketManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *BucketManager {
+func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, client *Client) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -728,7 +728,7 @@ func MakePublicURL(domain, key string) (finalUrl string) {
 }
 
 // MakePrivateURL 用来生成私有空间资源下载链接
-func MakePrivateURL(mac *qbox.Mac, domain, key string, deadline int64) (privateURL string) {
+func MakePrivateURL(mac *auth.Authorization, domain, key string, deadline int64) (privateURL string) {
 	publicURL := MakePublicURL(domain, key)
 	urlToSign := publicURL
 	if strings.Contains(publicURL, "?") {

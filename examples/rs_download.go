@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 )
 
@@ -16,7 +16,7 @@ var (
 )
 
 func main() {
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 
 	// 公开空间访问
 	domain := "https://image.example.com"

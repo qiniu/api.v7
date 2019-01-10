@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 )
 
@@ -26,7 +26,7 @@ func main() {
 	putPolicy := storage.PutPolicy{
 		Scope: bucket,
 	}
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 
 	cfg := storage.Config{}
 	// 空间对应的机房

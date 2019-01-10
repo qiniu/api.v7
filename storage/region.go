@@ -98,7 +98,7 @@ var RegionHuabei = Region{
 	},
 	RsHost:    "rs-z1.qbox.me",
 	RsfHost:   "rsf-z1.qbox.me",
-	ApiHost:   "api-z1.qiniu.com",
+	ApiHost:   "api-z 1.qiniu.com",
 	IovipHost: "iovip-z1.qbox.me",
 }
 

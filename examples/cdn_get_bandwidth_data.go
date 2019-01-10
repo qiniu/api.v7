@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/cdn"
 )
 
@@ -15,7 +15,7 @@ var (
 )
 
 func main() {
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	cdnManager := cdn.NewCdnManager(mac)
 
 	startDate := "2017-07-20"

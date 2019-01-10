@@ -5,7 +5,6 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/qiniu/api.v7/conf"
@@ -36,33 +35,32 @@ func (ath *Authorization) Sign(data []byte) (token string) {
 // SignWithData 对数据进行签名，一般用于上传凭证的生成用途
 func (ath *Authorization) SignWithData(b []byte) (token string) {
 	encodedData := base64.URLEncoding.EncodeToString(b)
-	sign := ath.Sign(b)
-	return fmt.Sprintf("%s:%s:%s", ath.AccessKey, sign, encodedData)
+	sign := ath.Sign([]byte(encodedData))
+	return fmt.Sprintf("%s:%s", sign, encodedData)
 }
 
-// SignRequest 对数据进行签名，一般用于管理凭证的生成
-func (ath *Authorization) SignRequest(req *http.Request) (token string, err error) {
+func collectData(req *http.Request) (data []byte, err error) {
 	u := req.URL
 	s := u.Path
 	if u.RawQuery != "" {
-		s += "?" + u.RawQuery
+		s += "?"
+		s += u.RawQuery
 	}
 	s += "\n"
 
-	data := []byte(s)
+	data = []byte(s)
 	if incBody(req) {
 		s2, err2 := seekable.New(req)
 		if err2 != nil {
-			return "", err2
+			err = err2
+			return
 		}
-		data = append(data, s2.Bytes())
+		data = append(data, s2.Bytes()...)
 	}
-	token = ath.Sign(data)
 	return
 }
 
-// SignRequestV2 对数据进行签名，一般用于高级管理凭证的生成
-func (ath *Authorization) SignRequestV2(req *http.Request) (token string, err error) {
+func collectDataV2(req *http.Request) (data []byte, err error) {
 	u := req.URL
 
 	//write method path?query
@@ -84,16 +82,36 @@ func (ath *Authorization) SignRequestV2(req *http.Request) (token string, err er
 	}
 	s += "\n\n"
 
-	data := []byte(s)
+	data = []byte(s)
 	//write body
 	if incBodyV2(req) {
 		s2, err2 := seekable.New(req)
 		if err2 != nil {
-			return "", err2
+			err = err2
+			return
 		}
-		data = append(data, s2.Bytes())
+		data = append(data, s2.Bytes()...)
 	}
+	return
+}
 
+// SignRequest 对数据进行签名，一般用于管理凭证的生成
+func (ath *Authorization) SignRequest(req *http.Request) (token string, err error) {
+	data, err := collectData(req)
+	if err != nil {
+		return
+	}
+	token = ath.Sign(data)
+	return
+}
+
+// SignRequestV2 对数据进行签名，一般用于高级管理凭证的生成
+func (ath *Authorization) SignRequestV2(req *http.Request) (token string, err error) {
+
+	data, err := collectDataV2(req)
+	if err != nil {
+		return
+	}
 	token = ath.Sign(data)
 	return
 }
