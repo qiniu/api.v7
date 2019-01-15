@@ -31,10 +31,12 @@ var formUploader *FormUploader
 var resumeUploader *ResumeUploader
 var base64Uploader *Base64Uploader
 
+/*
 func init() {
 	if testAK == "" || testSK == "" {
 		panic("please run ./test-env.sh first")
 	}
+
 	mac = auth.New(testAK, testSK)
 	cfg := Config{}
 	cfg.Zone = &Zone_z0
@@ -46,7 +48,7 @@ func init() {
 	base64Uploader = NewBase64Uploader(&cfg)
 	rand.Seed(time.Now().Unix())
 }
-
+*/
 //Test get zone
 func TestGetZone(t *testing.T) {
 	zone, err := GetZone(testAK, testBucket)

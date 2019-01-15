@@ -98,7 +98,7 @@ var RegionHuabei = Region{
 	},
 	RsHost:    "rs-z1.qbox.me",
 	RsfHost:   "rsf-z1.qbox.me",
-	ApiHost:   "api-z 1.qiniu.com",
+	ApiHost:   "api-z1.qiniu.com",
 	IovipHost: "iovip-z1.qbox.me",
 }
 
@@ -147,13 +147,6 @@ var RegionXinjiapo = Region{
 	ApiHost:   "api-as0.qiniu.com",
 	IovipHost: "iovip-as0.qbox.me",
 }
-
-// for programmers
-var Region_z0 = RegionHuadong
-var Region_z1 = RegionHuabei
-var Region_z2 = RegionHuanan
-var Region_na0 = RegionBeimei
-var Region_as0 = RegionXinjiapo
 
 // UcHost 为查询空间相关域名的API服务地址
 const UcHost = "https://uc.qbox.me"
@@ -230,20 +223,20 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 
 func setSpecificHosts(ioHost string, region *Region) {
 	if strings.Contains(ioHost, "-z1") {
-		region.RsHost = "rs-z1.qbox.me"
-		region.RsfHost = "rsf-z1.qbox.me"
-		region.ApiHost = "api-z1.qiniu.com"
+		region.RsHost = RegionHuabei.RsHost
+		region.RsfHost = RegionHuabei.RsfHost
+		region.ApiHost = RegionHuabei.ApiHost
 	} else if strings.Contains(ioHost, "-z2") {
-		region.RsHost = "rs-z2.qbox.me"
-		region.RsfHost = "rsf-z2.qbox.me"
-		region.ApiHost = "api-z2.qiniu.com"
+		region.RsHost = RegionHuanan.RsHost
+		region.RsfHost = RegionHuanan.RsfHost
+		region.ApiHost = RegionHuanan.ApiHost
 	} else if strings.Contains(ioHost, "-na0") {
-		region.RsHost = "rs-na0.qbox.me"
-		region.RsfHost = "rsf-na0.qbox.me"
-		region.ApiHost = "api-na0.qiniu.com"
+		region.RsHost = RegionBeimei.RsHost
+		region.RsfHost = RegionBeimei.RsfHost
+		region.ApiHost = RegionBeimei.ApiHost
 	} else if strings.Contains(ioHost, "-as0") {
-		region.RsHost = "rs-as0.qbox.me"
-		region.RsfHost = "rsf-as0.qbox.me"
-		region.ApiHost = "api-as0.qiniu.com"
+		region.RsHost = RegionXinjiapo.RsHost
+		region.RsfHost = RegionXinjiapo.RsfHost
+		region.ApiHost = RegionXinjiapo.ApiHost
 	}
 }
