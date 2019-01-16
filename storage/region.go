@@ -28,29 +28,12 @@ type Region struct {
 	IovipHost string
 }
 
-type RegionCode string
+type RegionID string
 
 // GetDefaultReion 根据RegionID获取对应的Region信息
-func GetDefaultRegion(regionCode RegionCode) (Region, bool) {
-	if r, ok := regionMap[regionCode]; ok {
+func GetRegionByID(regionID RegionID) (Region, bool) {
+	if r, ok := regionMap[regionID]; ok {
 		return r, ok
-	}
-	return Region{}, false
-}
-
-// GetDefaultRegionStr 根据region code string返回Region信息
-func GetDefaultRegionStr(regionCodeStr string) (Region, bool) {
-	switch regionCodeStr {
-	case "z0":
-		return GetDefaultRegion(RCodeHuadong)
-	case "z1":
-		return GetDefaultRegion(RCodeHuabei)
-	case "z2":
-		return GetDefaultRegion(RCodeHuanan)
-	case "na0":
-		return GetDefaultRegion(RCodeBeimei)
-	case "as0":
-		return GetDefaultRegion(RCodeAsia)
 	}
 	return Region{}, false
 }
@@ -180,20 +163,20 @@ var (
 
 const (
 	// region code
-	RCodeHuadong = RegionCode("z0")
-	RCodeHuabei  = RegionCode("z1")
-	RCodeHuanan  = RegionCode("z2")
-	RCodeBeimei  = RegionCode("na0")
-	RCodeAsia    = RegionCode("as0")
+	RIDHuadong = RegionID("z0")
+	RIDHuabei  = RegionID("z1")
+	RIDHuanan  = RegionID("z2")
+	RIDBeimei  = RegionID("na0")
+	RIDAsia    = RegionID("as0")
 )
 
 // regionMap 是RegionID到具体的Region的映射
-var regionMap = map[RegionCode]Region{
-	RCodeHuadong: regionHuadong,
-	RCodeHuanan:  regionHuanan,
-	RCodeHuabei:  regionHuabei,
-	RCodeAsia:    regionXinjiapo,
-	RCodeBeimei:  regionBeimei,
+var regionMap = map[RegionID]Region{
+	RIDHuadong: regionHuadong,
+	RIDHuanan:  regionHuanan,
+	RIDHuabei:  regionHuabei,
+	RIDAsia:    regionXinjiapo,
+	RIDBeimei:  regionBeimei,
 }
 
 // UcHost 为查询空间相关域名的API服务地址
@@ -271,17 +254,17 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 
 func regionFromHost(ioHost string) (Region, bool) {
 	if strings.Contains(ioHost, "-z1") {
-		return GetDefaultRegion(RCodeHuabei)
+		return GetRegionByID(RIDHuabei)
 	}
 	if strings.Contains(ioHost, "-z2") {
-		return GetDefaultRegion(RCodeHuanan)
+		return GetRegionByID(RIDHuanan)
 	}
 
 	if strings.Contains(ioHost, "-na0") {
-		return GetDefaultRegion(RCodeBeimei)
+		return GetRegionByID(RIDBeimei)
 	}
 	if strings.Contains(ioHost, "-as0") {
-		return GetDefaultRegion(RCodeAsia)
+		return GetRegionByID(RIDAsia)
 	}
 	return Region{}, false
 }
