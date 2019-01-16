@@ -10,9 +10,6 @@ import (
 // 存储所在的地区，例如华东，华南，华北
 // 每个存储区域可能有多个机房信息，每个机房可能有多个上传入口
 type Region struct {
-	// Region code
-	// z0 - 华东， z1 - 华北, z2 - 华南, as0 - 亚洲（新加坡, na0 - 北美
-	Code RegionCode
 	// 上传入口
 	SrcUpHosts []string
 
