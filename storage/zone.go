@@ -13,23 +13,23 @@ func GetZone(ak, bucket string) (zone *Zone, err error) {
 var (
 	// 华东机房
 	// 兼容保留
-	ZoneHuadong = RegionHuadong
+	ZoneHuadong, _ = GetDefaultRegion(RCodeHuadong)
 
 	// 华北机房
 	// 兼容保留
-	ZoneHuabei = RegionHuabei
+	ZoneHuabei, _ = GetDefaultRegion(RCodeHuabei)
 
 	// 华南机房
 	// 兼容保留
-	ZoneHuanan = RegionHuanan
+	ZoneHuanan, _ = GetDefaultRegion(RCodeHuanan)
 
 	// 北美机房
 	// 兼容保留
-	ZoneBeimei = RegionBeimei
+	ZoneBeimei, _ = GetDefaultRegion(RCodeBeimei)
 
 	// 新加坡机房
 	// 兼容保留
-	ZoneXinjiapo = RegionXinjiapo
+	ZoneXinjiapo, _ = GetDefaultRegion(RCodeAsia)
 
 	// 兼容保留
 	Zone_z0 = ZoneHuadong

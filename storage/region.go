@@ -10,6 +10,9 @@ import (
 // 存储所在的地区，例如华东，华南，华北
 // 每个存储区域可能有多个机房信息，每个机房可能有多个上传入口
 type Region struct {
+	// Region code
+	// z0 - 华东， z1 - 华北, z2 - 华南, as0 - 亚洲（新加坡, na0 - 北美
+	Code RegionCode
 	// 上传入口
 	SrcUpHosts []string
 
@@ -28,20 +31,50 @@ type Region struct {
 	IovipHost string
 }
 
-func (z *Region) String() string {
+type RegionCode string
+
+// GetDefaultReion 根据RegionID获取对应的Region信息
+func GetDefaultRegion(regionCode RegionCode) (Region, bool) {
+	if r, ok := regionMap[regionCode]; ok {
+		return r, ok
+	}
+	return Region{}, false
+}
+
+// GetDefaultRegionStr 根据region code string返回Region信息
+func GetDefaultRegionStr(regionCodeStr string) (Region, bool) {
+	switch regionCodeStr {
+	case "z0":
+		return GetDefaultRegion(RCodeHuadong)
+	case "z1":
+		return GetDefaultRegion(RCodeHuabei)
+	case "z2":
+		return GetDefaultRegion(RCodeHuanan)
+	case "na0":
+		return GetDefaultRegion(RCodeBeimei)
+	case "as0":
+		return GetDefaultRegion(RCodeAsia)
+	}
+	return Region{}, false
+}
+
+func (r *Region) String() string {
 	str := ""
-	str += fmt.Sprintf("SrcUpHosts: %v\n", z.SrcUpHosts)
-	str += fmt.Sprintf("CdnUpHosts: %v\n", z.CdnUpHosts)
-	str += fmt.Sprintf("IovipHost: %s\n", z.IovipHost)
-	str += fmt.Sprintf("RsHost: %s\n", z.RsHost)
-	str += fmt.Sprintf("RsfHost: %s\n", z.RsfHost)
-	str += fmt.Sprintf("ApiHost: %s\n", z.ApiHost)
+	str += fmt.Sprintf("SrcUpHosts: %v\n", r.SrcUpHosts)
+	str += fmt.Sprintf("CdnUpHosts: %v\n", r.CdnUpHosts)
+	str += fmt.Sprintf("IovipHost: %s\n", r.IovipHost)
+	str += fmt.Sprintf("RsHost: %s\n", r.RsHost)
+	str += fmt.Sprintf("RsfHost: %s\n", r.RsfHost)
+	str += fmt.Sprintf("ApiHost: %s\n", r.ApiHost)
 	return str
 }
 
 func endpoint(useHttps bool, host string) string {
-	if strings.HasPrefix(host, "http://") || strings.HasPrefix(host, "https://") {
-		return host
+	host = strings.TrimSpace(host)
+	host = strings.TrimLeft(host, "http://")
+	host = strings.TrimLeft(host, "https://")
+	if host == "" {
+		return ""
 	}
 	scheme := "http://"
 	if useHttps {
@@ -51,101 +84,119 @@ func endpoint(useHttps bool, host string) string {
 }
 
 // 获取rsfHost
-func (z *Region) GetRsfHost(useHttps bool) string {
-	return endpoint(useHttps, z.RsfHost)
+func (r *Region) GetRsfHost(useHttps bool) string {
+	return endpoint(useHttps, r.RsfHost)
 }
 
 // 获取io host
-func (z *Region) GetIoHost(useHttps bool) string {
-	return endpoint(useHttps, z.IovipHost)
+func (r *Region) GetIoHost(useHttps bool) string {
+	return endpoint(useHttps, r.IovipHost)
 }
 
 // 获取RsHost
-func (z *Region) GetRsHost(useHttps bool) string {
-	return endpoint(useHttps, z.RsHost)
+func (r *Region) GetRsHost(useHttps bool) string {
+	return endpoint(useHttps, r.RsHost)
 }
 
 // 获取api host
-func (z *Region) GetApiHost(useHttps bool) string {
-	return endpoint(useHttps, z.ApiHost)
+func (r *Region) GetApiHost(useHttps bool) string {
+	return endpoint(useHttps, r.ApiHost)
 }
 
-// RegionHuadong 表示华东机房
-var RegionHuadong = Region{
-	SrcUpHosts: []string{
-		"up.qiniup.com",
-		"up-nb.qiniup.com",
-		"up-xs.qiniup.com",
-	},
-	CdnUpHosts: []string{
-		"upload.qiniup.com",
-		"upload-nb.qiniup.com",
-		"upload-xs.qiniup.com",
-	},
-	RsHost:    "rs.qbox.me",
-	RsfHost:   "rsf.qbox.me",
-	ApiHost:   "api.qiniu.com",
-	IovipHost: "iovip.qbox.me",
-}
+var (
+	// regionHuadong 表示华东机房
+	regionHuadong = Region{
+		SrcUpHosts: []string{
+			"up.qiniup.com",
+			"up-nb.qiniup.com",
+			"up-xs.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload.qiniup.com",
+			"upload-nb.qiniup.com",
+			"upload-xs.qiniup.com",
+		},
+		RsHost:    "rs.qbox.me",
+		RsfHost:   "rsf.qbox.me",
+		ApiHost:   "api.qiniu.com",
+		IovipHost: "iovip.qbox.me",
+	}
 
-// RegionHuabei 表示华北机房
-var RegionHuabei = Region{
-	SrcUpHosts: []string{
-		"up-z1.qiniup.com",
-	},
-	CdnUpHosts: []string{
-		"upload-z1.qiniup.com",
-	},
-	RsHost:    "rs-z1.qbox.me",
-	RsfHost:   "rsf-z1.qbox.me",
-	ApiHost:   "api-z1.qiniu.com",
-	IovipHost: "iovip-z1.qbox.me",
-}
+	// regionHuabei 表示华北机房
+	regionHuabei = Region{
+		SrcUpHosts: []string{
+			"up-z1.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-z1.qiniup.com",
+		},
+		RsHost:    "rs-z1.qbox.me",
+		RsfHost:   "rsf-z1.qbox.me",
+		ApiHost:   "api-z1.qiniu.com",
+		IovipHost: "iovip-z1.qbox.me",
+	}
+	// regionHuanan 表示华南机房
+	regionHuanan = Region{
+		SrcUpHosts: []string{
+			"up-z2.qiniup.com",
+			"up-gz.qiniup.com",
+			"up-fs.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-z2.qiniup.com",
+			"upload-gz.qiniup.com",
+			"upload-fs.qiniup.com",
+		},
+		RsHost:    "rs-z2.qbox.me",
+		RsfHost:   "rsf-z2.qbox.me",
+		ApiHost:   "api-z2.qiniu.com",
+		IovipHost: "iovip-z2.qbox.me",
+	}
 
-// RegionHuanan 表示华南机房
-var RegionHuanan = Region{
-	SrcUpHosts: []string{
-		"up-z2.qiniup.com",
-		"up-gz.qiniup.com",
-		"up-fs.qiniup.com",
-	},
-	CdnUpHosts: []string{
-		"upload-z2.qiniup.com",
-		"upload-gz.qiniup.com",
-		"upload-fs.qiniup.com",
-	},
-	RsHost:    "rs-z2.qbox.me",
-	RsfHost:   "rsf-z2.qbox.me",
-	ApiHost:   "api-z2.qiniu.com",
-	IovipHost: "iovip-z2.qbox.me",
-}
+	// regionBeimei 表示北美机房
+	regionBeimei = Region{
+		SrcUpHosts: []string{
+			"up-na0.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-na0.qiniup.com",
+		},
+		RsHost:    "rs-na0.qbox.me",
+		RsfHost:   "rsf-na0.qbox.me",
+		ApiHost:   "api-na0.qiniu.com",
+		IovipHost: "iovip-na0.qbox.me",
+	}
+	// regionXinjiapo 表示新加坡机房
+	regionXinjiapo = Region{
+		SrcUpHosts: []string{
+			"up-as0.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-as0.qiniup.com",
+		},
+		RsHost:    "rs-as0.qbox.me",
+		RsfHost:   "rsf-as0.qbox.me",
+		ApiHost:   "api-as0.qiniu.com",
+		IovipHost: "iovip-as0.qbox.me",
+	}
+)
 
-// RegionBeimei 表示北美机房
-var RegionBeimei = Region{
-	SrcUpHosts: []string{
-		"up-na0.qiniup.com",
-	},
-	CdnUpHosts: []string{
-		"upload-na0.qiniup.com",
-	},
-	RsHost:    "rs-na0.qbox.me",
-	RsfHost:   "rsf-na0.qbox.me",
-	ApiHost:   "api-na0.qiniu.com",
-	IovipHost: "iovip-na0.qbox.me",
-}
+const (
+	// region code
+	RCodeHuadong = RegionCode("z0")
+	RCodeHuabei  = RegionCode("z1")
+	RCodeHuanan  = RegionCode("z2")
+	RCodeBeimei  = RegionCode("na0")
+	RCodeAsia    = RegionCode("as0")
+)
 
-// RegionXinjiapo 表示新加坡机房
-var RegionXinjiapo = Region{
-	SrcUpHosts: []string{
-		"up-as0.qiniup.com",
-	},
-	CdnUpHosts: []string{
-		"upload-as0.qiniup.com",
-	},
-	RsHost:    "rs-as0.qbox.me",
-	RsfHost:   "rsf-as0.qbox.me",
-	ApiHost:   "api-as0.qiniu.com",
-	IovipHost: "iovip-as0.qbox.me",
+// regionMap 是RegionID到具体的Region的映射
+var regionMap = map[RegionCode]Region{
+	RCodeHuadong: regionHuadong,
+	RCodeHuanan:  regionHuanan,
+	RCodeHuabei:  regionHuabei,
+	RCodeAsia:    regionXinjiapo,
+	RCodeBeimei:  regionBeimei,
 }
 
 // UcHost 为查询空间相关域名的API服务地址
@@ -221,22 +272,28 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 	return
 }
 
-func setSpecificHosts(ioHost string, region *Region) {
+func regionFromHost(ioHost string) (Region, bool) {
 	if strings.Contains(ioHost, "-z1") {
-		region.RsHost = RegionHuabei.RsHost
-		region.RsfHost = RegionHuabei.RsfHost
-		region.ApiHost = RegionHuabei.ApiHost
-	} else if strings.Contains(ioHost, "-z2") {
-		region.RsHost = RegionHuanan.RsHost
-		region.RsfHost = RegionHuanan.RsfHost
-		region.ApiHost = RegionHuanan.ApiHost
-	} else if strings.Contains(ioHost, "-na0") {
-		region.RsHost = RegionBeimei.RsHost
-		region.RsfHost = RegionBeimei.RsfHost
-		region.ApiHost = RegionBeimei.ApiHost
-	} else if strings.Contains(ioHost, "-as0") {
-		region.RsHost = RegionXinjiapo.RsHost
-		region.RsfHost = RegionXinjiapo.RsfHost
-		region.ApiHost = RegionXinjiapo.ApiHost
+		return GetDefaultRegion(RCodeHuabei)
+	}
+	if strings.Contains(ioHost, "-z2") {
+		return GetDefaultRegion(RCodeHuanan)
+	}
+
+	if strings.Contains(ioHost, "-na0") {
+		return GetDefaultRegion(RCodeBeimei)
+	}
+	if strings.Contains(ioHost, "-as0") {
+		return GetDefaultRegion(RCodeAsia)
+	}
+	return Region{}, false
+}
+
+func setSpecificHosts(ioHost string, region *Region) {
+	r, ok := regionFromHost(ioHost)
+	if ok {
+		region.RsHost = r.RsHost
+		region.RsfHost = r.RsfHost
+		region.ApiHost = r.ApiHost
 	}
 }

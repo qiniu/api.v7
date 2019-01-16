@@ -30,15 +30,17 @@ func TestReqHost(t *testing.T) {
 		{UseHTTPS: false, RsHost: "http://rshost.com"},
 		{UseHTTPS: false, RsHost: "https://rshost.com"},
 		{UseHTTPS: false, Zone: &zoneHuadong, RsHost: "http://rshost.com"},
+		{UseHTTPS: false, Region: &zoneHuadong, RsHost: "http://rshost.com"},
 	}
 	wantRsHosts := []string{
 		"https://rs.qbox.me",
-		"http://rshost.com",
+		"https://rshost.com",
 		"https://rshost.com",
 		"https://rs.qbox.me",
 		"http://rs.qbox.me",
 		"http://rshost.com",
-		"https://rshost.com",
+		"http://rshost.com",
+		"http://rs.qbox.me",
 		"http://rs.qbox.me",
 	}
 
@@ -46,7 +48,7 @@ func TestReqHost(t *testing.T) {
 		got := cfg.RsReqHost()
 		want := wantRsHosts[ind]
 		if got != want {
-			t.Fail()
+			t.Errorf("ind = %d, want = %q, got = %q\n", ind, want, got)
 		}
 	}
 }

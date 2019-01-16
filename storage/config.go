@@ -1,15 +1,14 @@
 package storage
 
-import (
-	"strings"
-)
-
 // Config 为文件上传，资源管理等配置
 type Config struct {
 	//兼容保留
 	Zone *Region //空间所在的机房
 
-	Region        *Region
+	Region *Region
+
+	// 如果设置的Host本身是以http://开头的，又设置了该字段为true，那么优先使用该字段，使用https协议
+	// 同理如果该字段为false, 但是设置的host以https开头，那么使用http协议通信
 	UseHTTPS      bool   //是否使用https域名
 	UseCdnDomains bool   //是否使用cdn加速域名
 	CentralRsHost string //中心机房的RsHost，用于list bucket
@@ -22,20 +21,12 @@ type Config struct {
 	IoHost  string
 }
 
-func emptyHost(useHttps bool) string {
-	return ""
-}
-
 // reqHost 返回一个Host链接
-// 如果getHost返回的Host是合法的，那么优先使用该返回值； 否则使用参数host, 当host 为空时，使用默认的host
 // 主要用于Config 中Host的获取，Region优先级最高， Zone次之， 最后才使用设置的Host信息
-func reqHost(useHttps bool, getHost func(bool) string, host, defaultHost string) (endp string) {
-	endp = getHost(useHttps)
-	endp = strings.TrimSpace(endp)
-
-	// 返回的host合法
-	if endp != "" && endp != "http://" && endp != "https://" {
-		return
+// topHost是优先级最高的， host次之，如果都没有，使用默认的defaultHost
+func reqHost(useHttps bool, topHost, host, defaultHost string) (endp string) {
+	if topHost != "" {
+		return topHost
 	}
 	if host == "" {
 		host = defaultHost
@@ -46,41 +37,49 @@ func reqHost(useHttps bool, getHost func(bool) string, host, defaultHost string)
 // 获取RsHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) RsReqHost() string {
-	var method func(bool) string
+	rzHost := c.hostFromRegionZone("rs")
+	return reqHost(c.UseHTTPS, rzHost, c.RsHost, DefaultRsHost)
+}
+
+// GetRegion返回一个Region指针
+// 默认返回最新的Region， 如果该字段没有，那么返回兼容保留的Zone, 如果都为nil, 就返回nil
+func (c *Config) GetRegion() *Region {
 	if c.Region != nil {
-		method = c.Region.GetRsHost
-	} else if c.Zone != nil {
-		method = c.Zone.GetRsHost
-	} else {
-		method = emptyHost
+		return c.Region
 	}
-	return reqHost(c.UseHTTPS, method, c.RsHost, DefaultRsHost)
+	if c.Zone != nil {
+		return c.Zone
+	}
+	return nil
+}
+
+func (c *Config) hostFromRegionZone(typ string) string {
+	z := c.GetRegion()
+	if z != nil {
+		switch typ {
+		case "rs":
+			return z.GetRsHost(c.UseHTTPS)
+		case "rsf":
+			return z.GetRsfHost(c.UseHTTPS)
+		case "api":
+			return z.GetApiHost(c.UseHTTPS)
+		case "io":
+			return z.GetIoHost(c.UseHTTPS)
+		}
+	}
+	return ""
 }
 
 // 获取rsfHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) RsfReqHost() string {
-	var method func(bool) string
-	if c.Region != nil {
-		method = c.Region.GetRsfHost
-	} else if c.Zone != nil {
-		method = c.Zone.GetRsfHost
-	} else {
-		method = emptyHost
-	}
-	return reqHost(c.UseHTTPS, method, c.RsfHost, DefaultRsfHost)
+	rsHost := c.hostFromRegionZone("rsf")
+	return reqHost(c.UseHTTPS, rsHost, c.RsfHost, DefaultRsfHost)
 }
 
 // 获取apiHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) ApiReqHost() string {
-	var method func(bool) string
-	if c.Region != nil {
-		method = c.Region.GetApiHost
-	} else if c.Zone != nil {
-		method = c.Zone.GetApiHost
-	} else {
-		method = emptyHost
-	}
-	return reqHost(c.UseHTTPS, method, c.ApiHost, DefaultAPIHost)
+	rzHost := c.hostFromRegionZone("api")
+	return reqHost(c.UseHTTPS, rzHost, c.ApiHost, DefaultAPIHost)
 }
