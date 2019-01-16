@@ -37,7 +37,7 @@ func reqHost(useHttps bool, topHost, host, defaultHost string) (endp string) {
 // 获取RsHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) RsReqHost() string {
-	rzHost := c.hostFromRegionZone("rs")
+	rzHost := c.hostFromRegion("rs")
 	return reqHost(c.UseHTTPS, rzHost, c.RsHost, DefaultRsHost)
 }
 
@@ -53,18 +53,18 @@ func (c *Config) GetRegion() *Region {
 	return nil
 }
 
-func (c *Config) hostFromRegionZone(typ string) string {
-	z := c.GetRegion()
-	if z != nil {
+func (c *Config) hostFromRegion(typ string) string {
+	region := c.GetRegion()
+	if region != nil {
 		switch typ {
 		case "rs":
-			return z.GetRsHost(c.UseHTTPS)
+			return region.GetRsHost(c.UseHTTPS)
 		case "rsf":
-			return z.GetRsfHost(c.UseHTTPS)
+			return region.GetRsfHost(c.UseHTTPS)
 		case "api":
-			return z.GetApiHost(c.UseHTTPS)
+			return region.GetApiHost(c.UseHTTPS)
 		case "io":
-			return z.GetIoHost(c.UseHTTPS)
+			return region.GetIoHost(c.UseHTTPS)
 		}
 	}
 	return ""
@@ -73,13 +73,13 @@ func (c *Config) hostFromRegionZone(typ string) string {
 // 获取rsfHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) RsfReqHost() string {
-	rsHost := c.hostFromRegionZone("rsf")
+	rsHost := c.hostFromRegion("rsf")
 	return reqHost(c.UseHTTPS, rsHost, c.RsfHost, DefaultRsfHost)
 }
 
 // 获取apiHost
 // 优先使用Zone中的Host信息，如果Zone中的host信息没有配置，那么使用Config中的Host信息
 func (c *Config) ApiReqHost() string {
-	rzHost := c.hostFromRegionZone("api")
+	rzHost := c.hostFromRegion("api")
 	return reqHost(c.UseHTTPS, rzHost, c.ApiHost, DefaultAPIHost)
 }

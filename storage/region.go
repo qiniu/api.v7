@@ -146,8 +146,8 @@ var (
 		ApiHost:   "api-na0.qiniu.com",
 		IovipHost: "iovip-na0.qbox.me",
 	}
-	// regionXinjiapo 表示新加坡机房
-	regionXinjiapo = Region{
+	// regionSingapore 表示新加坡机房
+	regionSingapore = Region{
 		SrcUpHosts: []string{
 			"up-as0.qiniup.com",
 		},
@@ -163,20 +163,20 @@ var (
 
 const (
 	// region code
-	RIDHuadong = RegionID("z0")
-	RIDHuabei  = RegionID("z1")
-	RIDHuanan  = RegionID("z2")
-	RIDBeimei  = RegionID("na0")
-	RIDAsia    = RegionID("as0")
+	RIDHuadong   = RegionID("z0")
+	RIDHuabei    = RegionID("z1")
+	RIDHuanan    = RegionID("z2")
+	RIDBeimei    = RegionID("na0")
+	RIDSingapore = RegionID("as0")
 )
 
 // regionMap 是RegionID到具体的Region的映射
 var regionMap = map[RegionID]Region{
-	RIDHuadong: regionHuadong,
-	RIDHuanan:  regionHuanan,
-	RIDHuabei:  regionHuabei,
-	RIDAsia:    regionXinjiapo,
-	RIDBeimei:  regionBeimei,
+	RIDHuadong:   regionHuadong,
+	RIDHuanan:    regionHuanan,
+	RIDHuabei:    regionHuabei,
+	RIDSingapore: regionSingapore,
+	RIDBeimei:    regionBeimei,
 }
 
 // UcHost 为查询空间相关域名的API服务地址
@@ -197,19 +197,19 @@ type UcQueryUp struct {
 }
 
 var (
-	regionMutext sync.RWMutex
-	regionCache  = make(map[string]*Region)
+	regionMutex sync.RWMutex
+	regionCache = make(map[string]*Region)
 )
 
 // GetRegion 用来根据ak和bucket来获取空间相关的机房信息
 func GetRegion(ak, bucket string) (region *Region, err error) {
 	regionID := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
-	regionMutext.RLock()
+	regionMutex.RLock()
 	if v, ok := regionCache[regionID]; ok {
 		region = v
 	}
-	regionMutext.RUnlock()
+	regionMutex.RUnlock()
 	if region != nil {
 		return
 	}
@@ -246,9 +246,9 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 	//set specific hosts if possible
 	setSpecificHosts(ioHost, region)
 
-	regionMutext.Lock()
+	regionMutex.Lock()
 	regionCache[regionID] = region
-	regionMutext.Unlock()
+	regionMutex.Unlock()
 	return
 }
 
@@ -264,7 +264,7 @@ func regionFromHost(ioHost string) (Region, bool) {
 		return GetRegionByID(RIDBeimei)
 	}
 	if strings.Contains(ioHost, "-as0") {
-		return GetRegionByID(RIDAsia)
+		return GetRegionByID(RIDSingapore)
 	}
 	return Region{}, false
 }

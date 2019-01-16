@@ -29,7 +29,7 @@ var (
 
 	// 新加坡机房
 	// 兼容保留
-	ZoneXinjiapo, _ = GetRegionByID(RIDAsia)
+	ZoneXinjiapo, _ = GetRegionByID(RIDSingapore)
 
 	// 兼容保留
 	Zone_z0 = ZoneHuadong
