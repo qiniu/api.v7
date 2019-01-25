@@ -22,12 +22,9 @@ env:
     - QINIU_TEST_DOMAIN_PRIVATE=gosdk.qiniudn.com
     - QINIU_TEST_PIPELINE=sdktest
 
-
-before_install:
-  - export GOPATH = $HOME/go
-  - mkdir -p $GOPATH && cd $GOPATH
-
 install:
+  - export GOPATH=$HOME/go
+  - mkdir -p $GOPATH && cd $GOPATH
   - go get github.com/qiniu/x
 
 script:
