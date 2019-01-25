@@ -21,6 +21,8 @@ env:
     - QINIU_TEST_DOMAIN=gosdk.qiniudn.com
     - QINIU_TEST_DOMAIN_PRIVATE=gosdk.qiniudn.com
     - QINIU_TEST_PIPELINE=sdktest
+install:
+  go get github.com/qiniu/x/bytes.v7/seekable
 
 script:
   - make test
