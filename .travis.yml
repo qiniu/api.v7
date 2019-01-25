@@ -25,6 +25,7 @@ install:
   go get github.com/qiniu/x
 
 script:
+  - echo $secretKey
   - make test
 
 branches:
