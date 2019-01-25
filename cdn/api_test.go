@@ -36,6 +36,9 @@ var mac *auth.Authorization
 var cdnManager *CdnManager
 
 func init() {
+	if ak == "" || sk == "" {
+		panic("ak/sk should not be empty")
+	}
 	mac = auth.New(ak, sk)
 	cdnManager = NewCdnManager(mac)
 }
