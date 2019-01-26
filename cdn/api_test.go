@@ -185,6 +185,7 @@ func TestRefreshDirs(t *testing.T) {
 	}
 }
 
+/* 预取有额度限制
 //TestPrefetchUrls
 func TestPrefetchUrls(t *testing.T) {
 	type args struct {
@@ -215,6 +216,7 @@ func TestPrefetchUrls(t *testing.T) {
 		})
 	}
 }
+*/
 
 //TestGetCdnLogList
 func TestGetCdnLogList(t *testing.T) {

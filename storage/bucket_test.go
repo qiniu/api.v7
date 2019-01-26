@@ -30,9 +30,10 @@ var operationManager *OperationManager
 var formUploader *FormUploader
 var resumeUploader *ResumeUploader
 var base64Uploader *Base64Uploader
+var clt Client
 
 func init() {
-	clt := Client{
+	clt = Client{
 		Client: &http.Client{
 			Timeout: time.Minute * 10,
 		},
@@ -248,7 +249,7 @@ func TestMakePrivateUrl(t *testing.T) {
 	deadline := time.Now().Add(time.Second * 3600).Unix()
 	privateURL := MakePrivateURL(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
 	t.Logf("PrivateUrl: %s", privateURL)
-	resp, respErr := Client.Get(privateURL)
+	resp, respErr := clt.Get(privateURL)
 	if respErr != nil {
 		t.Fatalf("MakePrivateUrl() error, %s", respErr)
 	}
