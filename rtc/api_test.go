@@ -16,8 +16,8 @@ import (
 var manager *Manager
 
 func init() {
-	accessKey := os.Getenv("QINIU_ACCESS_KEY")
-	secretKey := os.Getenv("QINIU_SECRET_KEY")
+	accessKey := os.Getenv("accessKey")
+	secretKey := os.Getenv("secretKey")
 
 	mac := auth.New(accessKey, secretKey)
 	manager = NewManager(mac)
