@@ -32,15 +32,20 @@ var resumeUploader *ResumeUploader
 var base64Uploader *Base64Uploader
 
 func init() {
+	clt := Client{
+		Client: &http.Client{
+			Timeout: time.Minute * 10,
+		},
+	}
 	mac = auth.New(testAK, testSK)
 	cfg := Config{}
 	cfg.Zone = &Zone_z0
 	cfg.UseCdnDomains = true
-	bucketManager = NewBucketManager(mac, &cfg)
-	operationManager = NewOperationManager(mac, &cfg)
-	formUploader = NewFormUploader(&cfg)
-	resumeUploader = NewResumeUploader(&cfg)
-	base64Uploader = NewBase64Uploader(&cfg)
+	bucketManager = NewBucketManagerEx(mac, &cfg, &clt)
+	operationManager = NewOperationManagerEx(mac, &cfg, &clt)
+	formUploader = NewFormUploaderEx(&cfg, &clt)
+	resumeUploader = NewResumeUploaderEx(&cfg, &clt)
+	base64Uploader = NewBase64UploaderEx(&cfg, &clt)
 	rand.Seed(time.Now().Unix())
 }
 
