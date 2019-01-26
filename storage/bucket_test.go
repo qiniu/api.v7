@@ -187,6 +187,9 @@ func TestChangeType(t *testing.T) {
 	bucketManager.Delete(testBucket, toChangeKey)
 }
 
+/*
+// SetImage成功以后， 后台生效需要一段时间；导致集成测试经常失败。
+// 如果要修改这一部分代码可以重新开启这个测试
 func TestPrefetchAndImage(t *testing.T) {
 	err := bucketManager.SetImage(testSiteUrl, testBucket)
 	if err != nil {
@@ -209,6 +212,7 @@ func TestPrefetchAndImage(t *testing.T) {
 
 	t.Log("unset image success for bucket", testBucket)
 }
+*/
 
 func TestListFiles(t *testing.T) {
 	limit := 100
