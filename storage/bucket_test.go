@@ -195,7 +195,7 @@ func TestPrefetchAndImage(t *testing.T) {
 
 	t.Log("set image success for bucket", testBucket)
 	//wait for image set to take effect
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 10)
 
 	err = bucketManager.Prefetch(testBucket, testKey)
 	if err != nil {
