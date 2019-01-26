@@ -3,7 +3,6 @@ package storage
 import (
 	"fmt"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"testing"
