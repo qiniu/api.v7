@@ -3,6 +3,7 @@ package storage
 import (
 	"fmt"
 	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"testing"
@@ -248,7 +249,7 @@ func TestMakePrivateUrl(t *testing.T) {
 	deadline := time.Now().Add(time.Second * 3600).Unix()
 	privateURL := MakePrivateURL(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
 	t.Logf("PrivateUrl: %s", privateURL)
-	resp, respErr := http.Get(privateURL)
+	resp, respErr := Client.Get(privateURL)
 	if respErr != nil {
 		t.Fatalf("MakePrivateUrl() error, %s", respErr)
 	}
