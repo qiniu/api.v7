@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/qiniu/api.v7/auth"
+	"github.com/qiniu/api.v7/client"
 )
 
 var (
@@ -30,10 +31,10 @@ var operationManager *OperationManager
 var formUploader *FormUploader
 var resumeUploader *ResumeUploader
 var base64Uploader *Base64Uploader
-var clt Client
+var clt client.Client
 
 func init() {
-	clt = Client{
+	clt = client.Client{
 		Client: &http.Client{
 			Timeout: time.Minute * 10,
 		},

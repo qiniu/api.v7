@@ -96,27 +96,27 @@ func NewBucketManager(mac *auth.Authorization, cfg *Config) *BucketManager {
 	}
 
 	return &BucketManager{
-		Client: &DefaultClient,
+		Client: &client.DefaultClient,
 		Mac:    mac,
 		Cfg:    cfg,
 	}
 }
 
 // NewBucketManagerEx 用来构建一个新的资源管理对象
-func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, client *client.Client) *BucketManager {
+func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, clt *client.Client) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if client == nil {
-		client = &DefaultClient
+	if clt == nil {
+		clt = &client.DefaultClient
 	}
 	if cfg.CentralRsHost == "" {
 		cfg.CentralRsHost = DefaultRsHost
 	}
 
 	return &BucketManager{
-		Client: client,
+		Client: clt,
 		Mac:    mac,
 		Cfg:    cfg,
 	}
@@ -462,7 +462,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = m.Client.CallChan(ctx, "POST", reqURL, headers)
+	retCh, err = callChan(m.Client, ctx, "POST", reqURL, headers)
 	return
 }
 
@@ -481,7 +481,7 @@ func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, d
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = m.Client.CallChan(vctx, "POST", reqURL, headers)
+	retCh, err = callChan(m.Client, vctx, "POST", reqURL, headers)
 	return
 }
 
@@ -746,7 +746,7 @@ func (l *ListItem) String() string {
 	return str
 }
 
-func callChan(r client.Client, ctx context.Context, method, reqUrl string, headers http.Header) (chan listFilesRet2, error) {
+func callChan(r *client.Client, ctx context.Context, method, reqUrl string, headers http.Header) (chan listFilesRet2, error) {
 
 	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
 	if err != nil {

@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"github.com/qiniu/api.v7/client"
 	"strings"
 	"sync"
 )
@@ -218,7 +219,7 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 	reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
 	var ret UcQueryRet
 	ctx := context.TODO()
-	qErr := DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil, nil)
+	qErr := client.DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil, nil)
 	if qErr != nil {
 		err = fmt.Errorf("query region error, %s", qErr.Error())
 		return

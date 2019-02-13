@@ -27,23 +27,23 @@ func NewBase64Uploader(cfg *Config) *Base64Uploader {
 	}
 
 	return &Base64Uploader{
-		client: &DefaultClient,
+		client: &client.DefaultClient,
 		cfg:    cfg,
 	}
 }
 
 // NewBase64UploaderEx 用来构建一个Base64上传的对象
-func NewBase64UploaderEx(cfg *Config, client *client.Client) *Base64Uploader {
+func NewBase64UploaderEx(cfg *Config, clt *client.Client) *Base64Uploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if client == nil {
-		client = &DefaultClient
+	if clt == nil {
+		clt = &client.DefaultClient
 	}
 
 	return &Base64Uploader{
-		client: client,
+		client: clt,
 		cfg:    cfg,
 	}
 }
