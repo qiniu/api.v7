@@ -746,7 +746,7 @@ func (l *ListItem) String() string {
 	return str
 }
 
-func callChan(r client.Client, ctx context.Context, method, reqUrl string, headers http.Header) (chan qws.listFilesRet2, error) {
+func callChan(r client.Client, ctx context.Context, method, reqUrl string, headers http.Header) (chan listFilesRet2, error) {
 
 	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
 	if err != nil {
