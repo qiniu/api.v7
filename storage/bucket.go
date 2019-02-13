@@ -3,11 +3,11 @@ package storage
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	. "golang.org/x/net/context"
 	"io"
-	"json"
 	"net/url"
 	"os"
 	"strconv"
