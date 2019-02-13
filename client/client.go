@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	qws "github.com/qiniu/api.v7"
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
 	"github.com/qiniu/x/reqid.v7"
@@ -16,7 +17,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"runtime"
 	"strings"
 )
@@ -249,38 +249,6 @@ func ResponseError(resp *http.Response) (err error) {
 	return e
 }
 
-func CallRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
-
-	retCh = make(chan listFilesRet2)
-	if resp.StatusCode/100 != 2 {
-		return nil, ResponseError(resp)
-	}
-
-	go func() {
-		defer resp.Body.Close()
-		defer close(retCh)
-
-		dec := json.NewDecoder(resp.Body)
-		var ret listFilesRet2
-
-		for {
-			err = dec.Decode(&ret)
-			if err != nil {
-				if err != io.EOF {
-					fmt.Fprintf(os.Stderr, "decode error: %v\n", err)
-				}
-				return
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case retCh <- ret:
-			}
-		}
-	}()
-	return
-}
-
 func CallRet(ctx Context, ret interface{}, resp *http.Response) (err error) {
 
 	defer func() {
@@ -351,14 +319,46 @@ func (r Client) Call(ctx Context, ret interface{}, method, reqUrl string, header
 	return CallRet(ctx, ret, resp)
 }
 
-func (r Client) CallChan(ctx Context, method, reqUrl string, headers http.Header) (chan listFilesRet2, error) {
+func CallRetChan(ctx Context, resp *http.Response) (retCh chan qws.listFilesRet2, err error) {
+
+	retCh = make(chan qws.listFilesRet2)
+	if resp.StatusCode/100 != 2 {
+		return nil, ResponseError(resp)
+	}
+
+	go func() {
+		defer resp.Body.Close()
+		defer close(retCh)
+
+		dec := json.NewDecoder(resp.Body)
+		var ret qws.listFilesRet2
+
+		for {
+			err = dec.Decode(&ret)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Fprintf(os.Stderr, "decode error: %v\n", err)
+				}
+				return
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case retCh <- ret:
+			}
+		}
+	}()
+	return
+}
+
+func (r client.Client) CallChan(ctx context.Context, method, reqUrl string, headers http.Header) (chan qws.listFilesRet2, error) {
 
 	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
 	if err != nil {
 		return nil, err
 	}
 	if resp.StatusCode/100 != 2 {
-		return nil, ResponseError(resp)
+		return nil, client.ResponseError(resp)
 	}
 	return CallRetChan(ctx, resp)
 }

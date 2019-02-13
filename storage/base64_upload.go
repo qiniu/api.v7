@@ -10,11 +10,13 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+
+	"github.com/qiniu/api.v7/client"
 )
 
 // Base64Uploader 表示一个Base64上传对象
 type Base64Uploader struct {
-	client *Client
+	client *client.Client
 	cfg    *Config
 }
 
@@ -31,7 +33,7 @@ func NewBase64Uploader(cfg *Config) *Base64Uploader {
 }
 
 // NewBase64UploaderEx 用来构建一个Base64上传的对象
-func NewBase64UploaderEx(cfg *Config, client *Client) *Base64Uploader {
+func NewBase64UploaderEx(cfg *Config, client *client.Client) *Base64Uploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}

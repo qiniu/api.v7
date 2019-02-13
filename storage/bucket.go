@@ -5,11 +5,16 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	. "golang.org/x/net/context"
+	"io"
+	"json"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 
 	"github.com/qiniu/api.v7/auth"
+	"github.com/qiniu/api.v7/client"
 	"github.com/qiniu/api.v7/conf"
 	"net/http"
 )
@@ -49,45 +54,12 @@ type FetchRet struct {
 	Key      string `json:"key"`
 }
 
-type listFilesRet2 struct {
-	Marker string   `json:"marker"`
-	Item   ListItem `json:"item"`
-	Dir    string   `json:"dir"`
-}
-
 func (r *FetchRet) String() string {
 	str := ""
 	str += fmt.Sprintf("Key:      %s\n", r.Key)
 	str += fmt.Sprintf("Hash:     %s\n", r.Hash)
 	str += fmt.Sprintf("Fsize:    %d\n", r.Fsize)
 	str += fmt.Sprintf("MimeType: %s\n", r.MimeType)
-	return str
-}
-
-// ListItem 为文件列举的返回值
-type ListItem struct {
-	Key      string `json:"key"`
-	Hash     string `json:"hash"`
-	Fsize    int64  `json:"fsize"`
-	PutTime  int64  `json:"putTime"`
-	MimeType string `json:"mimeType"`
-	Type     int    `json:"type"`
-	EndUser  string `json:"endUser"`
-}
-
-// 接口可能返回空的记录
-func (l *ListItem) IsEmpty() (empty bool) {
-	return l.Key == "" && l.Hash == "" && l.Fsize == 0 && l.PutTime == 0
-}
-
-func (l *ListItem) String() string {
-	str := ""
-	str += fmt.Sprintf("Hash:     %s\n", l.Hash)
-	str += fmt.Sprintf("Fsize:    %d\n", l.Fsize)
-	str += fmt.Sprintf("PutTime:  %d\n", l.PutTime)
-	str += fmt.Sprintf("MimeType: %s\n", l.MimeType)
-	str += fmt.Sprintf("Type:     %d\n", l.Type)
-	str += fmt.Sprintf("EndUser:  %s\n", l.EndUser)
 	return str
 }
 
@@ -109,7 +81,7 @@ type BatchOpRet struct {
 
 // BucketManager 提供了对资源进行管理的操作
 type BucketManager struct {
-	Client *Client
+	Client *client.Client
 	Mac    *auth.Authorization
 	Cfg    *Config
 }
@@ -131,7 +103,7 @@ func NewBucketManager(mac *auth.Authorization, cfg *Config) *BucketManager {
 }
 
 // NewBucketManagerEx 用来构建一个新的资源管理对象
-func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, client *Client) *BucketManager {
+func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, client *client.Client) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -441,12 +413,6 @@ func (m *BucketManager) UnsetImage(bucket string) (err error) {
 	return err
 }
 
-type listFilesRet struct {
-	Marker         string     `json:"marker"`
-	Items          []ListItem `json:"items"`
-	CommonPrefixes []string   `json:"commonPrefixes"`
-}
-
 // ListFiles 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，循环列举的时候下次
 // 列举的位置 marker，以及每次返回的文件的最大数量limit，其中limit最大为1000。
 func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
@@ -738,5 +704,88 @@ func MakePrivateURL(mac *auth.Authorization, domain, key string, deadline int64)
 	}
 	token := mac.Sign([]byte(urlToSign))
 	privateURL = fmt.Sprintf("%s&token=%s", urlToSign, token)
+	return
+}
+
+type listFilesRet2 struct {
+	Marker string   `json:"marker"`
+	Item   ListItem `json:"item"`
+	Dir    string   `json:"dir"`
+}
+
+type listFilesRet struct {
+	Marker         string     `json:"marker"`
+	Items          []ListItem `json:"items"`
+	CommonPrefixes []string   `json:"commonPrefixes"`
+}
+
+// ListItem 为文件列举的返回值
+type ListItem struct {
+	Key      string `json:"key"`
+	Hash     string `json:"hash"`
+	Fsize    int64  `json:"fsize"`
+	PutTime  int64  `json:"putTime"`
+	MimeType string `json:"mimeType"`
+	Type     int    `json:"type"`
+	EndUser  string `json:"endUser"`
+}
+
+// 接口可能返回空的记录
+func (l *ListItem) IsEmpty() (empty bool) {
+	return l.Key == "" && l.Hash == "" && l.Fsize == 0 && l.PutTime == 0
+}
+
+func (l *ListItem) String() string {
+	str := ""
+	str += fmt.Sprintf("Hash:     %s\n", l.Hash)
+	str += fmt.Sprintf("Fsize:    %d\n", l.Fsize)
+	str += fmt.Sprintf("PutTime:  %d\n", l.PutTime)
+	str += fmt.Sprintf("MimeType: %s\n", l.MimeType)
+	str += fmt.Sprintf("Type:     %d\n", l.Type)
+	str += fmt.Sprintf("EndUser:  %s\n", l.EndUser)
+	return str
+}
+
+func callChan(r client.Client, ctx context.Context, method, reqUrl string, headers http.Header) (chan qws.listFilesRet2, error) {
+
+	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 != 2 {
+		return nil, client.ResponseError(resp)
+	}
+	return callRetChan(ctx, resp)
+}
+
+func callRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
+
+	retCh = make(chan listFilesRet2)
+	if resp.StatusCode/100 != 2 {
+		return nil, client.ResponseError(resp)
+	}
+
+	go func() {
+		defer resp.Body.Close()
+		defer close(retCh)
+
+		dec := json.NewDecoder(resp.Body)
+		var ret listFilesRet2
+
+		for {
+			err = dec.Decode(&ret)
+			if err != nil {
+				if err != io.EOF {
+					fmt.Fprintf(os.Stderr, "decode error: %v\n", err)
+				}
+				return
+			}
+			select {
+			case <-ctx.Done():
+				return
+			case retCh <- ret:
+			}
+		}
+	}()
 	return
 }

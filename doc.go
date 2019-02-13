@@ -10,11 +10,3 @@ auth 包提供鉴权相关方法，conf 包提供配置相关方法，cdn包提�
 
 */
 package api
-
-import (
-	_ "github.com/qiniu/api.v7/auth/qbox"
-	_ "github.com/qiniu/api.v7/cdn"
-	_ "github.com/qiniu/api.v7/conf"
-	_ "github.com/qiniu/api.v7/rtc"
-	_ "github.com/qiniu/api.v7/storage"
-)
