@@ -122,6 +122,31 @@ func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, clt *client.Client
 	}
 }
 
+// DeleteBucket 删除七牛存储空间
+func (m *BucketManager) DeleteBucket(bucketName string) error {
+
+	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	var reqHost string
+
+	reqHost = m.Cfg.RsReqHost()
+	reqURL := fmt.Sprintf("%s/drop/%s", reqHost, bucketName)
+	headers := http.Header{}
+	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
+	return m.Client.Call(ctx, nil, "POST", reqURL, headers)
+}
+
+// CreateBucket 创建一个七牛存储空间
+func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error {
+	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	var reqHost string
+
+	reqHost = m.Cfg.RsReqHost()
+	reqURL := fmt.Sprintf("%s/mkbucketv2/%s/region/%s", reqHost, EncodedEntryWithoutKey(bucketName), string(regionID))
+	headers := http.Header{}
+	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
+	return m.Client.Call(ctx, nil, "POST", reqURL, headers)
+}
+
 // Buckets 用来获取空间列表，如果指定了 shared 参数为 true，那么一同列表被授权访问的空间
 func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)

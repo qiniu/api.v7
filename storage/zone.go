@@ -25,7 +25,7 @@ var (
 
 	// 北美机房
 	// 兼容保留
-	ZoneBeimei, _ = GetRegionByID(RIDBeimei)
+	ZoneBeimei, _ = GetRegionByID(RIDNorthAmerica)
 
 	// 新加坡机房
 	// 兼容保留

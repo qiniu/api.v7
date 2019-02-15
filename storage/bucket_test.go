@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/qiniu/api.v7/auth"
+	"github.com/qiniu/api.v7/auth/qbox"
 	"github.com/qiniu/api.v7/client"
 )
 
@@ -25,7 +26,9 @@ var (
 	testSiteUrl  = "http://devtools.qiniu.com"
 )
 
-var mac *auth.Authorization
+// 现在qbox.Mac是auth.Authorization的别名， 这个地方使用原来的qbox.Mac
+// 测试兼容性是否正确
+var mac *qbox.Mac
 var bucketManager *BucketManager
 var operationManager *OperationManager
 var formUploader *FormUploader
