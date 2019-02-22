@@ -72,14 +72,9 @@ func TestGetZone(t *testing.T) {
 func TestCreate(t *testing.T) {
 	err := bucketManager.CreateBucket("gosdk-test111111111", RIDHuadong)
 	if err != nil {
-		if ei, ok := err.(*client.ErrorInfo); ok {
-			statusCode := ei.HttpCode()
-			// 614 存储空间已经存在
-			if statusCode != 614 {
-				t.Fatalf("CreateBucket() error: %v\n", err)
-			}
+		if err.Error() != "bucket exists" {
+			t.Fatalf("CreateBucket() error: %v\n", err)
 		}
-		t.Fatalf("CreateBucket() error: %v\n", err)
 	}
 }
 
