@@ -88,11 +88,11 @@ func TestUpdateObjectStatus(t *testing.T) {
 	keysToStat := []string{"qiniu.png"}
 
 	for _, eachKey := range keysToStat {
-		err := objManager.UpdateObjectStatus(testBucket, eachKey, true)
+		err = objManager.UpdateObjectStatus(testBucket, eachKey, false)
 		if err != nil {
 			t.Fatalf("UpdateObjectStatus error: %v\n", err)
 		}
-		err = objManager.UpdateObjectStatus(testBucket, eachKey, false)
+		err := objManager.UpdateObjectStatus(testBucket, eachKey, true)
 		if err != nil {
 			t.Fatalf("UpdateObjectStatus error: %v\n", err)
 		}
