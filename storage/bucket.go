@@ -122,19 +122,6 @@ func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, clt *client.Client
 	}
 }
 
-// DeleteBucket 删除七牛存储空间
-func (m *BucketManager) DeleteBucket(bucketName string) error {
-
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
-	var reqHost string
-
-	reqHost = m.Cfg.RsReqHost()
-	reqURL := fmt.Sprintf("%s/drop/%s", reqHost, bucketName)
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	return m.Client.Call(ctx, nil, "POST", reqURL, headers)
-}
-
 // CreateBucket 创建一个七牛存储空间
 func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error {
 	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
