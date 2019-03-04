@@ -769,7 +769,7 @@ func callChan(r *client.Client, ctx context.Context, method, reqUrl string, head
 	return callRetChan(ctx, resp)
 }
 
-func callRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
+func callRetChan(ctx context.Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
 
 	retCh = make(chan listFilesRet2)
 	if resp.StatusCode/100 != 2 {

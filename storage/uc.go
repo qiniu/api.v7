@@ -161,15 +161,15 @@ func (b *BucketInfo) TokenAntiLeechModeOn() bool {
 
 // GetBucketInfo 返回BucketInfo结构
 func GetBucketInfo(bucketName string) (bucketInfo BucketInfo, err error) {
-
+	return
 }
 
 // BucketInfosForRegion 获取指定区域的该用户的所有bucketInfo信息
 func BucketInfosInRegion(region RegionID) (bucketInfos []BucketInfo, err error) {
-
+	return
 }
 
 // SetReferAntiLeechMode 配置存储空间referer防盗链模式
 func SetReferAntiLeechMode(bucketName string, refererAntiLeechConfig *ReferAntiLeechConfig) (err error) {
-
+	return
 }
