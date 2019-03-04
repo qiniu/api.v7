@@ -51,7 +51,7 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 	req.Header = headers
 
 	//check access token
-	mac, ok := ctx.Value("mac").(*auth.Authorization)
+	mac, ok := ctx.Value("mac").(*auth.Credentials)
 	if ok {
 		token, signErr := mac.SignRequest(req)
 		if signErr != nil {
