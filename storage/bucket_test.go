@@ -36,7 +36,6 @@ var (
 	resumeUploader   *ResumeUploader
 	base64Uploader   *Base64Uploader
 	clt              client.Client
-	objManager       *ObjectManager
 )
 
 func init() {
@@ -55,8 +54,6 @@ func init() {
 	resumeUploader = NewResumeUploaderEx(&cfg, &clt)
 	base64Uploader = NewBase64UploaderEx(&cfg, &clt)
 	rand.Seed(time.Now().Unix())
-
-	objManager = NewObjectManagerEx(mac.AccessKey, string(mac.SecretKey), &cfg, &clt)
 }
 
 //Test get zone
@@ -83,11 +80,11 @@ func TestUpdateObjectStatus(t *testing.T) {
 	keysToStat := []string{"qiniu.png"}
 
 	for _, eachKey := range keysToStat {
-		err := objManager.UpdateObjectStatus(testBucket, eachKey, false)
+		err := bucketManager.UpdateObjectStatus(testBucket, eachKey, false)
 		if err != nil {
 			t.Fatalf("UpdateObjectStatus error: %v\n", err)
 		}
-		err = objManager.UpdateObjectStatus(testBucket, eachKey, true)
+		err = bucketManager.UpdateObjectStatus(testBucket, eachKey, true)
 		if err != nil {
 			t.Fatalf("UpdateObjectStatus error: %v\n", err)
 		}
