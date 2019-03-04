@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	. "golang.org/x/net/context"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -16,7 +16,6 @@ import (
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/client"
 	"github.com/qiniu/api.v7/conf"
-	"net/http"
 )
 
 // 资源管理相关的默认域名
@@ -82,12 +81,12 @@ type BatchOpRet struct {
 // BucketManager 提供了对资源进行管理的操作
 type BucketManager struct {
 	Client *client.Client
-	Mac    *auth.Authorization
+	Mac    *auth.Credentials
 	Cfg    *Config
 }
 
 // NewBucketManager 用来构建一个新的资源管理对象
-func NewBucketManager(mac *auth.Authorization, cfg *Config) *BucketManager {
+func NewBucketManager(mac *auth.Credentials, cfg *Config) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -103,7 +102,7 @@ func NewBucketManager(mac *auth.Authorization, cfg *Config) *BucketManager {
 }
 
 // NewBucketManagerEx 用来构建一个新的资源管理对象
-func NewBucketManagerEx(mac *auth.Authorization, cfg *Config, clt *client.Client) *BucketManager {
+func NewBucketManagerEx(mac *auth.Credentials, cfg *Config, clt *client.Client) *BucketManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
@@ -706,7 +705,7 @@ func MakePublicURL(domain, key string) (finalUrl string) {
 }
 
 // MakePrivateURL 用来生成私有空间资源下载链接
-func MakePrivateURL(mac *auth.Authorization, domain, key string, deadline int64) (privateURL string) {
+func MakePrivateURL(mac *auth.Credentials, domain, key string, deadline int64) (privateURL string) {
 	publicURL := MakePublicURL(domain, key)
 	urlToSign := publicURL
 	if strings.Contains(publicURL, "?") {

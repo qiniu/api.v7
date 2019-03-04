@@ -36,7 +36,7 @@ type PutPolicy struct {
 }
 
 // UploadToken 方法用来进行上传凭证的生成
-func (p *PutPolicy) UploadToken(mac *auth.Authorization) (token string) {
+func (p *PutPolicy) UploadToken(mac *auth.Credentials) (token string) {
 	if p.Expires == 0 {
 		p.Expires = 3600 // 1 hour
 	}

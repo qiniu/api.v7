@@ -26,7 +26,7 @@ var (
 	testSiteUrl  = "http://devtools.qiniu.com"
 )
 
-// 现在qbox.Mac是auth.Authorization的别名， 这个地方使用原来的qbox.Mac
+// 现在qbox.Mac是auth.Credentials的别名， 这个地方使用原来的qbox.Mac
 // 测试兼容性是否正确
 var (
 	mac              *qbox.Mac

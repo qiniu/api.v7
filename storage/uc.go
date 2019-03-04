@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// 存储空间的详细信息
+// BucketInfo 存储空间的详细信息
 type BucketInfo struct {
 	// 镜像回源地址， 接口返回的多个地址以；分割
 	Source string `json:"source"`
@@ -72,6 +72,59 @@ type BucketInfo struct {
 	Global bool
 }
 
+// ReferAntiLeechConfig 是用户存储空间的Refer防盗链配置
+type ReferAntiLeechConfig struct {
+	// 防盗链模式， 0 - 关闭Refer防盗链, 1 - 开启Referer白名单，2 - 开启Referer黑名单
+	Mode int
+
+	// 是否允许空的referer访问
+	AllowEmptyReferer bool
+
+	// Pattern 匹配HTTP Referer头, 当模式是1或者2的时候有效
+	// Mode为1的时候表示允许Referer符合该Pattern的HTTP请求访问
+	// Mode为2的时候表示禁止Referer符合该Pattern的HTTP请求访问
+	// 当前允许的匹配字符串格式分为三种:
+	// 一种为空主机头域名, 比如 foo.com; 一种是泛域名, 比如 *.bar.com;
+	// 一种是完全通配符, 即一个 *;
+	// 多个规则之间用;隔开, 比如: foo.com;*.bar.com;sub.foo.com;*.sub.bar.com
+	Pattern string
+
+	// 是否开启源站的防盗链， 默认为0， 只开启CDN防盗链， 当设置为1的时候
+	// 在源站支持的情况下开启源站的Referer防盗链
+	EnableSource bool
+}
+
+// SetMode 设置referer防盗链模式
+func (r *ReferAntiLeechConfig) SetMode(mode int) *ReferAntiLeechConfig {
+	if mode != 0 && mode != 1 && mode != 2 {
+		panic("Referer anti_leech_mode must be in [0, 1, 2]")
+	}
+	r.Mode = mode
+	return r
+}
+
+// SetEmptyReferer 设置是否允许空Referer访问
+func (r *ReferAntiLeechConfig) SetEmptyReferer(enable bool) *ReferAntiLeechConfig {
+	r.AllowEmptyReferer = enable
+	return r
+}
+
+// SetPattern 设置匹配Referer的模式
+func (r *ReferAntiLeechConfig) SetPattern(pattern string) *ReferAntiLeechConfig {
+	if pattern == "" {
+		panic("Empty pattern is not allowed")
+	}
+
+	r.Pattern = pattern
+	return r
+}
+
+// SetEnableSource 设置是否开启源站的防盗链
+func (r *ReferAntiLeechConfig) SetEnableSource(enable bool) *ReferAntiLeechConfig {
+	r.EnableSource = enable
+	return r
+}
+
 // ImageSources 返回多个镜像回源地址的列表
 func (b *BucketInfo) ImageSources() (srcs []string) {
 	srcs = strings.Split(b.Source, ";")
@@ -104,4 +157,19 @@ func (b *BucketInfo) BlackListSet() bool {
 // TokenAntiLeechModeOn 返回是否使用token签名防盗链开启了
 func (b *BucketInfo) TokenAntiLeechModeOn() bool {
 	return b.TokenAntiLeechMode == 1
+}
+
+// GetBucketInfo 返回BucketInfo结构
+func GetBucketInfo(bucketName string) (bucketInfo BucketInfo, err error) {
+
+}
+
+// BucketInfosForRegion 获取指定区域的该用户的所有bucketInfo信息
+func BucketInfosInRegion(region RegionID) (bucketInfos []BucketInfo, err error) {
+
+}
+
+// SetReferAntiLeechMode 配置存储空间referer防盗链模式
+func SetReferAntiLeechMode(bucketName string, refererAntiLeechConfig *ReferAntiLeechConfig) (err error) {
+
 }

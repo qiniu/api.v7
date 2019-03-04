@@ -225,6 +225,10 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 		return
 	}
 
+	if len(ret.Io["src"]["main"]) <= 0 {
+		return nil, fmt.Errorf("empty io host list")
+	}
+
 	ioHost := ret.Io["src"]["main"][0]
 	srcUpHosts := ret.Up["src"].Main
 	if ret.Up["src"].Backup != nil {

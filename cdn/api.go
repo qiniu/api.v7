@@ -19,11 +19,11 @@ var (
 
 // CdnManager 提供了文件和目录刷新，文件预取，获取域名带宽和流量数据，获取域名日志列表等功能
 type CdnManager struct {
-	mac *auth.Authorization
+	mac *auth.Credentials
 }
 
 // NewCdnManager 用来构建一个新的 CdnManager
-func NewCdnManager(mac *auth.Authorization) *CdnManager {
+func NewCdnManager(mac *auth.Credentials) *CdnManager {
 	return &CdnManager{mac: mac}
 }
 
@@ -265,7 +265,7 @@ func (m *CdnManager) GetCdnLogList(day string, domains []string) (
 }
 
 // RequestWithBody 带body对api发出请求并且返回response body
-func postRequest(mac *auth.Authorization, path string, body interface{}) (resData []byte,
+func postRequest(mac *auth.Credentials, path string, body interface{}) (resData []byte,
 	err error) {
 	urlStr := fmt.Sprintf("%s%s", FusionHost, path)
 	reqData, _ := json.Marshal(body)

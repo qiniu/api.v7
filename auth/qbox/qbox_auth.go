@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type Mac = auth.Authorization
+type Mac = auth.Credentials
 
 // 兼容保留
 func NewMac(accessKey, secretKey string) *Mac {

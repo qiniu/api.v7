@@ -20,7 +20,7 @@ var (
 
 // Manager 提供了 Qiniu RTC Server API 相关功能
 type Manager struct {
-	mac        *auth.Authorization
+	mac        *auth.Credentials
 	httpClient *http.Client
 }
 
@@ -93,7 +93,7 @@ type User struct {
 }
 
 // NewManager 用来构建一个新的 Manager
-func NewManager(mac *auth.Authorization) *Manager {
+func NewManager(mac *auth.Credentials) *Manager {
 	httpClient := http.DefaultClient
 	return &Manager{mac: mac, httpClient: httpClient}
 }

@@ -32,7 +32,7 @@ var (
 	}
 )
 
-var mac *auth.Authorization
+var mac *auth.Credentials
 var cdnManager *CdnManager
 
 func init() {

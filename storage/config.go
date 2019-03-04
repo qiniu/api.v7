@@ -3,7 +3,7 @@ package storage
 // Config 为文件上传，资源管理等配置
 type Config struct {
 	//兼容保留
-	Zone *Region //空间所在的机房
+	Zone *Region //空间所在的存储区域
 
 	Region *Region
 

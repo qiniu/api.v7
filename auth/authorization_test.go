@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-var at *Authorization
+var at *Credentials
 
 func init() {
 	at = New("ak", "sk")
