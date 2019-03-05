@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -82,11 +83,15 @@ func TestUpdateObjectStatus(t *testing.T) {
 	for _, eachKey := range keysToStat {
 		err := bucketManager.UpdateObjectStatus(testBucket, eachKey, false)
 		if err != nil {
-			t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			if !strings.Contains(err.Error(), "already disabled") {
+				t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			}
 		}
 		err = bucketManager.UpdateObjectStatus(testBucket, eachKey, true)
 		if err != nil {
-			t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			if !strings.Contains(err.Error(), "already enabled") {
+				t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			}
 		}
 	}
 }
