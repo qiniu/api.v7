@@ -145,7 +145,7 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 		pfopParams["force"] = []string{"1"}
 	}
 	var ret PfopRet
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.TODO(), m.Mac)
 	reqHost, reqErr := m.ApiHost(bucket)
 	if reqErr != nil {
 		err = reqErr

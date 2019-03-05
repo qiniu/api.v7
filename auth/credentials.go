@@ -1,14 +1,16 @@
 package auth
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
+	"github.com/qiniu/api.v7"
 	"github.com/qiniu/api.v7/conf"
-	"github.com/qiniu/x/bytes.v7/seekable"
 )
 
 //  七牛鉴权类，用于生成Qbox, Qiniu, Upload签名
@@ -50,12 +52,13 @@ func collectData(req *http.Request) (data []byte, err error) {
 
 	data = []byte(s)
 	if incBody(req) {
-		s2, err2 := seekable.New(req)
-		if err2 != nil {
-			err = err2
+		s2, rErr := api.BytesFromRequest(req)
+		if rErr != nil {
+			err = rErr
 			return
 		}
-		data = append(data, s2.Bytes()...)
+		req.Body = ioutil.NopCloser(bytes.NewReader(s2))
+		data = append(data, s2...)
 	}
 	return
 }
@@ -85,12 +88,13 @@ func collectDataV2(req *http.Request) (data []byte, err error) {
 	data = []byte(s)
 	//write body
 	if incBodyV2(req) {
-		s2, err2 := seekable.New(req)
-		if err2 != nil {
-			err = err2
+		s2, rErr := api.BytesFromRequest(req)
+		if rErr != nil {
+			err = rErr
 			return
 		}
-		data = append(data, s2.Bytes()...)
+		req.Body = ioutil.NopCloser(bytes.NewReader(s2))
+		data = append(data, s2...)
 	}
 	return
 }

@@ -144,7 +144,7 @@ func (m *BucketManager) UpdateObjectStatus(bucketName string, key string, enable
 	}
 	path := fmt.Sprintf("/chstatus/%s/status/%s", ee, status)
 
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucketName)
 	if reqErr != nil {
 		return reqErr
@@ -157,7 +157,7 @@ func (m *BucketManager) UpdateObjectStatus(bucketName string, key string, enable
 
 // CreateBucket 创建一个七牛存储空间
 func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	var reqHost string
 
 	reqHost = m.Cfg.RsReqHost()
@@ -169,7 +169,7 @@ func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error
 
 // Buckets 用来获取空间列表，如果指定了 shared 参数为 true，那么一同列表被授权访问的空间
 func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	var reqHost string
 
 	reqHost = m.Cfg.RsReqHost()
@@ -182,7 +182,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 
 // Stat 用来获取一个文件的基本信息
 func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -198,7 +198,7 @@ func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 
 // Delete 用来删除空间中的一个文件
 func (m *BucketManager) Delete(bucket, key string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -213,7 +213,7 @@ func (m *BucketManager) Delete(bucket, key string) (err error) {
 
 // Copy 用来创建已有空间中的文件的一个新的副本
 func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
@@ -229,7 +229,7 @@ func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, forc
 
 // Move 用来将空间中的一个文件移动到新的空间或者重命名
 func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, force bool) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(srcBucket)
 	if reqErr != nil {
 		err = reqErr
@@ -245,7 +245,7 @@ func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, forc
 
 // ChangeMime 用来更新文件的MimeType
 func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -260,7 +260,7 @@ func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 
 // ChangeType 用来更新文件的存储类型，0表示普通存储，1表示低频存储
 func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -275,7 +275,7 @@ func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error)
 
 // DeleteAfterDays 用来更新文件生命周期，如果 days 设置为0，则表示取消文件的定期删除功能，永久存储
 func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -295,7 +295,7 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 		err = errors.New("batch operation count exceeds the limit of 1000")
 		return
 	}
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	scheme := "http://"
 	if m.Cfg.UseHTTPS {
 		scheme = "https://"
@@ -310,7 +310,7 @@ func (m *BucketManager) Batch(operations []string) (batchOpRet []BatchOpRet, err
 
 // Fetch 根据提供的远程资源链接来抓取一个文件到空间并已指定文件名保存
 func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 
 	reqHost, rErr := m.IoReqHost(bucket)
 	if rErr != nil {
@@ -398,7 +398,7 @@ func (m *BucketManager) IoReqHost(bucket string) (reqHost string, err error) {
 
 // FetchWithoutKey 根据提供的远程资源链接来抓取一个文件到空间并以文件的内容hash作为文件名
 func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRet, err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 
 	reqHost, rErr := m.IoReqHost(bucket)
 	if rErr != nil {
@@ -414,7 +414,7 @@ func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRe
 
 // Prefetch 用来同步镜像空间的资源和镜像源资源内容
 func (m *BucketManager) Prefetch(bucket, key string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.IoReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -429,7 +429,7 @@ func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 
 // SetImage 用来设置空间镜像源
 func (m *BucketManager) SetImage(siteURL, bucket string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteURL, bucket))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
@@ -439,7 +439,7 @@ func (m *BucketManager) SetImage(siteURL, bucket string) (err error) {
 
 // SetImageWithHost 用来设置空间镜像源，额外添加回源Host头部
 func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost,
 		uriSetImageWithHost(siteURL, bucket, host))
 	headers := http.Header{}
@@ -450,7 +450,7 @@ func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err erro
 
 // UnsetImage 用来取消空间镜像源设置
 func (m *BucketManager) UnsetImage(bucket string) (err error) {
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
@@ -467,7 +467,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 		return
 	}
 
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -496,7 +496,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 // ListBucket 用来获取空间文件列表，可以根据需要指定文件的前缀 prefix，文件的目录 delimiter，流式返回每条数据。
 func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -515,7 +515,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 // 接受的context可以用来取消列举操作
 func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, delimiter, marker string) (retCh chan listFilesRet2, err error) {
 
-	vctx := context.WithValue(ctx, "mac", m.Mac)
+	ctx = auth.WithCredentials(context.Background(), m.Mac)
 	reqHost, reqErr := m.RsfReqHost(bucket)
 	if reqErr != nil {
 		err = reqErr
@@ -526,7 +526,7 @@ func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, d
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = callChan(m.Client, vctx, "POST", reqURL, headers)
+	retCh, err = callChan(m.Client, ctx, "POST", reqURL, headers)
 	return
 }
 
@@ -557,7 +557,7 @@ func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, er
 
 	reqUrl += "/sisyphus/fetch"
 
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	headers := http.Header{}
 	headers.Add("Content-Type", conf.CONTENT_TYPE_JSON)
 	err = m.Client.CallWithJson(ctx, &ret, "POST", reqUrl, headers, param)

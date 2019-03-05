@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -12,8 +13,7 @@ import (
 
 	"github.com/qiniu/api.v7/client"
 	"github.com/qiniu/api.v7/conf"
-	"github.com/qiniu/x/bytes.v7"
-	"github.com/qiniu/x/xlog.v7"
+	"github.com/qiniu/api.v7/internal/log"
 )
 
 // ResumeUploader 表示一个分片上传的对象
@@ -78,7 +78,6 @@ func (p *ResumeUploader) Bput(
 func (p *ResumeUploader) resumableBput(
 	ctx context.Context, upToken string, upHost string, ret *BlkputRet, f io.ReaderAt, blkIdx, blkSize int, extra *RputExtra) (err error) {
 
-	log := xlog.NewWith(ctx)
 	h := crc32.NewIEEE()
 	offbase := int64(blkIdx) << blockBits
 	chunkSize := extra.ChunkSize
