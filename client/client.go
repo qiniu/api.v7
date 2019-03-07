@@ -1,27 +1,23 @@
-package storage
+package client
 
-// The original library rpc.v7 logic in github.com/qiniu/x has its own bugs
-// under the concurrent http calls, we make a fork of the library and fix
-// the bug
 import (
-	//	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
-	"github.com/qiniu/api.v7/conf"
-	"github.com/qiniu/x/reqid.v7"
-	. "golang.org/x/net/context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"runtime"
 	"strings"
+
+	"github.com/qiniu/api.v7/auth"
+	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/api.v7/reqid"
 )
 
-var UserAgent = "Golang qiniu/rpc package"
+var UserAgent = "Golang qiniu/client package"
 var DefaultClient = Client{&http.Client{Transport: http.DefaultTransport}}
 
 // --------------------------------------------------------------------
@@ -39,7 +35,7 @@ func SetAppName(userApp string) error {
 
 // --------------------------------------------------------------------
 
-func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io.Reader) (req *http.Request, err error) {
+func newRequest(ctx context.Context, method, reqUrl string, headers http.Header, body io.Reader) (req *http.Request, err error) {
 	req, err = http.NewRequest(method, reqUrl, body)
 	if err != nil {
 		return
@@ -52,7 +48,7 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 	req.Header = headers
 
 	//check access token
-	mac, ok := ctx.Value("mac").(*qbox.Mac)
+	mac, ok := auth.CredentialsFromContext(ctx)
 	if ok {
 		token, signErr := mac.SignRequest(req)
 		if signErr != nil {
@@ -65,7 +61,7 @@ func newRequest(ctx Context, method, reqUrl string, headers http.Header, body io
 	return
 }
 
-func (r Client) DoRequest(ctx Context, method, reqUrl string, headers http.Header) (resp *http.Response, err error) {
+func (r Client) DoRequest(ctx context.Context, method, reqUrl string, headers http.Header) (resp *http.Response, err error) {
 	req, err := newRequest(ctx, method, reqUrl, headers, nil)
 	if err != nil {
 		return
@@ -73,7 +69,7 @@ func (r Client) DoRequest(ctx Context, method, reqUrl string, headers http.Heade
 	return r.Do(ctx, req)
 }
 
-func (r Client) DoRequestWith(ctx Context, method, reqUrl string, headers http.Header, body io.Reader,
+func (r Client) DoRequestWith(ctx context.Context, method, reqUrl string, headers http.Header, body io.Reader,
 	bodyLength int) (resp *http.Response, err error) {
 
 	req, err := newRequest(ctx, method, reqUrl, headers, body)
@@ -84,7 +80,7 @@ func (r Client) DoRequestWith(ctx Context, method, reqUrl string, headers http.H
 	return r.Do(ctx, req)
 }
 
-func (r Client) DoRequestWith64(ctx Context, method, reqUrl string, headers http.Header, body io.Reader,
+func (r Client) DoRequestWith64(ctx context.Context, method, reqUrl string, headers http.Header, body io.Reader,
 	bodyLength int64) (resp *http.Response, err error) {
 
 	req, err := newRequest(ctx, method, reqUrl, headers, body)
@@ -95,7 +91,7 @@ func (r Client) DoRequestWith64(ctx Context, method, reqUrl string, headers http
 	return r.Do(ctx, req)
 }
 
-func (r Client) DoRequestWithForm(ctx Context, method, reqUrl string, headers http.Header,
+func (r Client) DoRequestWithForm(ctx context.Context, method, reqUrl string, headers http.Header,
 	data map[string][]string) (resp *http.Response, err error) {
 
 	if headers == nil {
@@ -116,7 +112,7 @@ func (r Client) DoRequestWithForm(ctx Context, method, reqUrl string, headers ht
 	return r.DoRequestWith(ctx, method, reqUrl, headers, strings.NewReader(requestData), len(requestData))
 }
 
-func (r Client) DoRequestWithJson(ctx Context, method, reqUrl string, headers http.Header,
+func (r Client) DoRequestWithJson(ctx context.Context, method, reqUrl string, headers http.Header,
 	data interface{}) (resp *http.Response, err error) {
 
 	reqBody, err := json.Marshal(data)
@@ -131,13 +127,13 @@ func (r Client) DoRequestWithJson(ctx Context, method, reqUrl string, headers ht
 	return r.DoRequestWith(ctx, method, reqUrl, headers, bytes.NewReader(reqBody), len(reqBody))
 }
 
-func (r Client) Do(ctx Context, req *http.Request) (resp *http.Response, err error) {
+func (r Client) Do(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
 
 	if ctx == nil {
-		ctx = Background()
+		ctx = context.Background()
 	}
 
-	if reqId, ok := reqid.FromContext(ctx); ok {
+	if reqId, ok := reqid.ReqidFromContext(ctx); ok {
 		req.Header.Set("X-Reqid", reqId)
 	}
 
@@ -249,39 +245,7 @@ func ResponseError(resp *http.Response) (err error) {
 	return e
 }
 
-func CallRetChan(ctx Context, resp *http.Response) (retCh chan listFilesRet2, err error) {
-
-	retCh = make(chan listFilesRet2)
-	if resp.StatusCode/100 != 2 {
-		return nil, ResponseError(resp)
-	}
-
-	go func() {
-		defer resp.Body.Close()
-		defer close(retCh)
-
-		dec := json.NewDecoder(resp.Body)
-		var ret listFilesRet2
-
-		for {
-			err = dec.Decode(&ret)
-			if err != nil {
-				if err != io.EOF {
-					fmt.Fprintf(os.Stderr, "decode error: %v\n", err)
-				}
-				return
-			}
-			select {
-			case <-ctx.Done():
-				return
-			case retCh <- ret:
-			}
-		}
-	}()
-	return
-}
-
-func CallRet(ctx Context, ret interface{}, resp *http.Response) (err error) {
+func CallRet(ctx context.Context, ret interface{}, resp *http.Response) (err error) {
 
 	defer func() {
 		io.Copy(ioutil.Discard, resp.Body)
@@ -302,7 +266,7 @@ func CallRet(ctx Context, ret interface{}, resp *http.Response) (err error) {
 	return ResponseError(resp)
 }
 
-func (r Client) CallWithForm(ctx Context, ret interface{}, method, reqUrl string, headers http.Header,
+func (r Client) CallWithForm(ctx context.Context, ret interface{}, method, reqUrl string, headers http.Header,
 	param map[string][]string) (err error) {
 
 	resp, err := r.DoRequestWithForm(ctx, method, reqUrl, headers, param)
@@ -312,7 +276,7 @@ func (r Client) CallWithForm(ctx Context, ret interface{}, method, reqUrl string
 	return CallRet(ctx, ret, resp)
 }
 
-func (r Client) CallWithJson(ctx Context, ret interface{}, method, reqUrl string, headers http.Header,
+func (r Client) CallWithJson(ctx context.Context, ret interface{}, method, reqUrl string, headers http.Header,
 	param interface{}) (err error) {
 
 	resp, err := r.DoRequestWithJson(ctx, method, reqUrl, headers, param)
@@ -322,7 +286,7 @@ func (r Client) CallWithJson(ctx Context, ret interface{}, method, reqUrl string
 	return CallRet(ctx, ret, resp)
 }
 
-func (r Client) CallWith(ctx Context, ret interface{}, method, reqUrl string, headers http.Header, body io.Reader,
+func (r Client) CallWith(ctx context.Context, ret interface{}, method, reqUrl string, headers http.Header, body io.Reader,
 	bodyLength int) (err error) {
 
 	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, body, bodyLength)
@@ -332,7 +296,7 @@ func (r Client) CallWith(ctx Context, ret interface{}, method, reqUrl string, he
 	return CallRet(ctx, ret, resp)
 }
 
-func (r Client) CallWith64(ctx Context, ret interface{}, method, reqUrl string, headers http.Header, body io.Reader,
+func (r Client) CallWith64(ctx context.Context, ret interface{}, method, reqUrl string, headers http.Header, body io.Reader,
 	bodyLength int64) (err error) {
 
 	resp, err := r.DoRequestWith64(ctx, method, reqUrl, headers, body, bodyLength)
@@ -342,25 +306,13 @@ func (r Client) CallWith64(ctx Context, ret interface{}, method, reqUrl string, 
 	return CallRet(ctx, ret, resp)
 }
 
-func (r Client) Call(ctx Context, ret interface{}, method, reqUrl string, headers http.Header) (err error) {
+func (r Client) Call(ctx context.Context, ret interface{}, method, reqUrl string, headers http.Header) (err error) {
 
 	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
 	if err != nil {
 		return err
 	}
 	return CallRet(ctx, ret, resp)
-}
-
-func (r Client) CallChan(ctx Context, method, reqUrl string, headers http.Header) (chan listFilesRet2, error) {
-
-	resp, err := r.DoRequestWith(ctx, method, reqUrl, headers, nil, 0)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode/100 != 2 {
-		return nil, ResponseError(resp)
-	}
-	return CallRetChan(ctx, resp)
 }
 
 // ---------------------------------------------------------------------------

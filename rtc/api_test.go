@@ -10,16 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 )
 
 var manager *Manager
 
 func init() {
-	accessKey := os.Getenv("QINIU_ACCESS_KEY")
-	secretKey := os.Getenv("QINIU_SECRET_KEY")
+	accessKey := os.Getenv("accessKey")
+	secretKey := os.Getenv("secretKey")
 
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	manager = NewManager(mac)
 }
 

@@ -55,7 +55,7 @@ func TestWorkerUpload(t *testing.T) {
 	uploader := NewResumeUploader(nil)
 	ctx := context.Background()
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 20; i++ {
 		wg.Add(1)
 
 		tasks <- func() {

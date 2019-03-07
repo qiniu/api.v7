@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 )
 
 // resInfo is httpresponse infomation
@@ -39,7 +39,7 @@ func buildURL(path string) string {
 	return "https://" + RtcHost + path
 }
 
-func postReq(httpClient *http.Client, mac *qbox.Mac, url string,
+func postReq(httpClient *http.Client, mac *auth.Credentials, url string,
 	reqParam interface{}, ret interface{}) *resInfo {
 	info := newResInfo()
 	var reqData []byte
@@ -71,7 +71,7 @@ func postReq(httpClient *http.Client, mac *qbox.Mac, url string,
 	return callReq(httpClient, req, mac, &info, ret)
 }
 
-func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *resInfo {
+func getReq(httpClient *http.Client, mac *auth.Credentials, url string, ret interface{}) *resInfo {
 	info := newResInfo()
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -81,7 +81,7 @@ func getReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{})
 	return callReq(httpClient, req, mac, &info, ret)
 }
 
-func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{}) *resInfo {
+func delReq(httpClient *http.Client, mac *auth.Credentials, url string, ret interface{}) *resInfo {
 	info := newResInfo()
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
@@ -91,7 +91,7 @@ func delReq(httpClient *http.Client, mac *qbox.Mac, url string, ret interface{})
 	return callReq(httpClient, req, mac, &info, ret)
 }
 
-func callReq(httpClient *http.Client, req *http.Request, mac *qbox.Mac,
+func callReq(httpClient *http.Client, req *http.Request, mac *auth.Credentials,
 	info *resInfo, ret interface{}) (oinfo *resInfo) {
 	oinfo = info
 	accessToken, err := mac.SignRequestV2(req)

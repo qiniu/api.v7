@@ -5,15 +5,18 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/client"
 )
 
 var (
-	testAK                  = os.Getenv("QINIU_ACCESS_KEY")
-	testSK                  = os.Getenv("QINIU_SECRET_KEY")
+	testAK                  = os.Getenv("accessKey")
+	testSK                  = os.Getenv("secretKey")
 	testBucket              = os.Getenv("QINIU_TEST_BUCKET")
 	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
 	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
@@ -24,26 +27,33 @@ var (
 	testSiteUrl  = "http://devtools.qiniu.com"
 )
 
-var mac *qbox.Mac
-var bucketManager *BucketManager
-var operationManager *OperationManager
-var formUploader *FormUploader
-var resumeUploader *ResumeUploader
-var base64Uploader *Base64Uploader
+// 现在qbox.Mac是auth.Credentials的别名， 这个地方使用原来的qbox.Mac
+// 测试兼容性是否正确
+var (
+	mac              *qbox.Mac
+	bucketManager    *BucketManager
+	operationManager *OperationManager
+	formUploader     *FormUploader
+	resumeUploader   *ResumeUploader
+	base64Uploader   *Base64Uploader
+	clt              client.Client
+)
 
 func init() {
-	if testAK == "" || testSK == "" {
-		panic("please run ./test-env.sh first")
+	clt = client.Client{
+		Client: &http.Client{
+			Timeout: time.Minute * 10,
+		},
 	}
-	mac = qbox.NewMac(testAK, testSK)
+	mac = auth.New(testAK, testSK)
 	cfg := Config{}
 	cfg.Zone = &Zone_z0
 	cfg.UseCdnDomains = true
-	bucketManager = NewBucketManager(mac, &cfg)
-	operationManager = NewOperationManager(mac, &cfg)
-	formUploader = NewFormUploader(&cfg)
-	resumeUploader = NewResumeUploader(&cfg)
-	base64Uploader = NewBase64Uploader(&cfg)
+	bucketManager = NewBucketManagerEx(mac, &cfg, &clt)
+	operationManager = NewOperationManagerEx(mac, &cfg, &clt)
+	formUploader = NewFormUploaderEx(&cfg, &clt)
+	resumeUploader = NewResumeUploaderEx(&cfg, &clt)
+	base64Uploader = NewBase64UploaderEx(&cfg, &clt)
 	rand.Seed(time.Now().Unix())
 }
 
@@ -54,6 +64,36 @@ func TestGetZone(t *testing.T) {
 		t.Fatalf("GetZone() error, %s", err)
 	}
 	t.Log(zone.String())
+}
+
+// TestCreate 测试创建空间的功能
+func TestCreate(t *testing.T) {
+	err := bucketManager.CreateBucket("gosdk-test111111111", RIDHuadong)
+	if err != nil {
+		if err.Error() != "bucket exists" {
+			t.Fatalf("CreateBucket() error: %v\n", err)
+		}
+	}
+}
+
+// TestUpdateObjectStatus 测试更新文件状态的功能
+func TestUpdateObjectStatus(t *testing.T) {
+	keysToStat := []string{"qiniu.png"}
+
+	for _, eachKey := range keysToStat {
+		err := bucketManager.UpdateObjectStatus(testBucket, eachKey, false)
+		if err != nil {
+			if !strings.Contains(err.Error(), "already disabled") {
+				t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			}
+		}
+		err = bucketManager.UpdateObjectStatus(testBucket, eachKey, true)
+		if err != nil {
+			if !strings.Contains(err.Error(), "already enabled") {
+				t.Fatalf("UpdateObjectStatus error: %v\n", err)
+			}
+		}
+	}
 }
 
 //Test get bucket list
@@ -190,6 +230,9 @@ func TestChangeType(t *testing.T) {
 	bucketManager.Delete(testBucket, toChangeKey)
 }
 
+/*
+// SetImage成功以后， 后台生效需要一段时间；导致集成测试经常失败。
+// 如果要修改这一部分代码可以重新开启这个测试
 func TestPrefetchAndImage(t *testing.T) {
 	err := bucketManager.SetImage(testSiteUrl, testBucket)
 	if err != nil {
@@ -198,7 +241,7 @@ func TestPrefetchAndImage(t *testing.T) {
 
 	t.Log("set image success for bucket", testBucket)
 	//wait for image set to take effect
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 10)
 
 	err = bucketManager.Prefetch(testBucket, testKey)
 	if err != nil {
@@ -212,6 +255,7 @@ func TestPrefetchAndImage(t *testing.T) {
 
 	t.Log("unset image success for bucket", testBucket)
 }
+*/
 
 func TestListFiles(t *testing.T) {
 	limit := 100
@@ -238,11 +282,14 @@ func TestListFiles(t *testing.T) {
 	}
 }
 
+/*
+
+CDN 节点经常超时
 func TestMakePrivateUrl(t *testing.T) {
 	deadline := time.Now().Add(time.Second * 3600).Unix()
 	privateURL := MakePrivateURL(mac, "http://"+testBucketPrivateDomain, testKey, deadline)
 	t.Logf("PrivateUrl: %s", privateURL)
-	resp, respErr := http.Get(privateURL)
+	resp, respErr := clt.Get(privateURL)
 	if respErr != nil {
 		t.Fatalf("MakePrivateUrl() error, %s", respErr)
 	}
@@ -252,6 +299,7 @@ func TestMakePrivateUrl(t *testing.T) {
 		t.Fatalf("MakePrivateUrl() error, %s", resp.Status)
 	}
 }
+*/
 
 func TestBatch(t *testing.T) {
 	copyCnt := 100

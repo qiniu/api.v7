@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"github.com/qiniu/api.v7/client"
 	"hash"
 	"hash/crc32"
 	"io"
@@ -40,7 +41,7 @@ type PutRet struct {
 
 // FormUploader 表示一个表单上传的对象
 type FormUploader struct {
-	Client *Client
+	Client *client.Client
 	Cfg    *Config
 }
 
@@ -51,23 +52,23 @@ func NewFormUploader(cfg *Config) *FormUploader {
 	}
 
 	return &FormUploader{
-		Client: &DefaultClient,
+		Client: &client.DefaultClient,
 		Cfg:    cfg,
 	}
 }
 
 // NewFormUploaderEx 用来构建一个表单上传的对象
-func NewFormUploaderEx(cfg *Config, client *Client) *FormUploader {
+func NewFormUploaderEx(cfg *Config, clt *client.Client) *FormUploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if client == nil {
-		client = &DefaultClient
+	if clt == nil {
+		clt = &client.DefaultClient
 	}
 
 	return &FormUploader{
-		Client: client,
+		Client: clt,
 		Cfg:    cfg,
 	}
 }

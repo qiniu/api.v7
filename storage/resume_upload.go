@@ -4,11 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/qiniu/api.v7/internal/log"
 	"io"
 	"os"
 	"sync"
-
-	"github.com/qiniu/x/xlog.v7"
 )
 
 // 分片上传过程中可能遇到的错误
@@ -186,7 +185,6 @@ func (p *ResumeUploader) rput(
 
 	once.Do(initWorkers)
 
-	log := xlog.NewWith(ctx)
 	blockCnt := BlockCount(fsize)
 
 	if extra == nil {

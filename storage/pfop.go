@@ -3,43 +3,44 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
+	"github.com/qiniu/api.v7/client"
 	"github.com/qiniu/api.v7/conf"
 	"net/http"
 )
 
 // OperationManager 提供了数据处理相关的方法
 type OperationManager struct {
-	Client *Client
-	Mac    *qbox.Mac
+	Client *client.Client
+	Mac    *auth.Credentials
 	Cfg    *Config
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
-func NewOperationManager(mac *qbox.Mac, cfg *Config) *OperationManager {
+func NewOperationManager(mac *auth.Credentials, cfg *Config) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
 	return &OperationManager{
-		Client: &DefaultClient,
+		Client: &client.DefaultClient,
 		Mac:    mac,
 		Cfg:    cfg,
 	}
 }
 
 // NewOperationManager 用来构建一个新的数据处理对象
-func NewOperationManagerEx(mac *qbox.Mac, cfg *Config, client *Client) *OperationManager {
+func NewOperationManagerEx(mac *auth.Credentials, cfg *Config, clt *client.Client) *OperationManager {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if client == nil {
-		client = &DefaultClient
+	if clt == nil {
+		clt = &client.DefaultClient
 	}
 
 	return &OperationManager{
-		Client: client,
+		Client: clt,
 		Mac:    mac,
 		Cfg:    cfg,
 	}
@@ -144,7 +145,7 @@ func (m *OperationManager) Pfop(bucket, key, fops, pipeline, notifyURL string,
 		pfopParams["force"] = []string{"1"}
 	}
 	var ret PfopRet
-	ctx := context.WithValue(context.TODO(), "mac", m.Mac)
+	ctx := auth.WithCredentials(context.TODO(), m.Mac)
 	reqHost, reqErr := m.ApiHost(bucket)
 	if reqErr != nil {
 		err = reqErr

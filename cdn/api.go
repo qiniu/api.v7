@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 )
 
 // Fusion CDN服务域名
@@ -19,11 +19,11 @@ var (
 
 // CdnManager 提供了文件和目录刷新，文件预取，获取域名带宽和流量数据，获取域名日志列表等功能
 type CdnManager struct {
-	mac *qbox.Mac
+	mac *auth.Credentials
 }
 
 // NewCdnManager 用来构建一个新的 CdnManager
-func NewCdnManager(mac *qbox.Mac) *CdnManager {
+func NewCdnManager(mac *auth.Credentials) *CdnManager {
 	return &CdnManager{mac: mac}
 }
 
@@ -265,7 +265,7 @@ func (m *CdnManager) GetCdnLogList(day string, domains []string) (
 }
 
 // RequestWithBody 带body对api发出请求并且返回response body
-func postRequest(mac *qbox.Mac, path string, body interface{}) (resData []byte,
+func postRequest(mac *auth.Credentials, path string, body interface{}) (resData []byte,
 	err error) {
 	urlStr := fmt.Sprintf("%s%s", FusionHost, path)
 	reqData, _ := json.Marshal(body)

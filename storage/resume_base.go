@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -10,14 +11,14 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/qiniu/api.v7/client"
 	"github.com/qiniu/api.v7/conf"
-	"github.com/qiniu/x/bytes.v7"
-	"github.com/qiniu/x/xlog.v7"
+	"github.com/qiniu/api.v7/internal/log"
 )
 
 // ResumeUploader 表示一个分片上传的对象
 type ResumeUploader struct {
-	Client *Client
+	Client *client.Client
 	Cfg    *Config
 }
 
@@ -29,22 +30,22 @@ func NewResumeUploader(cfg *Config) *ResumeUploader {
 
 	return &ResumeUploader{
 		Cfg:    cfg,
-		Client: &DefaultClient,
+		Client: &client.DefaultClient,
 	}
 }
 
 // NewResumeUploaderEx 表示构建一个新的分片上传的对象
-func NewResumeUploaderEx(cfg *Config, client *Client) *ResumeUploader {
+func NewResumeUploaderEx(cfg *Config, clt *client.Client) *ResumeUploader {
 	if cfg == nil {
 		cfg = &Config{}
 	}
 
-	if client == nil {
-		client = &DefaultClient
+	if clt == nil {
+		clt = &client.DefaultClient
 	}
 
 	return &ResumeUploader{
-		Client: client,
+		Client: clt,
 		Cfg:    cfg,
 	}
 }
@@ -77,7 +78,6 @@ func (p *ResumeUploader) Bput(
 func (p *ResumeUploader) resumableBput(
 	ctx context.Context, upToken string, upHost string, ret *BlkputRet, f io.ReaderAt, blkIdx, blkSize int, extra *RputExtra) (err error) {
 
-	log := xlog.NewWith(ctx)
 	h := crc32.NewIEEE()
 	offbase := int64(blkIdx) << blockBits
 	chunkSize := extra.ChunkSize
@@ -130,7 +130,7 @@ func (p *ResumeUploader) resumableBput(
 			log.Warn("ResumableBlockput: invalid checksum, retry")
 			err = ErrUnmatchedChecksum
 		} else {
-			if ei, ok := err.(*ErrorInfo); ok && ei.Code == InvalidCtx {
+			if ei, ok := err.(*client.ErrorInfo); ok && ei.Code == InvalidCtx {
 				ret.Ctx = "" // reset
 				log.Warn("ResumableBlockput: invalid ctx, please retry")
 				return

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 )
 
@@ -14,7 +14,7 @@ var (
 )
 
 func main() {
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	cfg := storage.Config{
 		UseHTTPS: false,
 	}

@@ -11,6 +11,10 @@ github.com/qiniu/api.v7 (Qiniu Go SDK v7.x)
 go get -u github.com/qiniu/api.v7
 ```
 
+# go版本需求
+
+需要go1.9或者1.9以上
+
 #  文档
 
 [七牛SDK文档站](https://developer.qiniu.com/kodo/sdk/1238/go) 或者 [项目WIKI](https://github.com/qiniu/api.v7/wiki)

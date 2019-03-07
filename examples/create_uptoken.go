@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 )
 
@@ -22,7 +22,7 @@ func main() {
 	putPolicy := storage.PutPolicy{
 		Scope: bucket,
 	}
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	upToken := putPolicy.UploadToken(mac)
 	fmt.Println(upToken)
 

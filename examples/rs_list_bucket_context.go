@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"context"
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 	"strings"
 )
@@ -17,7 +17,7 @@ var (
 )
 
 func main() {
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 
 	cfg := storage.Config{
 		// 是否使用https域名进行资源管理

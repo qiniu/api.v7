@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/storage"
 )
 
@@ -16,7 +16,7 @@ var (
 
 func main() {
 	cfg := storage.Config{}
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	bucketManger := storage.NewBucketManager(mac, &cfg)
 	siteURL := "http://devtools.qiniu.com"
 

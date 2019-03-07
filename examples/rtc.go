@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/rtc"
 )
 
@@ -21,7 +21,7 @@ func init() {
 	accessKey := os.Getenv("QINIU_ACCESS_KEY")
 	secretKey := os.Getenv("QINIU_SECRET_KEY")
 
-	mac := qbox.NewMac(accessKey, secretKey)
+	mac := auth.New(accessKey, secretKey)
 	manager = rtc.NewManager(mac)
 }
 

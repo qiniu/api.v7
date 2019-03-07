@@ -5,14 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qiniu/api.v7/auth/qbox"
+	"fmt"
+	"github.com/qiniu/api.v7/auth"
 )
 
 //global variables
 
 var (
-	ak     = os.Getenv("QINIU_ACCESS_KEY")
-	sk     = os.Getenv("QINIU_SECRET_KEY")
+	ak     = os.Getenv("accessKey")
+	sk     = os.Getenv("secretKey")
 	domain = os.Getenv("QINIU_TEST_DOMAIN")
 
 	layout    = "2006-01-02"
@@ -22,23 +23,23 @@ var (
 	logDate   = now.AddDate(0, 0, -1).Format(layout)
 
 	testUrls = []string{
-		"http://gosdk.qiniudn.com/qiniu1.png",
-		"http://gosdk.qiniudn.com/qiniu2.png",
+		fmt.Sprintf("http://%s/qiniu.png", domain),
+		fmt.Sprintf("http://%s/qiniu-fetch.png", domain),
 	}
 	testDirs = []string{
-		"http://gosdk.qiniudn.com/dir1/",
-		"http://gosdk.qiniudn.com/dir2/",
+		fmt.Sprintf("http://%s/gosdkintegration/", domain),
+		fmt.Sprintf("http://%s/gosdkintegration1/", domain),
 	}
 )
 
-var mac *qbox.Mac
+var mac *auth.Credentials
 var cdnManager *CdnManager
 
 func init() {
 	if ak == "" || sk == "" {
-		panic("please run ./test-env.sh first")
+		panic("ak/sk should not be empty")
 	}
-	mac = qbox.NewMac(ak, sk)
+	mac = auth.New(ak, sk)
 	cdnManager = NewCdnManager(mac)
 }
 
@@ -142,7 +143,7 @@ func TestRefreshUrls(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ret, err := cdnManager.RefreshUrls(tc.args.urls)
 			if err != nil || ret.Code != tc.wantCode {
-				t.Errorf("RefreshUrls() error = %v, %v", err, ret.Error)
+				t.Errorf("RefreshUrls() %v error = %v, %v", tc.args.urls, err, ret.Error)
 				return
 			}
 		})
@@ -184,6 +185,7 @@ func TestRefreshDirs(t *testing.T) {
 	}
 }
 
+/* 预取有额度限制
 //TestPrefetchUrls
 func TestPrefetchUrls(t *testing.T) {
 	type args struct {
@@ -214,6 +216,7 @@ func TestPrefetchUrls(t *testing.T) {
 		})
 	}
 }
+*/
 
 //TestGetCdnLogList
 func TestGetCdnLogList(t *testing.T) {
