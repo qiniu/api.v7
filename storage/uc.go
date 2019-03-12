@@ -1,9 +1,20 @@
-// package storage 提供了用户配置(uc)方面的功能, 定义了UC API 的返回结构体类型
+// package storage 提供了用户存储配置(uc)方面的功能, 定义了UC API 的返回结构体类型
 package storage
 
 import (
+	"context"
+	"fmt"
 	"strings"
+
+	"github.com/qiniu/api.v7/auth"
 )
+
+// BucketSummary 存储空间信息
+type BucketSummary struct {
+	// 存储空间名字
+	Name string     `json:"name"`
+	Info BucketInfo `json:"info"`
+}
 
 // BucketInfo 存储空间的详细信息
 type BucketInfo struct {
@@ -17,15 +28,15 @@ type BucketInfo struct {
 	Expires int `json:"expires"`
 
 	// 是否开启了原图保护
-	Protected bool `json:"protected"`
+	Protected int `json:"protected"`
 
 	// 是否是私有空间
-	Private bool `json:"private"`
+	Private int `json:"private"`
 
 	// 如果NoIndexPage是false表示开启了空间根目录index.html
 	// 如果是true, 表示没有开启
 	// 开启了根目录下的index.html, 文件将会被作为默认首页展示
-	NoIndexPage bool `json:"no_index_page"`
+	NoIndexPage int `json:"no_index_page"`
 
 	// 图片样式分隔符， 接口返回的可能有多个
 	Separator string `json:"separator"`
@@ -33,9 +44,6 @@ type BucketInfo struct {
 	// 图片样式， map中的key表示图片样式命令名字
 	// map中的value表示图片样式命令的内容
 	Styles map[string]string `json:"styles"`
-
-	// 该字段已经废弃
-	RefreshTime string `json:"refresh_time"`
 
 	// 防盗链模式
 	// 1 - 表示设置了防盗链的referer白名单
@@ -51,7 +59,7 @@ type BucketInfo struct {
 	ReferWl []string `json:"refer_wl"`
 
 	// 防盗链referer黑名单列表
-	ReferBl []string `json:"refer_bl`
+	ReferBl []string `json:"refer_bl"`
 
 	// 是否允许空的referer访问
 	NoRefer bool `json:"no_refer"`
@@ -67,9 +75,6 @@ type BucketInfo struct {
 
 	// 存储区域
 	Region string
-
-	// 是否是全局域名
-	Global bool
 }
 
 // ReferAntiLeechConfig 是用户存储空间的Refer防盗链配置
@@ -119,10 +124,50 @@ func (r *ReferAntiLeechConfig) SetPattern(pattern string) *ReferAntiLeechConfig 
 	return r
 }
 
+// AddDomainPattern 添加pattern到Pattern字段
+// 假入Pattern值为"*.qiniu.com"， 使用AddDomainPattern("*.baidu.com")后
+// r.Pattern的值为"*.qiniu.com;*.baidu.com"
+func (r *ReferAntiLeechConfig) AddDomainPattern(pattern string) *ReferAntiLeechConfig {
+	if strings.HasSuffix(r.Pattern, ";") {
+		r.Pattern = strings.TrimRight(r.Pattern, ";")
+	}
+	r.Pattern = strings.Join([]string{r.Pattern, pattern}, ";")
+	return r
+}
+
 // SetEnableSource 设置是否开启源站的防盗链
 func (r *ReferAntiLeechConfig) SetEnableSource(enable bool) *ReferAntiLeechConfig {
 	r.EnableSource = enable
 	return r
+}
+
+// AsQueryString 编码成query参数格式
+func (r *ReferAntiLeechConfig) AsQueryString() string {
+	var norefer int
+	var enableSource int
+	if r.AllowEmptyReferer {
+		norefer = 1
+	} else {
+		norefer = 0
+	}
+	if r.EnableSource {
+		enableSource = 1
+	} else {
+		enableSource = 0
+	}
+	return fmt.Sprintf("mode=%d&norefer=%d&pattern=%s&source_enabled=%d", r.Mode, norefer, r.Pattern, enableSource)
+}
+
+// ProtectedOn 返回true or false
+// 如果开启了原图保护，返回true, 否则false
+func (b *BucketInfo) ProtectedOn() bool {
+	return b.Protected == 1
+}
+
+// IsPrivate  返回布尔值
+// 如果是私有空间， 返回 true, 否则返回false
+func (b *BucketInfo) IsPrivate() bool {
+	return b.Private == 1
 }
 
 // ImageSources 返回多个镜像回源地址的列表
@@ -133,7 +178,7 @@ func (b *BucketInfo) ImageSources() (srcs []string) {
 
 // IndexPageOn 返回空间是否开启了根目录下的index.html
 func (b *BucketInfo) IndexPageOn() bool {
-	return b.NoIndexPage == false
+	return b.NoIndexPage == 0
 }
 
 // Separators 返回分隔符列表
@@ -160,16 +205,25 @@ func (b *BucketInfo) TokenAntiLeechModeOn() bool {
 }
 
 // GetBucketInfo 返回BucketInfo结构
-func GetBucketInfo(bucketName string) (bucketInfo BucketInfo, err error) {
+func (m *BucketManager) GetBucketInfo(bucketName string) (bucketInfo BucketInfo, err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := fmt.Sprintf("%s/v2/bucketInfo?bucket=%s", UcHost, bucketName)
+	err = m.Client.Call(ctx, &bucketInfo, "POST", reqURL, nil)
 	return
 }
 
 // BucketInfosForRegion 获取指定区域的该用户的所有bucketInfo信息
-func BucketInfosInRegion(region RegionID) (bucketInfos []BucketInfo, err error) {
+func (m *BucketManager) BucketInfosInRegion(region RegionID, statistics bool) (bucketInfos []BucketSummary, err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := fmt.Sprintf("%s/v2/bucketInfos?region=%s&fs=%t", UcHost, string(region), statistics)
+	err = m.Client.Call(ctx, &bucketInfos, "POST", reqURL, nil)
 	return
 }
 
 // SetReferAntiLeechMode 配置存储空间referer防盗链模式
-func SetReferAntiLeechMode(bucketName string, refererAntiLeechConfig *ReferAntiLeechConfig) (err error) {
+func (m *BucketManager) SetReferAntiLeechMode(bucketName string, refererAntiLeechConfig *ReferAntiLeechConfig) (err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := fmt.Sprintf("%s/referAntiLeech?bucket=%s&%s", UcHost, bucketName, refererAntiLeechConfig.AsQueryString())
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }

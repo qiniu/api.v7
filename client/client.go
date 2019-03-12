@@ -8,22 +8,30 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"runtime"
 	"strings"
 
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/api.v7/internal/log"
 	"github.com/qiniu/api.v7/reqid"
 )
 
 var UserAgent = "Golang qiniu/client package"
 var DefaultClient = Client{&http.Client{Transport: http.DefaultTransport}}
+var DebugMode = false
 
 // --------------------------------------------------------------------
 
 type Client struct {
 	*http.Client
+}
+
+// TurnOnDebug 开启Debug模式
+func TurnOnDebug() {
+	DebugMode = true
 }
 
 // userApp should be [A-Za-z0-9_\ \-\.]*
@@ -56,6 +64,14 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 			return
 		}
 		req.Header.Add("Authorization", "QBox "+token)
+	}
+	if DebugMode {
+		bs, bErr := httputil.DumpRequest(req, true)
+		if bErr != nil {
+			err = bErr
+			return
+		}
+		log.Debug(string(bs))
 	}
 
 	return
@@ -252,6 +268,14 @@ func CallRet(ctx context.Context, ret interface{}, resp *http.Response) (err err
 		resp.Body.Close()
 	}()
 
+	if DebugMode {
+		bs, dErr := httputil.DumpResponse(resp, true)
+		if dErr != nil {
+			err = dErr
+			return
+		}
+		log.Debug(string(bs))
+	}
 	if resp.StatusCode/100 == 2 {
 		if ret != nil && resp.ContentLength != 0 {
 			err = json.NewDecoder(resp.Body).Decode(ret)

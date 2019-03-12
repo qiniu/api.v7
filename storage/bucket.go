@@ -1,5 +1,10 @@
 package storage
 
+// TODO:
+// BucketManager 每个接口的基本逻辑都是设置Mac信息， 获取请求地址， 发送HTTP请求。
+// 后期可以调整抽象出Request struct, APIOperation struct， 这样不用每个接口都要写
+// 重复的逻辑
+
 import (
 	"context"
 	"encoding/base64"
@@ -15,7 +20,6 @@ import (
 
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/client"
-	"github.com/qiniu/api.v7/conf"
 )
 
 // 资源管理相关的默认域名
@@ -150,9 +154,7 @@ func (m *BucketManager) UpdateObjectStatus(bucketName string, key string, enable
 		return reqErr
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, path)
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	return m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
 }
 
 // CreateBucket 创建一个七牛存储空间
@@ -162,9 +164,7 @@ func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error
 
 	reqHost = m.Cfg.RsReqHost()
 	reqURL := fmt.Sprintf("%s/mkbucketv2/%s/region/%s", reqHost, EncodedEntryWithoutKey(bucketName), string(regionID))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	return m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
 }
 
 // Buckets 用来获取空间列表，如果指定了 shared 参数为 true，那么一同列表被授权访问的空间
@@ -174,9 +174,7 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 
 	reqHost = m.Cfg.RsReqHost()
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, &buckets, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &buckets, "POST", reqURL, nil)
 	return
 }
 
@@ -190,9 +188,7 @@ func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	}
 
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIStat(bucket, key))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, &info, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &info, "POST", reqURL, nil)
 	return
 }
 
@@ -204,10 +200,8 @@ func (m *BucketManager) Delete(bucket, key string) (err error) {
 		err = reqErr
 		return
 	}
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIDelete(bucket, key))
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -221,9 +215,7 @@ func (m *BucketManager) Copy(srcBucket, srcKey, destBucket, destKey string, forc
 	}
 
 	reqURL := fmt.Sprintf("%s%s", reqHost, URICopy(srcBucket, srcKey, destBucket, destKey, force))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -237,9 +229,7 @@ func (m *BucketManager) Move(srcBucket, srcKey, destBucket, destKey string, forc
 	}
 
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIMove(srcBucket, srcKey, destBucket, destKey, force))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -252,9 +242,7 @@ func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeMime(bucket, key, newMime))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -267,9 +255,7 @@ func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error)
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeType(bucket, key, fileType))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -283,9 +269,7 @@ func (m *BucketManager) DeleteAfterDays(bucket, key string, days int) (err error
 	}
 
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIDeleteAfterDays(bucket, key, days))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -318,9 +302,7 @@ func (m *BucketManager) Fetch(resURL, bucket, key string) (fetchRet FetchRet, er
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetch(resURL, bucket, key))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, nil)
 	return
 }
 
@@ -406,9 +388,7 @@ func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRe
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resURL, bucket))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, nil)
 	return
 }
 
@@ -421,9 +401,7 @@ func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriPrefetch(bucket, key))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -431,9 +409,7 @@ func (m *BucketManager) Prefetch(bucket, key string) (err error) {
 func (m *BucketManager) SetImage(siteURL, bucket string) (err error) {
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriSetImage(siteURL, bucket))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -442,9 +418,7 @@ func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err erro
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost,
 		uriSetImageWithHost(siteURL, bucket, host))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
@@ -452,9 +426,7 @@ func (m *BucketManager) SetImageWithHost(siteURL, bucket, host string) (err erro
 func (m *BucketManager) UnsetImage(bucket string) (err error) {
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("http://%s%s", DefaultPubHost, uriUnsetImage(bucket))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, nil, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return err
 }
 
@@ -476,9 +448,7 @@ func (m *BucketManager) ListFiles(bucket, prefix, delimiter, marker string,
 
 	ret := listFilesRet{}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles(bucket, prefix, delimiter, marker, limit))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	err = m.Client.Call(ctx, &ret, "POST", reqURL, headers)
+	err = m.Client.Call(ctx, &ret, "POST", reqURL, nil)
 	if err != nil {
 		return
 	}
@@ -505,9 +475,7 @@ func (m *BucketManager) ListBucket(bucket, prefix, delimiter, marker string) (re
 
 	// limit 0 ==> 列举所有文件
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = callChan(m.Client, ctx, "POST", reqURL, headers)
+	retCh, err = callChan(m.Client, ctx, "POST", reqURL, nil)
 	return
 }
 
@@ -524,9 +492,7 @@ func (m *BucketManager) ListBucketContext(ctx context.Context, bucket, prefix, d
 
 	// limit 0 ==> 列举所有文件
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriListFiles2(bucket, prefix, delimiter, marker))
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_FORM)
-	retCh, err = callChan(m.Client, ctx, "POST", reqURL, headers)
+	retCh, err = callChan(m.Client, ctx, "POST", reqURL, nil)
 	return
 }
 
@@ -558,9 +524,7 @@ func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, er
 	reqUrl += "/sisyphus/fetch"
 
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
-	headers := http.Header{}
-	headers.Add("Content-Type", conf.CONTENT_TYPE_JSON)
-	err = m.Client.CallWithJson(ctx, &ret, "POST", reqUrl, headers, param)
+	err = m.Client.CallWithJson(ctx, &ret, "POST", reqUrl, nil, param)
 	return
 }
 

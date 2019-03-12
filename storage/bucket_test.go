@@ -21,6 +21,7 @@ var (
 	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
 	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
 	testPipeline            = os.Getenv("QINIU_TEST_PIPELINE")
+	testDebug               = os.Getenv("QINIU_SDK_DEBUG")
 
 	testKey      = "qiniu.png"
 	testFetchUrl = "http://devtools.qiniu.com/qiniu.png"
@@ -40,6 +41,9 @@ var (
 )
 
 func init() {
+	if testDebug == "true" {
+		client.TurnOnDebug()
+	}
 	clt = client.Client{
 		Client: &http.Client{
 			Timeout: time.Minute * 10,
@@ -327,4 +331,65 @@ func TestBatch(t *testing.T) {
 	}
 
 	t.Logf("BatchStat: %v", batchOpRets)
+}
+
+func TestListBucket(t *testing.T) {
+	retChan, lErr := bucketManager.ListBucket(testBucket, "", "", "")
+	if lErr != nil {
+		t.Fatalf("ListBucket: %v\n", lErr)
+	}
+	for ret := range retChan {
+		t.Log(ret.Item)
+	}
+}
+
+func TestGetBucketInfo(t *testing.T) {
+	bInfo, bErr := bucketManager.GetBucketInfo(testBucket)
+	if bErr != nil {
+		t.Fatalf("GetBucketInfo: %v\n", bErr)
+	}
+	t.Log(bInfo)
+}
+
+func TestBucketInfosInRegion(t *testing.T) {
+	bInfos, bErr := bucketManager.BucketInfosInRegion(RIDHuadong, true)
+	if bErr != nil {
+		t.Fatalf("BucketInfosInRegion: %v\n", bErr)
+	}
+	for _, bInfo := range bInfos {
+		t.Log(bInfo)
+	}
+}
+
+func TestRefererAntiLeechMode(t *testing.T) {
+	cfgs := []*ReferAntiLeechConfig{
+		&ReferAntiLeechConfig{
+			Mode: 0, // 关闭referer防盗链
+		},
+		&ReferAntiLeechConfig{
+			Mode:    1, // 开启referer白名单
+			Pattern: "*.qiniu.com",
+		},
+		&ReferAntiLeechConfig{
+			Mode:    2, // 开启referer黑名单
+			Pattern: "*.qiniu.com",
+		},
+	}
+	for _, cfg := range cfgs {
+		err := bucketManager.SetReferAntiLeechMode(testBucket, cfg)
+		if err != nil {
+			t.Fatalf("SetReferAntiLeechMode: %v\n", err)
+		}
+	}
+
+	bInfo, bErr := bucketManager.GetBucketInfo(testBucket)
+	if bErr != nil {
+		t.Fatalf("GetBucketInfo: %v\n", bErr)
+	}
+	if bInfo.AntiLeechMode != 2 {
+		t.Fatalf("AntiLeechMode expected: %q, got: %q\n", 2, bInfo.AntiLeechMode)
+	}
+	if len(bInfo.ReferBl) != 1 || bInfo.ReferBl[0] != "*.qiniu.com" {
+		t.Fatalf("Referer blacklist expected: %q, got: %q\n", "*.qiniu.com", bInfo.ReferBl[0])
+	}
 }
