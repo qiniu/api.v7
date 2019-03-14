@@ -393,3 +393,87 @@ func TestRefererAntiLeechMode(t *testing.T) {
 		t.Fatalf("Referer blacklist expected: %q, got: %q\n", "*.qiniu.com", bInfo.ReferBl[0])
 	}
 }
+
+func TestBucketLifeCycleRule(t *testing.T) {
+	err := bucketManager.AddBucketLifeCycleRule(testBucket, &BucketLifeCycleRule{
+		Name:            "golangIntegrationTest",
+		Prefix:          "testPutFileKey",
+		DeleteAfterDays: 3,
+	})
+	if err != nil {
+		if !strings.Contains(err.Error(), "rule name exists") {
+			t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+		}
+	}
+	rules, err := bucketManager.GetBucketLifeCycleRule(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+	ruleExists := false
+	for _, r := range rules {
+		if r.Name == "golangIntegrationTest" && r.Prefix == "testPutFileKey" && r.DeleteAfterDays == 3 {
+			ruleExists = true
+			break
+		}
+	}
+	if !ruleExists {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+
+	err = bucketManager.UpdateBucketLifeCycleRule(testBucket, &BucketLifeCycleRule{
+		Name:            "golangIntegrationTest",
+		Prefix:          "testPutFileKey",
+		DeleteAfterDays: 2,
+	})
+
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+	err = bucketManager.DelBucketLifeCycleRule(testBucket, "golangIntegrationTest")
+
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+}
+
+func TestBucketEventRule(t *testing.T) {
+	err := bucketManager.AddBucketEvent(testBucket, &BucketEventRule{
+		Name:        "golangIntegrationTest",
+		Event:       []string{"put", "mkfile"},
+		Host:        "www.qiniu.com",
+		CallbackURL: []string{"http://www.qiniu.com"},
+	})
+	if err != nil {
+		if !strings.Contains(err.Error(), "event name exists") {
+			t.Fatalf("TestBucketEventRule: %v\n", err)
+		}
+	}
+	rules, err := bucketManager.GetBucketEvent(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+	exist := false
+	for _, rule := range rules {
+		if rule.Name == "golangIntegrationTest" && rule.Host == "www.qiniu.com" {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+
+	err = bucketManager.UpdateBucketEnvent(testBucket, &BucketEventRule{
+		Name:        "golangIntegrationTest",
+		Event:       []string{"put", "mkfile"},
+		Host:        "www.qiniu.com",
+		CallbackURL: []string{"http://www.qiniu.com"},
+	})
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+	err = bucketManager.DelBucketEvent(testBucket, "golangIntegrationTest")
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+}

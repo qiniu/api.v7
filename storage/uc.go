@@ -4,6 +4,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/qiniu/api.v7/auth"
@@ -225,5 +226,178 @@ func (m *BucketManager) SetReferAntiLeechMode(bucketName string, refererAntiLeec
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := fmt.Sprintf("%s/referAntiLeech?bucket=%s&%s", UcHost, bucketName, refererAntiLeechConfig.AsQueryString())
 	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
+	return
+}
+
+// BucketLifeCycleRule 定义了关于七牛存储空间关于生命周期的一些配置，规则。
+// 比如存储空间中文件可以设置多少天后删除，多少天后转低频存储等等
+type BucketLifeCycleRule struct {
+	// 规则名称， 在设置的bucket中规则名称需要是唯一的
+	// 同时长度小于50， 不能为空
+	// 由字母，数字和下划线组成
+	Name string `json:"name"`
+
+	// 以该前缀开头的文件应用此规则
+	Prefix string `json:"prefix"`
+
+	// 指定存储空间内的文件多少天后删除
+	// 0 - 不删除
+	// > 0 表示多少天后删除
+	DeleteAfterDays int `json:"delete_after_days"`
+
+	// 在多少天后转低频存储
+	// 0  - 表示不转低频
+	// < 0 表示上传的文件立即使用低频存储
+	// > 0 表示转低频的天数
+	ToLFSAfterDays int `json:"to_line_after_days"`
+}
+
+func str(d int) string {
+	return strconv.FormatInt(int64(d), 10)
+}
+
+// SetBucketLifeCycleRule 设置存储空间内文件的生命周期规则
+func (m *BucketManager) AddBucketLifeCycleRule(bucketName string, lifeCycleRule *BucketLifeCycleRule) (err error) {
+
+	params := make(map[string][]string)
+
+	// 没有检查参数的合法性，交给服务端检查
+	params["bucket"] = []string{bucketName}
+	params["name"] = []string{lifeCycleRule.Name}
+	params["prefix"] = []string{lifeCycleRule.Prefix}
+	params["delete_after_days"] = []string{str(lifeCycleRule.DeleteAfterDays)}
+	params["to_line_after_days"] = []string{str(lifeCycleRule.ToLFSAfterDays)}
+
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/rules/add"
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+
+}
+
+// DelBucketLifeCycleRule 删除特定存储空间上设定的规则
+func (m *BucketManager) DelBucketLifeCycleRule(bucketName, ruleName string) (err error) {
+	params := make(map[string][]string)
+
+	params["bucket"] = []string{bucketName}
+	params["name"] = []string{ruleName}
+
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/rules/delete"
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+}
+
+// UpdateBucketLifeCycleRule 更新特定存储空间上的生命周期规则
+func (m *BucketManager) UpdateBucketLifeCycleRule(bucketName string, rule *BucketLifeCycleRule) (err error) {
+	params := make(map[string][]string)
+
+	params["bucket"] = []string{bucketName}
+	params["name"] = []string{rule.Name}
+	params["delete_after_days"] = []string{str(rule.DeleteAfterDays)}
+	params["to_line_after_days"] = []string{str(rule.ToLFSAfterDays)}
+
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/rules/update"
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+}
+
+// GetBucketLifeCycleRule 获取指定空间上设置的生命周期规则
+func (m *BucketManager) GetBucketLifeCycleRule(bucketName string) (rules []BucketLifeCycleRule, err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/rules/get?bucket=" + bucketName
+	err = m.Client.Call(ctx, &rules, "GET", reqURL, nil)
+	return
+}
+
+// BucketEnvent 定义了存储空间发生事件时候的通知规则
+// 比如调用了存储的"delete"删除接口删除文件， 这个是一个事件；
+// 当这个事件发生的时候， 我们要对哪些文件，做什么处理，是否要作回调，
+// 都可以通过这个结构体配置
+type BucketEventRule struct {
+	// 规则名字
+	Name string `json:"name"`
+
+	// 匹配文件前缀
+	Prefix string `json:"prefix"`
+
+	// 匹配文件后缀
+	Suffix string `json:"suffix"`
+
+	// 事件类型
+	// put,mkfile,delete,copy,move,append,disable,enable,deleteMarkerCreate
+	Event []string `json:"event"`
+
+	// 回调通知地址， 可以指定多个
+	CallbackURL []string `json:"callback_urls`
+
+	// 用户的AccessKey， 可选， 设置的话会对通知请求用对应的ak、sk进行签名
+	AccessKey string `json:"access_key"`
+
+	// 回调通知的请求HOST, 可选
+	Host string `json:"host"`
+}
+
+// Params 返回一个hash结构
+func (r *BucketEventRule) Params(bucket string) map[string][]string {
+	params := make(map[string][]string)
+
+	params["bucket"] = []string{bucket}
+	params["name"] = []string{r.Name}
+	if r.Prefix != "" {
+		params["prefix"] = []string{r.Prefix}
+	}
+	if r.Suffix != "" {
+		params["suffix"] = []string{r.Suffix}
+	}
+	params["event"] = r.Event
+	params["callbackURL"] = r.CallbackURL
+	if r.AccessKey != "" {
+		params["access_key"] = []string{r.AccessKey}
+	}
+	if r.Host != "" {
+		params["host"] = []string{r.Host}
+	}
+	return params
+}
+
+// AddBucketEvent 增加存储空间事件通知规则
+func (m *BucketManager) AddBucketEvent(bucket string, rule *BucketEventRule) (err error) {
+	params := rule.Params(bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/events/add"
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+}
+
+// DelBucketEvent 删除指定存储空间的通知事件规则
+func (m *BucketManager) DelBucketEvent(bucket, ruleName string) (err error) {
+	params := make(map[string][]string)
+	params["bucket"] = []string{bucket}
+	params["name"] = []string{ruleName}
+
+	reqURL := UcHost + "/events/delete"
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+}
+
+// UpdateBucketEnvent 更新指定存储空间的事件通知规则
+func (m *BucketManager) UpdateBucketEnvent(bucket string, rule *BucketEventRule) (err error) {
+
+	params := rule.Params(bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/events/update"
+	err = m.Client.CallWithForm(ctx, nil, "POST", reqURL, nil, params)
+	return
+}
+
+// GetBucketEvent 获取指定存储空间的事件通知规则
+func (m *BucketManager) GetBucketEvent(bucket string) (rule []BucketEventRule, err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := UcHost + "/events/get?bucket=" + bucket
+	err = m.Client.Call(ctx, &rule, "GET", reqURL, nil)
 	return
 }
