@@ -477,3 +477,23 @@ func TestBucketEventRule(t *testing.T) {
 		t.Fatalf("TestBucketEventRule: %v\n", err)
 	}
 }
+
+func TestCorsRules(t *testing.T) {
+	err := bucketManager.AddCorsRules(testBucket, []CorsRule{
+		CorsRule{
+			AllowedOrigin: []string{"http://www.test1.com"},
+			AllowedMethod: []string{"GET", "POST"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("TestCorsRules: %v\n", err)
+	}
+	rules, err := bucketManager.GetCorsRules(testBucket)
+	if err != nil {
+		t.Fatalf("TestCorsRules: %v\n", err)
+	}
+	for _, r := range rules {
+		t.Log(r)
+	}
+
+}
