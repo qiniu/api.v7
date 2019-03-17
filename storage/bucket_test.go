@@ -497,3 +497,36 @@ func TestCorsRules(t *testing.T) {
 	}
 
 }
+
+func TestSetBucketAccessStyle(t *testing.T) {
+	err := bucketManager.TurnOnBucketProtected(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessStyle: %q\n", err)
+	}
+	err = bucketManager.TurnOffBucketProtected(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessStyle: %q\n", err)
+	}
+}
+
+func TestSetBucketMaxAge(t *testing.T) {
+	err := bucketManager.SetBucketMaxAge(testBucket, 20)
+	if err != nil {
+		t.Fatalf("TestSetBucketMaxAge: %q\n", err)
+	}
+	err = bucketManager.SetBucketMaxAge(testBucket, 0)
+	if err != nil {
+		t.Fatalf("TestSetBucketMaxAge: %q\n", err)
+	}
+}
+
+func TestSetBucketAccessMode(t *testing.T) {
+	err := bucketManager.MakeBucketPrivate(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessMode: %q\n", err)
+	}
+	err = bucketManager.MakeBucketPublic(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessMode: %q\n", err)
+	}
+}
