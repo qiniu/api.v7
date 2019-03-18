@@ -447,3 +447,46 @@ func (m *BucketManager) GetCorsRules(bucket string) (corsRules []CorsRule, err e
 	err = m.Client.Call(ctx, &corsRules, "GET", reqURL, nil)
 	return
 }
+
+// BucketQuota 七牛存储空间的配额信息
+type BucketQuota struct {
+	// 如果HTTP请求没有发送该参数或者发送的参数是0，表示不更改当前配置
+	// 如果是-1， 表示取消限额
+	// 一下两个参数都使用于这个逻辑
+
+	// 空间存储量配额信息
+	Size int64
+
+	// 空间文件数配置信息
+	Count int64
+}
+
+// SetBucketQuota 设置存储空间的配额限制
+// 配额限制主要是两块， 空间存储量的限制和空间文件数限制
+func (m *BucketManager) SetBucketQuota(bucket string, size, count int64) (err error) {
+	reqHost, rErr := m.ApiReqHost(bucket)
+	if rErr != nil {
+		err = rErr
+		return
+	}
+	reqHost = strings.TrimRight(reqHost, "/")
+	reqURL := fmt.Sprintf("%s/setbucketquota/%s/size/%d/count/%d", reqHost, bucket, size, count)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
+	return
+}
+
+// GetBucketQuota 获取存储空间的配额信息
+func (m *BucketManager) GetBucketQuota(bucket string) (quota BucketQuota, err error) {
+	reqHost, rErr := m.ApiReqHost(bucket)
+	if rErr != nil {
+		err = rErr
+		return
+	}
+	reqHost = strings.TrimRight(reqHost, "/")
+	reqURL := reqHost + "/getbucketquota/" + bucket
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	err = m.Client.Call(ctx, &quota, "POST", reqURL, nil)
+	return
+}

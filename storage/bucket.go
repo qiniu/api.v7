@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/client"
@@ -389,6 +390,33 @@ func (m *BucketManager) FetchWithoutKey(resURL, bucket string) (fetchRet FetchRe
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, uriFetchWithoutKey(resURL, bucket))
 	err = m.Client.Call(ctx, &fetchRet, "POST", reqURL, nil)
+	return
+}
+
+// DomainInfo 是绑定在存储空间上的域名的具体信息
+type DomainInfo struct {
+	Domain string `json:"domain"`
+
+	// 存储空间名字
+	Tbl string `json:"tbl"`
+
+	// 用户UID
+	Owner   int       `json:"uid"`
+	Refresh bool      `json:"refresh"`
+	Ctime   time.Time `json:"ctime"`
+	Utime   time.Time `json:"utime"`
+}
+
+// ListBucketDomains 返回绑定在存储空间中的域名信息
+func (m *BucketManager) ListBucketDomains(bucket string) (info []DomainInfo, err error) {
+	reqHost, rErr := m.ApiReqHost(bucket)
+	if rErr != nil {
+		err = rErr
+		return
+	}
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	reqURL := fmt.Sprintf("%s/v3/domains?tbl=%s", reqHost, bucket)
+	err = m.Client.Call(ctx, &info, "GET", reqURL, nil)
 	return
 }
 

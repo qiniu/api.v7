@@ -255,6 +255,12 @@ func ResponseError(resp *http.Response) (err error) {
 			ct, ok := resp.Header["Content-Type"]
 			if ok && strings.HasPrefix(ct[0], "application/json") {
 				parseError(e, resp.Body)
+			} else {
+				bs, rErr := ioutil.ReadAll(resp.Body)
+				if rErr != nil {
+					err = rErr
+				}
+				e.Err = strings.TrimRight(string(bs), "\n")
 			}
 		}
 	}

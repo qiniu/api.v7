@@ -497,3 +497,27 @@ func TestCorsRules(t *testing.T) {
 	}
 
 }
+
+func TestListBucketDomains(t *testing.T) {
+	bInfos, err := bucketManager.ListBucketDomains(testBucket)
+	if err != nil {
+		if !strings.Contains(err.Error(), "404 page not found") {
+			t.Fatalf("ListBucketDomains: %q\n", err)
+		}
+	}
+	for _, info := range bInfos {
+		t.Log(info)
+	}
+}
+
+func TestBucketQuota(t *testing.T) {
+	err := bucketManager.SetBucketQuota(testBucket, 0, 1000000000000000)
+	if err != nil {
+		t.Fatalf("TestBucketQuota: %q\n", err)
+	}
+	quota, err := bucketManager.GetBucketQuota(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketQuota: %q\n", err)
+	}
+	t.Log(quota)
+}
