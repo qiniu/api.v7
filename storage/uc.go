@@ -448,6 +448,7 @@ func (m *BucketManager) GetCorsRules(bucket string) (corsRules []CorsRule, err e
 	return
 }
 
+<<<<<<< HEAD
 // BucketQuota 七牛存储空间的配额信息
 type BucketQuota struct {
 	// 如果HTTP请求没有发送该参数或者发送的参数是0，表示不更改当前配置
@@ -489,4 +490,58 @@ func (m *BucketManager) GetBucketQuota(bucket string) (quota BucketQuota, err er
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	err = m.Client.Call(ctx, &quota, "POST", reqURL, nil)
 	return
+=======
+// MirrorConfig
+type MirrorConfig struct {
+}
+
+// SetBucketAccessStyle 可以用来开启或关闭制定存储空间的原图保护
+// mode - 1 ==> 开启原图保护
+// mode - 0 ==> 关闭原图保护
+func (m *BucketManager) SetBucketAccessStyle(bucket string, mode int) error {
+
+	reqURL := fmt.Sprintf("%s/accessMode/%s/mode/%d", UcHost, bucket, mode)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
+
+// TurnOffBucketProtected 开启指定存储空间的原图保护
+func (m *BucketManager) TurnOnBucketProtected(bucket string) error {
+	return m.SetBucketAccessStyle(bucket, 1)
+}
+
+// TurnOffBucketProtected 关闭指定空间的原图保护
+func (m *BucketManager) TurnOffBucketProtected(bucket string) error {
+	return m.SetBucketAccessStyle(bucket, 0)
+}
+
+// SetBucketMaxAge 设置指定存储空间的MaxAge响应头
+// maxAge <= 0时，表示使用默认值31536000
+func (m *BucketManager) SetBucketMaxAge(bucket string, maxAge int64) error {
+	reqURL := fmt.Sprintf("%s/maxAge?bucket=%s&maxAge=%d", UcHost, bucket, maxAge)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
+
+// SetBucketAccessMode 设置指定空间的私有属性
+
+// mode - 1 表示设置空间为私有空间， 私有空间访问需要鉴权
+// mode - 0 表示设置空间为公开空间
+func (m *BucketManager) SetBucketAccessMode(bucket string, mode int) error {
+
+	reqURL := fmt.Sprintf("%s/private?bucket=%s&private=%d", UcHost, bucket, mode)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
+
+// MakeBucketPublic 设置空间为公有空间
+func (m *BucketManager) MakeBucketPublic(bucket string) error {
+	return m.SetBucketAccessMode(bucket, 0)
+}
+
+// MakeBucketPrivate 设置空间为私有空间
+func (m *BucketManager) MakeBucketPrivate(bucket string) error {
+
+	return m.SetBucketAccessMode(bucket, 1)
+>>>>>>> ab38891fe61e141ecf0342706568fc660b0621b3
 }
