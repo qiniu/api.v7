@@ -448,7 +448,6 @@ func (m *BucketManager) GetCorsRules(bucket string) (corsRules []CorsRule, err e
 	return
 }
 
-<<<<<<< HEAD
 // BucketQuota 七牛存储空间的配额信息
 type BucketQuota struct {
 	// 如果HTTP请求没有发送该参数或者发送的参数是0，表示不更改当前配置
@@ -490,7 +489,8 @@ func (m *BucketManager) GetBucketQuota(bucket string) (quota BucketQuota, err er
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	err = m.Client.Call(ctx, &quota, "POST", reqURL, nil)
 	return
-=======
+}
+
 // MirrorConfig
 type MirrorConfig struct {
 }
@@ -543,5 +543,4 @@ func (m *BucketManager) MakeBucketPublic(bucket string) error {
 func (m *BucketManager) MakeBucketPrivate(bucket string) error {
 
 	return m.SetBucketAccessMode(bucket, 1)
->>>>>>> ab38891fe61e141ecf0342706568fc660b0621b3
 }
