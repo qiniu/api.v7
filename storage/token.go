@@ -36,14 +36,22 @@ type PutPolicy struct {
 }
 
 // UploadToken 方法用来进行上传凭证的生成
-func (p *PutPolicy) UploadToken(mac *auth.Credentials) (token string) {
+// 该方法生成的过期时间是现对于现在的时间
+func (p *PutPolicy) UploadToken(cred *auth.Credentials) (token string) {
+	token = p.UploadTokenTime(cred, time.Now())
+	return
+}
+
+// UploadTokenTime 生成上传凭证， 凭证的过期时间现对于指定的时间
+// 这个是调用者的责任保证 p.Expires + t 的时间没有过期
+func (p *PutPolicy) UploadTokenTime(cred *auth.Credentials, t time.Time) (token string) {
 	if p.Expires == 0 {
 		p.Expires = 3600 // 1 hour
 	}
-	p.Expires += uint32(time.Now().Unix())
+	p.Expires += uint32(t.Unix())
 
 	putPolicyJSON, _ := json.Marshal(p)
-	token = mac.SignWithData(putPolicyJSON)
+	token = cred.SignWithData(putPolicyJSON)
 	return
 }
 

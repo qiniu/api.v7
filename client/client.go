@@ -54,6 +54,7 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 	}
 
 	req.Header = headers
+	req = req.WithContext(ctx)
 
 	//check access token
 	mac, ok := auth.CredentialsFromContext(ctx)
