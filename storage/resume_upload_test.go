@@ -35,22 +35,38 @@ func TestNextReader(t *testing.T) {
 
 	blkSize := int64(1 << blockBits)
 
-	uploaders := []testUploader{
-		{
-			uploader: &uploader{
-				body:    strings.NewReader("hello world"),
-				blkSize: blkSize,
-			},
-			length: 11,
+	tu1 := testUploader{
+		uploader: &uploader{
+			body:    strings.NewReader("hello world"),
+			blkSize: blkSize,
 		},
+		length: 11,
 	}
 
-	for _, up := range uploaders {
-		up.init()
-		_, n, _, err := up.nextReader()
-		if err != io.EOF || int64(n) != up.length {
+	tu1.init()
+	_, n, _, err := tu1.nextReader()
+	if err != io.EOF || int64(n) != tu1.length {
+		t.Fatalf("nextReader(): %q\n", err)
+	}
+
+	tu2 := testUploader{
+		uploader: &uploader{
+			body:    strings.NewReader(strings.Repeat("hello", 1<<blockBits)),
+			blkSize: blkSize,
+		},
+		length: 5 * blkSize,
+	}
+	tu2.init()
+
+	for i := 0; i < 4; i++ {
+		_, n, _, err = tu2.nextReader()
+		if err != nil || int64(n) != blkSize {
 			t.Fatalf("nextReader(): %q\n", err)
 		}
+	}
+	_, n, _, err = tu2.nextReader()
+	if err != io.EOF {
+		t.Fatalf("nextReader(): %q\n", err)
 	}
 }
 
@@ -63,9 +79,17 @@ func TestPutWithoutSize(t *testing.T) {
 	upToken := putPolicy.UploadToken(mac)
 	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
 
-	err := resumeUploader.PutWithoutSize(context.Background(), &putRet, upToken, testKey, strings.NewReader("hello world"), nil)
-	if err != nil {
-		t.Fatalf("PutWithoutSize() error, %s", err)
+	rds := []io.Reader{
+		strings.NewReader("hello world"),
+		strings.NewReader(strings.Repeat("he", 1<<blockBits)),
 	}
-	t.Logf("Key: %s, Hash:%s", putRet.Key, putRet.Hash)
+
+	for _, rd := range rds {
+
+		err := resumeUploader.PutWithoutSize(context.Background(), &putRet, upToken, testKey, rd, nil)
+		if err != nil {
+			t.Fatalf("PutWithoutSize() error, %s", err)
+		}
+		t.Logf("Key: %s, Hash:%s", putRet.Key, putRet.Hash)
+	}
 }

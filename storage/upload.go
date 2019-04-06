@@ -41,6 +41,7 @@ func (r *defaultChunkRetryer) Retry(ck *Chunk) {
 	var i = 0
 	for ; i < r.maxCount; i++ {
 		if ck.ShouldRetry() {
+			log.Debug("Retrying to upload chunk: ", ck.Index)
 			if err := ck.Reset(); err != nil {
 				log.Warn(fmt.Sprintf("Reset chunk body error: %q, chunk index: %d", err, ck.Index))
 				ck.Err = err
@@ -182,23 +183,28 @@ func (u *uploader) init() {
 
 func (u *uploader) upload(ret interface{}, key string, hasKey bool, extra *RputExtra) error {
 	u.init()
+
+	defer close(u.success)
 	ctx, cancelFunc := context.WithCancel(u.ctx)
 	u.ctx = ctx
 
-	chunkMap := make(map[int]*Chunk)
 	go func() {
 		<-u.errChan
 		cancelFunc()
 	}()
+
+	cks := make(map[int]*Chunk)
 	go func() {
-		for chunk := range u.success {
-			if _, ok := chunkMap[chunk.Index]; ok {
+		for c := range u.success {
+			if _, ok := cks[c.Index]; ok {
 				panic("chunk with same index")
 			}
-			if chunk.Index <= 0 {
+			if c.Index <= 0 {
 				panic("index less than 1")
 			}
-			chunkMap[chunk.Index-1] = chunk
+			cks[c.Index] = c
+
+			u.wg.Done()
 		}
 	}()
 
@@ -237,9 +243,13 @@ func (u *uploader) upload(ret interface{}, key string, hasKey bool, extra *RputE
 	if u.totalSize == -1 {
 		u.totalSize = totalSize
 	}
-	extra.Progresses = make([]BlkputRet, len(chunkMap))
-	for ind, c := range chunkMap {
-		extra.Progresses[ind] = *c.Ret
+	//log.Debug(cks)
+	extra.Progresses = make([]BlkputRet, index)
+	for ind, c := range cks {
+		if ind < 0 {
+			panic("negative index count")
+		}
+		extra.Progresses[ind-1] = *c.Ret
 	}
 	return u.Mkfile(ctx, u.upToken, u.upHost, ret, key, hasKey, u.totalSize, extra)
 }
@@ -294,9 +304,8 @@ func (u *uploader) uploadChunk(sema chan struct{}, chunk *Chunk, part []byte) {
 	}
 
 	u.bufferPool.Put(part)
-	u.success <- chunk
 	<-sema
-	u.wg.Done()
+	u.success <- chunk
 }
 
 func (u *uploader) nextReader() (io.ReadSeeker, int, []byte, error) {
