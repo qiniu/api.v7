@@ -17,7 +17,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/client"
@@ -401,10 +400,10 @@ type DomainInfo struct {
 	Tbl string `json:"tbl"`
 
 	// 用户UID
-	Owner   int       `json:"uid"`
-	Refresh bool      `json:"refresh"`
-	Ctime   time.Time `json:"ctime"`
-	Utime   time.Time `json:"utime"`
+	Owner   int  `json:"uid"`
+	Refresh bool `json:"refresh"`
+	Ctime   int  `json:"ctime"`
+	Utime   int  `json:"utime"`
 }
 
 // ListBucketDomains 返回绑定在存储空间中的域名信息
