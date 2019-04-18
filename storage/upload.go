@@ -289,7 +289,6 @@ func (u *uploader) chunkPut(chunk *Chunk) {
 }
 
 func (u *uploader) uploadChunk(sema chan struct{}, chunk *Chunk, part []byte) {
-	log.Debug(fmt.Sprintf("uploading chunk: %d", chunk.Index))
 	if chunk.Ret == nil {
 		chunk.Ret = new(BlkputRet)
 	}
