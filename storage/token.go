@@ -13,7 +13,7 @@ import (
 // PutPolicy 表示文件上传的上传策略
 type PutPolicy struct {
 	Scope               string `json:"scope"`
-	Expires             uint32 `json:"deadline"` // 截止时间（以秒为单位）
+	Expires             uint64 `json:"deadline"` // 截止时间（以秒为单位）
 	IsPrefixalScope     int    `json:"isPrefixalScope,omitempty"`
 	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
 	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
@@ -38,18 +38,9 @@ type PutPolicy struct {
 // UploadToken 方法用来进行上传凭证的生成
 // 该方法生成的过期时间是现对于现在的时间
 func (p *PutPolicy) UploadToken(cred *auth.Credentials) (token string) {
-	token = p.UploadTokenTime(cred, time.Now())
-	return
-}
-
-// UploadTokenTime 生成上传凭证， 凭证的过期时间现对于指定的时间
-// 这个是调用者的责任保证 p.Expires + t 的时间没有过期
-func (p *PutPolicy) UploadTokenTime(cred *auth.Credentials, t time.Time) (token string) {
 	if p.Expires == 0 {
-		p.Expires = 3600 // 1 hour
+		p.Expires += (uint64(time.Now().Unix()) + 3600) // 默认一小时过期
 	}
-	p.Expires += uint32(t.Unix())
-
 	putPolicyJSON, _ := json.Marshal(p)
 	token = cred.SignWithData(putPolicyJSON)
 	return

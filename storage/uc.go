@@ -249,16 +249,15 @@ type BucketLifeCycleRule struct {
 	// 0  - 表示不转低频
 	// < 0 表示上传的文件立即使用低频存储
 	// > 0 表示转低频的天数
-	ToLFSAfterDays int `json:"to_line_after_days"`
+	ToLineAfterDays int `json:"to_line_after_days"`
 }
 
 func str(d int) string {
-	return strconv.FormatInt(int64(d), 10)
+	return strconv.Itoa(d)
 }
 
 // SetBucketLifeCycleRule 设置存储空间内文件的生命周期规则
 func (m *BucketManager) AddBucketLifeCycleRule(bucketName string, lifeCycleRule *BucketLifeCycleRule) (err error) {
-
 	params := make(map[string][]string)
 
 	// 没有检查参数的合法性，交给服务端检查
@@ -266,7 +265,7 @@ func (m *BucketManager) AddBucketLifeCycleRule(bucketName string, lifeCycleRule 
 	params["name"] = []string{lifeCycleRule.Name}
 	params["prefix"] = []string{lifeCycleRule.Prefix}
 	params["delete_after_days"] = []string{str(lifeCycleRule.DeleteAfterDays)}
-	params["to_line_after_days"] = []string{str(lifeCycleRule.ToLFSAfterDays)}
+	params["to_line_after_days"] = []string{str(lifeCycleRule.ToLineAfterDays)}
 
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := UcHost + "/rules/add"
@@ -295,7 +294,7 @@ func (m *BucketManager) UpdateBucketLifeCycleRule(bucketName string, rule *Bucke
 	params["bucket"] = []string{bucketName}
 	params["name"] = []string{rule.Name}
 	params["delete_after_days"] = []string{str(rule.DeleteAfterDays)}
-	params["to_line_after_days"] = []string{str(rule.ToLFSAfterDays)}
+	params["to_line_after_days"] = []string{str(rule.ToLineAfterDays)}
 
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := UcHost + "/rules/update"
@@ -491,10 +490,6 @@ func (m *BucketManager) GetBucketQuota(bucket string) (quota BucketQuota, err er
 	return
 }
 
-// MirrorConfig
-type MirrorConfig struct {
-}
-
 // SetBucketAccessStyle 可以用来开启或关闭制定存储空间的原图保护
 // mode - 1 ==> 开启原图保护
 // mode - 0 ==> 关闭原图保护
@@ -528,7 +523,6 @@ func (m *BucketManager) SetBucketMaxAge(bucket string, maxAge int64) error {
 // mode - 1 表示设置空间为私有空间， 私有空间访问需要鉴权
 // mode - 0 表示设置空间为公开空间
 func (m *BucketManager) SetBucketAccessMode(bucket string, mode int) error {
-
 	reqURL := fmt.Sprintf("%s/private?bucket=%s&private=%d", UcHost, bucket, mode)
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
@@ -541,6 +535,5 @@ func (m *BucketManager) MakeBucketPublic(bucket string) error {
 
 // MakeBucketPrivate 设置空间为私有空间
 func (m *BucketManager) MakeBucketPrivate(bucket string) error {
-
 	return m.SetBucketAccessMode(bucket, 1)
 }

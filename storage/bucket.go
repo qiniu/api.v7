@@ -409,9 +409,8 @@ type DomainInfo struct {
 
 // ListBucketDomains 返回绑定在存储空间中的域名信息
 func (m *BucketManager) ListBucketDomains(bucket string) (info []DomainInfo, err error) {
-	reqHost, rErr := m.ApiReqHost(bucket)
-	if rErr != nil {
-		err = rErr
+	reqHost, err := m.ApiReqHost(bucket)
+	if err != nil {
 		return
 	}
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
