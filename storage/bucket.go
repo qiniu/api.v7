@@ -414,7 +414,7 @@ func (m *BucketManager) ListBucketDomains(bucket string) (info []DomainInfo, err
 		return
 	}
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
-	reqURL := fmt.Sprintf("%s/v3/domains?tbl=%s", reqHost, bucket)
+	reqURL := fmt.Sprintf("%s/v7/domain/list?tbl=%s", reqHost, bucket)
 	err = m.Client.Call(ctx, &info, "GET", reqURL, nil)
 	return
 }

@@ -501,9 +501,12 @@ func TestCorsRules(t *testing.T) {
 func TestListBucketDomains(t *testing.T) {
 	bInfos, err := bucketManager.ListBucketDomains(testBucket)
 	if err != nil {
-		if !strings.Contains(err.Error(), "404 page not found") {
-			t.Fatalf("ListBucketDomains: %q\n", err)
-		}
+		/*
+			if !strings.Contains(err.Error(), "404 page not found") {
+				t.Fatalf("ListBucketDomains: %q\n", err)
+			}
+		*/
+		t.Fatalf("ListBucketDomains: %q\n", err)
 	}
 	for _, info := range bInfos {
 		t.Log(info)
