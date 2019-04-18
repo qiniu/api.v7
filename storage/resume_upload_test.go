@@ -51,7 +51,9 @@ func TestNextReader(t *testing.T) {
 
 	tu2 := testUploader{
 		uploader: &uploader{
-			body:    strings.NewReader(strings.Repeat("hello", 1<<blockBits)),
+			body: &NotSeekerReader{
+				Reader: strings.NewReader(strings.Repeat("hello", 1<<blockBits)),
+			},
 			blkSize: blkSize,
 		},
 		length: 5 * blkSize,
@@ -61,12 +63,26 @@ func TestNextReader(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		_, n, _, err = tu2.nextReader()
 		if err != nil || int64(n) != blkSize {
-			t.Fatalf("nextReader(): %q\n", err)
+			t.Fatalf("nextReader(): %q, n: %d\n", err, n)
 		}
 	}
 	_, n, _, err = tu2.nextReader()
-	if err != io.EOF {
+	if err != io.EOF && err != nil {
 		t.Fatalf("nextReader(): %q\n", err)
+	}
+}
+
+type NotSeekerReader struct {
+	io.Reader
+}
+
+func (r *NotSeekerReader) Read(p []byte) (n int, err error) {
+	return r.Reader.Read(p)
+}
+
+func NewNotSeekerReader(r io.Reader) *NotSeekerReader {
+	return &NotSeekerReader{
+		Reader: r,
 	}
 }
 
@@ -82,6 +98,7 @@ func TestPutWithoutSize(t *testing.T) {
 	rds := []io.Reader{
 		strings.NewReader("hello world"),
 		strings.NewReader(strings.Repeat("he", 1<<blockBits)),
+		NewNotSeekerReader(strings.NewReader(strings.Repeat("test", 1<<blockBits))),
 	}
 
 	for _, rd := range rds {
