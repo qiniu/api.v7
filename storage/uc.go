@@ -252,10 +252,6 @@ type BucketLifeCycleRule struct {
 	ToLineAfterDays int `json:"to_line_after_days"`
 }
 
-func str(d int) string {
-	return strconv.Itoa(d)
-}
-
 // SetBucketLifeCycleRule 设置存储空间内文件的生命周期规则
 func (m *BucketManager) AddBucketLifeCycleRule(bucketName string, lifeCycleRule *BucketLifeCycleRule) (err error) {
 	params := make(map[string][]string)
@@ -264,8 +260,8 @@ func (m *BucketManager) AddBucketLifeCycleRule(bucketName string, lifeCycleRule 
 	params["bucket"] = []string{bucketName}
 	params["name"] = []string{lifeCycleRule.Name}
 	params["prefix"] = []string{lifeCycleRule.Prefix}
-	params["delete_after_days"] = []string{str(lifeCycleRule.DeleteAfterDays)}
-	params["to_line_after_days"] = []string{str(lifeCycleRule.ToLineAfterDays)}
+	params["delete_after_days"] = []string{strconv.Itoa(lifeCycleRule.DeleteAfterDays)}
+	params["to_line_after_days"] = []string{strconv.Itoa(lifeCycleRule.ToLineAfterDays)}
 
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := UcHost + "/rules/add"
@@ -293,8 +289,8 @@ func (m *BucketManager) UpdateBucketLifeCycleRule(bucketName string, rule *Bucke
 
 	params["bucket"] = []string{bucketName}
 	params["name"] = []string{rule.Name}
-	params["delete_after_days"] = []string{str(rule.DeleteAfterDays)}
-	params["to_line_after_days"] = []string{str(rule.ToLineAfterDays)}
+	params["delete_after_days"] = []string{strconv.Itoa(rule.DeleteAfterDays)}
+	params["to_line_after_days"] = []string{strconv.Itoa(rule.ToLineAfterDays)}
 
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	reqURL := UcHost + "/rules/update"
