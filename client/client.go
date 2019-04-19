@@ -21,10 +21,13 @@ import (
 
 var UserAgent = "Golang qiniu/client package"
 var DefaultClient = Client{&http.Client{Transport: http.DefaultTransport}}
+
+// 用来打印调试信息
 var DebugMode = false
 
 // --------------------------------------------------------------------
 
+// Client 负责发送HTTP请求到七牛接口服务器
 type Client struct {
 	*http.Client
 }
@@ -57,14 +60,12 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 	req = req.WithContext(ctx)
 
 	//check access token
-	mac, ok := auth.CredentialsFromContext(ctx)
+	mac, t, ok := auth.CredentialsFromContext(ctx)
 	if ok {
-		token, signErr := mac.SignRequest(req)
-		if signErr != nil {
-			err = signErr
+		err = mac.AddToken(t, req)
+		if err != nil {
 			return
 		}
-		req.Header.Add("Authorization", "QBox "+token)
 	}
 	if DebugMode {
 		bs, bErr := httputil.DumpRequest(req, true)
@@ -74,7 +75,6 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 		}
 		log.Debug(string(bs))
 	}
-
 	return
 }
 

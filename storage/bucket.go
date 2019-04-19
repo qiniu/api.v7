@@ -549,7 +549,7 @@ func (m *BucketManager) AsyncFetch(param AsyncFetchParam) (ret AsyncFetchRet, er
 
 	reqUrl += "/sisyphus/fetch"
 
-	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	ctx := auth.WithCredentialsType(context.Background(), m.Mac, auth.TokenQiniu)
 	err = m.Client.CallWithJson(ctx, &ret, "POST", reqUrl, nil, param)
 	return
 }
