@@ -33,14 +33,20 @@ type PutPolicy struct {
 	EndUser             string `json:"endUser,omitempty"`
 	DeleteAfterDays     int    `json:"deleteAfterDays,omitempty"`
 	FileType            int    `json:"fileType,omitempty"`
+
+	t time.Time
 }
 
 // UploadToken 方法用来进行上传凭证的生成
 // 该方法生成的过期时间是现对于现在的时间
 func (p *PutPolicy) UploadToken(cred *auth.Credentials) (token string) {
 	if p.Expires == 0 {
-		p.Expires += (uint64(time.Now().Unix()) + 3600) // 默认一小时过期
+		p.Expires += 3600 // 默认一小时过期
 	}
+	if p.t.IsZero() {
+		p.t = time.Now()
+	}
+	p.Expires += uint64(p.t.Unix())
 	putPolicyJSON, _ := json.Marshal(p)
 	token = cred.SignWithData(putPolicyJSON)
 	return
