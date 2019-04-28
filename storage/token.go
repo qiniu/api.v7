@@ -41,7 +41,7 @@ type PutPolicy struct {
 // 该方法生成的过期时间是现对于现在的时间
 func (p *PutPolicy) UploadToken(cred *auth.Credentials) (token string) {
 	if p.Expires == 0 {
-		p.Expires += 3600 // 默认一小时过期
+		p.Expires = 3600 // 默认一小时过期
 	}
 	if p.t.IsZero() {
 		p.t = time.Now()
