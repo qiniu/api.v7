@@ -9,9 +9,9 @@ import (
 )
 
 var (
-	accessKey = os.Getenv("QINIU_ACCESS_KEY")
-	secretKey = os.Getenv("QINIU_SECRET_KEY")
-	bucket    = os.Getenv("QINIU_TEST_BUCKET")
+	accessKey = "QINIU_ACCESS_KEY"
+	secretKey = "QINIU_SECRET_KEY"
+	bucket    = "QINIU_TEST_BUCKET"
 )
 
 func main() {
