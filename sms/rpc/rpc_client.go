@@ -52,128 +52,128 @@ type Logger interface {
 // --------------------------------------------------------------------
 
 // Head send head method request
-func (r Client) Head(l Logger, url string) (resp *http.Response, err error) {
+func (r Client) Head(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return
 	}
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // Get send get method request
-func (r Client) Get(l Logger, url string) (resp *http.Response, err error) {
+func (r Client) Get(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // Delete send delete method request
-func (r Client) Delete(l Logger, url string) (resp *http.Response, err error) {
+func (r Client) Delete(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("DELETE", url, nil)
 	if err != nil {
 		return
 	}
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PostEx send post method request with url
-func (r Client) PostEx(l Logger, url string) (resp *http.Response, err error) {
+func (r Client) PostEx(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return
 	}
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PostWith send post method request with url, bodyType, body and bodyLength
-func (r Client) PostWith(l Logger, url1 string, bodyType string, body io.Reader, bodyLength int) (resp *http.Response, err error) {
+func (r Client) PostWith(url1 string, bodyType string, body io.Reader, bodyLength int) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url1, body)
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", bodyType)
 	req.ContentLength = int64(bodyLength)
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PostWith64 send post method request with url, bodyType, body and bodyLength(64)
-func (r Client) PostWith64(l Logger, url1 string, bodyType string, body io.Reader, bodyLength int64) (resp *http.Response, err error) {
+func (r Client) PostWith64(url1 string, bodyType string, body io.Reader, bodyLength int64) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url1, body)
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", bodyType)
 	req.ContentLength = bodyLength
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PostWithForm send post method request with url and form data
-func (r Client) PostWithForm(l Logger, url1 string, data map[string][]string) (resp *http.Response, err error) {
+func (r Client) PostWithForm(url1 string, data map[string][]string) (resp *http.Response, err error) {
 	msg := url.Values(data).Encode()
-	return r.PostWith(l, url1, "application/x-www-form-urlencoded", strings.NewReader(msg), len(msg))
+	return r.PostWith(url1, "application/x-www-form-urlencoded", strings.NewReader(msg), len(msg))
 }
 
 // PostWithJSON send post method request with url and application/json data
-func (r Client) PostWithJSON(l Logger, url1 string, data interface{}) (resp *http.Response, err error) {
+func (r Client) PostWithJSON(url1 string, data interface{}) (resp *http.Response, err error) {
 	msg, err := json.Marshal(data)
 	if err != nil {
 		return
 	}
-	return r.PostWith(l, url1, "application/json", bytes.NewReader(msg), len(msg))
+	return r.PostWith(url1, "application/json", bytes.NewReader(msg), len(msg))
 }
 
 // PutEx send put request with url
-func (r Client) PutEx(l Logger, url string) (resp *http.Response, err error) {
+func (r Client) PutEx(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("PUT", url, nil)
 	if err != nil {
 		return
 	}
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PutWith send put method request with url, bodyType, body and bodyLength
-func (r Client) PutWith(l Logger, url1 string, bodyType string, body io.Reader, bodyLength int) (resp *http.Response, err error) {
+func (r Client) PutWith(url1 string, bodyType string, body io.Reader, bodyLength int) (resp *http.Response, err error) {
 	req, err := http.NewRequest("PUT", url1, body)
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", bodyType)
 	req.ContentLength = int64(bodyLength)
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PutWith64 send put method request with url, bodyType, body and bodyLength(64)
-func (r Client) PutWith64(l Logger, url1 string, bodyType string, body io.Reader, bodyLength int64) (resp *http.Response, err error) {
+func (r Client) PutWith64(url1 string, bodyType string, body io.Reader, bodyLength int64) (resp *http.Response, err error) {
 	req, err := http.NewRequest("PUT", url1, body)
 	if err != nil {
 		return
 	}
 	req.Header.Set("Content-Type", bodyType)
 	req.ContentLength = bodyLength
-	return r.Do(l, req)
+	return r.Do(req)
 }
 
 // PutWithForm send put method request with url and form data
-func (r Client) PutWithForm(l Logger, url1 string, data map[string][]string) (resp *http.Response, err error) {
+func (r Client) PutWithForm(url1 string, data map[string][]string) (resp *http.Response, err error) {
 	msg := url.Values(data).Encode()
-	return r.PutWith(l, url1, "application/x-www-form-urlencoded", strings.NewReader(msg), len(msg))
+	return r.PutWith(url1, "application/x-www-form-urlencoded", strings.NewReader(msg), len(msg))
 }
 
 // PutWithJSON send put method request with url and application/json data
-func (r Client) PutWithJSON(l Logger, url1 string, data interface{}) (resp *http.Response, err error) {
+func (r Client) PutWithJSON(url1 string, data interface{}) (resp *http.Response, err error) {
 	msg, err := json.Marshal(data)
 	if err != nil {
 		return
 	}
-	return r.PutWith(l, url1, "application/json", bytes.NewReader(msg), len(msg))
+	return r.PutWith(url1, "application/json", bytes.NewReader(msg), len(msg))
 }
 
 // --------------------------------------------------------------------
 
 // Do 发送 HTTP Request, 并返回 HTTP Response
-func (r Client) Do(l Logger, req *http.Request) (resp *http.Response, err error) {
+func (r Client) Do(req *http.Request) (resp *http.Response, err error) {
 	// debug
 	start := time.Now()
 	defer func() {
@@ -202,24 +202,11 @@ func (r Client) Do(l Logger, req *http.Request) (resp *http.Response, err error)
 		}
 	}()
 
-	if l != nil {
-		req.Header.Set("X-Request-Id", l.ReqID())
-	}
-
 	if req.Header.Get("User-Agent") == "" {
 		req.Header.Set("User-Agent", UserAgent)
 	}
-	resp, err = r.Client.Do(req)
-	if err != nil {
-		return
-	}
 
-	if l != nil {
-		details := resp.Header["X-Log"]
-		if len(details) > 0 {
-			l.Xput(details)
-		}
-	}
+	resp, err = r.Client.Do(req)
 	return
 }
 
@@ -285,12 +272,12 @@ func ResponseError(resp *http.Response) (err error) {
 }
 
 // CallRet parse http response
-func CallRet(l Logger, ret interface{}, resp *http.Response) (err error) {
-	return callRet(l, ret, resp)
+func CallRet(ret interface{}, resp *http.Response) (err error) {
+	return callRet(ret, resp)
 }
 
 // callRet parse http response
-func callRet(l Logger, ret interface{}, resp *http.Response) (err error) {
+func callRet(ret interface{}, resp *http.Response) (err error) {
 	defer func() {
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
@@ -309,106 +296,106 @@ func callRet(l Logger, ret interface{}, resp *http.Response) (err error) {
 }
 
 // CallWithForm send post method request with url and form data then parse response
-func (r Client) CallWithForm(l Logger, ret interface{}, url1 string, param map[string][]string) (err error) {
-	resp, err := r.PostWithForm(l, url1, param)
+func (r Client) CallWithForm(ret interface{}, url1 string, param map[string][]string) (err error) {
+	resp, err := r.PostWithForm(url1, param)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // CallWithJSON send post method request with url and application/json data then parse response
-func (r Client) CallWithJSON(l Logger, ret interface{}, url1 string, param interface{}) (err error) {
-	resp, err := r.PostWithJSON(l, url1, param)
+func (r Client) CallWithJSON(ret interface{}, url1 string, param interface{}) (err error) {
+	resp, err := r.PostWithJSON(url1, param)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // CallWith send post method request with url, bodyType, body and bodyLength then parse response
-func (r Client) CallWith(l Logger, ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int) (err error) {
-	resp, err := r.PostWith(l, url1, bodyType, body, bodyLength)
+func (r Client) CallWith(ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int) (err error) {
+	resp, err := r.PostWith(url1, bodyType, body, bodyLength)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // CallWith64 send post method request with url, bodyType, body and bodyLength(64) then parse response
-func (r Client) CallWith64(l Logger, ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int64) (err error) {
-	resp, err := r.PostWith64(l, url1, bodyType, body, bodyLength)
+func (r Client) CallWith64(ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int64) (err error) {
+	resp, err := r.PostWith64(url1, bodyType, body, bodyLength)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // Call send post method request with url then parse response
-func (r Client) Call(l Logger, ret interface{}, url1 string) (err error) {
-	resp, err := r.PostWith(l, url1, "application/x-www-form-urlencoded", nil, 0)
+func (r Client) Call(ret interface{}, url1 string) (err error) {
+	resp, err := r.PostWith(url1, "application/x-www-form-urlencoded", nil, 0)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // PutCallWithForm send put method request with url and param then parse response
-func (r Client) PutCallWithForm(l Logger, ret interface{}, url1 string, param map[string][]string) (err error) {
-	resp, err := r.PutWithForm(l, url1, param)
+func (r Client) PutCallWithForm(ret interface{}, url1 string, param map[string][]string) (err error) {
+	resp, err := r.PutWithForm(url1, param)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // PutCallWithJSON send put method request with url and param then parse response
-func (r Client) PutCallWithJSON(l Logger, ret interface{}, url1 string, param interface{}) (err error) {
-	resp, err := r.PutWithJSON(l, url1, param)
+func (r Client) PutCallWithJSON(ret interface{}, url1 string, param interface{}) (err error) {
+	resp, err := r.PutWithJSON(url1, param)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // PutCallWith send put method request with url, bodyType, body and bodyLength then parse response
-func (r Client) PutCallWith(l Logger, ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int) (err error) {
-	resp, err := r.PutWith(l, url1, bodyType, body, bodyLength)
+func (r Client) PutCallWith(ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int) (err error) {
+	resp, err := r.PutWith(url1, bodyType, body, bodyLength)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // PutCallWith64 send post method request with url, bodyType, body and bodyLength(64) then parse response
-func (r Client) PutCallWith64(l Logger, ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int64) (err error) {
-	resp, err := r.PutWith64(l, url1, bodyType, body, bodyLength)
+func (r Client) PutCallWith64(ret interface{}, url1 string, bodyType string, body io.Reader, bodyLength int64) (err error) {
+	resp, err := r.PutWith64(url1, bodyType, body, bodyLength)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // PutCall send put method request with url then parse response
-func (r Client) PutCall(l Logger, ret interface{}, url1 string) (err error) {
-	resp, err := r.PutWith(l, url1, "application/x-www-form-urlencoded", nil, 0)
+func (r Client) PutCall(ret interface{}, url1 string) (err error) {
+	resp, err := r.PutWith(url1, "application/x-www-form-urlencoded", nil, 0)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // GetCall send get method request with url then parse response
-func (r Client) GetCall(l Logger, ret interface{}, url1 string) (err error) {
-	resp, err := r.Get(l, url1)
+func (r Client) GetCall(ret interface{}, url1 string) (err error) {
+	resp, err := r.Get(url1)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // GetCallWithForm send get method request with url and param then parse response
-func (r Client) GetCallWithForm(l Logger, ret interface{}, url1 string, param map[string][]string) (err error) {
+func (r Client) GetCallWithForm(ret interface{}, url1 string, param map[string][]string) (err error) {
 	payload := url.Values(param).Encode()
 	if strings.ContainsRune(url1, '?') {
 		url1 += "&"
@@ -416,20 +403,20 @@ func (r Client) GetCallWithForm(l Logger, ret interface{}, url1 string, param ma
 		url1 += "?"
 	}
 	url1 += payload
-	resp, err := r.Get(l, url1)
+	resp, err := r.Get(url1)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // DeleteCall send delete method request with url
-func (r Client) DeleteCall(l Logger, ret interface{}, url string) (err error) {
-	resp, err := r.Delete(l, url)
+func (r Client) DeleteCall(ret interface{}, url string) (err error) {
+	resp, err := r.Delete(url)
 	if err != nil {
 		return err
 	}
-	return callRet(l, ret, resp)
+	return callRet(ret, resp)
 }
 
 // --------------------------------------------------------------------

@@ -8,18 +8,6 @@ import (
 	"github.com/qiniu/api.v7/sms"
 )
 
-type Logger struct {
-}
-
-func (log Logger) ReqID() string {
-	return "req_id"
-}
-
-func (log Logger) Xput(logs []string) {
-
-	return
-}
-
 var manager *sms.Manager
 
 func init() {
@@ -36,7 +24,7 @@ func TestCreateSignature(t *testing.T) {
 		Source:    sms.Website,
 	}
 
-	ret, err := manager.CreateSignature(Logger{}, args)
+	ret, err := manager.CreateSignature(args)
 
 	if err != nil {
 		t.Fatalf("CreateSignature() error: %v\n", err)
