@@ -132,6 +132,50 @@ func (p *ResumeUploader) Put(ctx context.Context, ret interface{}, upToken strin
 	return
 }
 
+func (p *ResumeUploader) PutWithoutSize(ctx context.Context, ret interface{}, upToken, key string, r io.Reader, extra *RputExtra) (err error) {
+	if extra == nil {
+		extra = new(RputExtra)
+	}
+	if extra.ChunkSize == 0 {
+		extra.ChunkSize = settings.ChunkSize
+	}
+	if extra.TryTimes == 0 {
+		extra.TryTimes = settings.TryTimes
+	}
+	if extra.Notify == nil {
+		extra.Notify = notifyNil
+	}
+	if extra.NotifyErr == nil {
+		extra.NotifyErr = notifyErrNil
+	}
+	var upHost string
+	if extra.UpHost != "" {
+		upHost = extra.UpHost
+	} else {
+		ak, bucket, gErr := getAkBucketFromUploadToken(upToken)
+		if gErr != nil {
+			err = gErr
+			return
+		}
+
+		upHost, gErr = p.UpHost(ak, bucket)
+		if gErr != nil {
+			err = gErr
+			return
+		}
+	}
+	upper := uploader{
+		ResumeUploader: p,
+		body:           r,
+		blkSize:        1 << blockBits,
+		upHost:         upHost,
+		upToken:        upToken,
+		Notify:         extra.Notify,
+		NotifyErr:      extra.NotifyErr,
+	}
+	return upper.upload(ret, key, true, extra)
+}
+
 // PutWithoutKey 方法用来上传一个文件，支持断点续传和分块上传。文件命名方式首先看看
 // upToken 中是否设置了 saveKey，如果设置了 saveKey，那么按 saveKey 要求的规则生成 key，否则自动以文件的 hash 做 key。
 //

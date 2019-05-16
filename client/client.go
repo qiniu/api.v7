@@ -8,22 +8,33 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"runtime"
 	"strings"
 
 	"github.com/qiniu/api.v7/auth"
 	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/api.v7/internal/log"
 	"github.com/qiniu/api.v7/reqid"
 )
 
 var UserAgent = "Golang qiniu/client package"
 var DefaultClient = Client{&http.Client{Transport: http.DefaultTransport}}
 
+// 用来打印调试信息
+var DebugMode = false
+
 // --------------------------------------------------------------------
 
+// Client 负责发送HTTP请求到七牛接口服务器
 type Client struct {
 	*http.Client
+}
+
+// TurnOnDebug 开启Debug模式
+func TurnOnDebug() {
+	DebugMode = true
 }
 
 // userApp should be [A-Za-z0-9_\ \-\.]*
@@ -46,18 +57,24 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 	}
 
 	req.Header = headers
+	req = req.WithContext(ctx)
 
 	//check access token
-	mac, ok := auth.CredentialsFromContext(ctx)
+	mac, t, ok := auth.CredentialsFromContext(ctx)
 	if ok {
-		token, signErr := mac.SignRequest(req)
-		if signErr != nil {
-			err = signErr
+		err = mac.AddToken(t, req)
+		if err != nil {
 			return
 		}
-		req.Header.Add("Authorization", "QBox "+token)
 	}
-
+	if DebugMode {
+		bs, bErr := httputil.DumpRequest(req, true)
+		if bErr != nil {
+			err = bErr
+			return
+		}
+		log.Debug(string(bs))
+	}
 	return
 }
 
@@ -239,6 +256,12 @@ func ResponseError(resp *http.Response) (err error) {
 			ct, ok := resp.Header["Content-Type"]
 			if ok && strings.HasPrefix(ct[0], "application/json") {
 				parseError(e, resp.Body)
+			} else {
+				bs, rErr := ioutil.ReadAll(resp.Body)
+				if rErr != nil {
+					err = rErr
+				}
+				e.Err = strings.TrimRight(string(bs), "\n")
 			}
 		}
 	}
@@ -252,6 +275,14 @@ func CallRet(ctx context.Context, ret interface{}, resp *http.Response) (err err
 		resp.Body.Close()
 	}()
 
+	if DebugMode {
+		bs, dErr := httputil.DumpResponse(resp, true)
+		if dErr != nil {
+			err = dErr
+			return
+		}
+		log.Debug(string(bs))
+	}
 	if resp.StatusCode/100 == 2 {
 		if ret != nil && resp.ContentLength != 0 {
 			err = json.NewDecoder(resp.Body).Decode(ret)

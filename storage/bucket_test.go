@@ -21,6 +21,7 @@ var (
 	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
 	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
 	testPipeline            = os.Getenv("QINIU_TEST_PIPELINE")
+	testDebug               = os.Getenv("QINIU_SDK_DEBUG")
 
 	testKey      = "qiniu.png"
 	testFetchUrl = "http://devtools.qiniu.com/qiniu.png"
@@ -40,6 +41,9 @@ var (
 )
 
 func init() {
+	if testDebug == "true" {
+		client.TurnOnDebug()
+	}
 	clt = client.Client{
 		Client: &http.Client{
 			Timeout: time.Minute * 10,
@@ -327,4 +331,229 @@ func TestBatch(t *testing.T) {
 	}
 
 	t.Logf("BatchStat: %v", batchOpRets)
+}
+
+func TestListBucket(t *testing.T) {
+	retChan, lErr := bucketManager.ListBucket(testBucket, "", "", "")
+	if lErr != nil {
+		t.Fatalf("ListBucket: %v\n", lErr)
+	}
+	for ret := range retChan {
+		t.Log(ret.Item)
+	}
+}
+
+func TestGetBucketInfo(t *testing.T) {
+	bInfo, bErr := bucketManager.GetBucketInfo(testBucket)
+	if bErr != nil {
+		t.Fatalf("GetBucketInfo: %v\n", bErr)
+	}
+	t.Log(bInfo)
+}
+
+func TestBucketInfosInRegion(t *testing.T) {
+	bInfos, bErr := bucketManager.BucketInfosInRegion(RIDHuadong, true)
+	if bErr != nil {
+		t.Fatalf("BucketInfosInRegion: %v\n", bErr)
+	}
+	for _, bInfo := range bInfos {
+		t.Log(bInfo)
+	}
+}
+
+func TestRefererAntiLeechMode(t *testing.T) {
+	cfgs := []*ReferAntiLeechConfig{
+		&ReferAntiLeechConfig{
+			Mode: 0, // 关闭referer防盗链
+		},
+		&ReferAntiLeechConfig{
+			Mode:    1, // 开启referer白名单
+			Pattern: "*.qiniu.com",
+		},
+		&ReferAntiLeechConfig{
+			Mode:    2, // 开启referer黑名单
+			Pattern: "*.qiniu.com",
+		},
+	}
+	for _, cfg := range cfgs {
+		err := bucketManager.SetReferAntiLeechMode(testBucket, cfg)
+		if err != nil {
+			t.Fatalf("SetReferAntiLeechMode: %v\n", err)
+		}
+	}
+
+	bInfo, bErr := bucketManager.GetBucketInfo(testBucket)
+	if bErr != nil {
+		t.Fatalf("GetBucketInfo: %v\n", bErr)
+	}
+	if bInfo.AntiLeechMode != 2 {
+		t.Fatalf("AntiLeechMode expected: %q, got: %q\n", 2, bInfo.AntiLeechMode)
+	}
+	if len(bInfo.ReferBl) != 1 || bInfo.ReferBl[0] != "*.qiniu.com" {
+		t.Fatalf("Referer blacklist expected: %q, got: %q\n", "*.qiniu.com", bInfo.ReferBl[0])
+	}
+}
+
+func TestBucketLifeCycleRule(t *testing.T) {
+	err := bucketManager.AddBucketLifeCycleRule(testBucket, &BucketLifeCycleRule{
+		Name:            "golangIntegrationTest",
+		Prefix:          "testPutFileKey",
+		DeleteAfterDays: 3,
+	})
+	if err != nil {
+		if !strings.Contains(err.Error(), "rule name exists") {
+			t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+		}
+	}
+	rules, err := bucketManager.GetBucketLifeCycleRule(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+	ruleExists := false
+	for _, r := range rules {
+		if r.Name == "golangIntegrationTest" && r.Prefix == "testPutFileKey" && r.DeleteAfterDays == 3 {
+			ruleExists = true
+			break
+		}
+	}
+	if !ruleExists {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+
+	err = bucketManager.UpdateBucketLifeCycleRule(testBucket, &BucketLifeCycleRule{
+		Name:            "golangIntegrationTest",
+		Prefix:          "testPutFileKey",
+		DeleteAfterDays: 2,
+	})
+
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+	err = bucketManager.DelBucketLifeCycleRule(testBucket, "golangIntegrationTest")
+
+	if err != nil {
+		t.Fatalf("TestBucketLifeCycleRule: %v\n", err)
+	}
+}
+
+func TestBucketEventRule(t *testing.T) {
+	err := bucketManager.AddBucketEvent(testBucket, &BucketEventRule{
+		Name:        "golangIntegrationTest",
+		Event:       []string{"put", "mkfile"},
+		Host:        "www.qiniu.com",
+		CallbackURL: []string{"http://www.qiniu.com"},
+	})
+	if err != nil {
+		if !strings.Contains(err.Error(), "event name exists") {
+			t.Fatalf("TestBucketEventRule: %v\n", err)
+		}
+	}
+	rules, err := bucketManager.GetBucketEvent(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+	exist := false
+	for _, rule := range rules {
+		if rule.Name == "golangIntegrationTest" && rule.Host == "www.qiniu.com" {
+			exist = true
+			break
+		}
+	}
+	if !exist {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+
+	err = bucketManager.UpdateBucketEnvent(testBucket, &BucketEventRule{
+		Name:        "golangIntegrationTest",
+		Event:       []string{"put", "mkfile"},
+		Host:        "www.qiniu.com",
+		CallbackURL: []string{"http://www.qiniu.com"},
+	})
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+	err = bucketManager.DelBucketEvent(testBucket, "golangIntegrationTest")
+	if err != nil {
+		t.Fatalf("TestBucketEventRule: %v\n", err)
+	}
+}
+
+func TestCorsRules(t *testing.T) {
+	err := bucketManager.AddCorsRules(testBucket, []CorsRule{
+		CorsRule{
+			AllowedOrigin: []string{"http://www.test1.com"},
+			AllowedMethod: []string{"GET", "POST"},
+		},
+	})
+	if err != nil {
+		t.Fatalf("TestCorsRules: %v\n", err)
+	}
+	rules, err := bucketManager.GetCorsRules(testBucket)
+	if err != nil {
+		t.Fatalf("TestCorsRules: %v\n", err)
+	}
+	for _, r := range rules {
+		t.Log(r)
+	}
+
+}
+
+func TestListBucketDomains(t *testing.T) {
+	bInfos, err := bucketManager.ListBucketDomains(testBucket)
+	if err != nil {
+		/*
+			if !strings.Contains(err.Error(), "404 page not found") {
+				t.Fatalf("ListBucketDomains: %q\n", err)
+			}
+		*/
+		t.Fatalf("ListBucketDomains: %q\n", err)
+	}
+	for _, info := range bInfos {
+		t.Log(info)
+	}
+}
+
+func TestBucketQuota(t *testing.T) {
+	err := bucketManager.SetBucketQuota(testBucket, 0, 1000000000000000)
+	if err != nil {
+		t.Fatalf("TestBucketQuota: %q\n", err)
+	}
+	quota, err := bucketManager.GetBucketQuota(testBucket)
+	if err != nil {
+		t.Fatalf("TestBucketQuota: %q\n", err)
+	}
+	t.Log(quota)
+}
+
+func TestSetBucketAccessStyle(t *testing.T) {
+	err := bucketManager.TurnOnBucketProtected(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessStyle: %q\n", err)
+	}
+	err = bucketManager.TurnOffBucketProtected(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessStyle: %q\n", err)
+	}
+}
+
+func TestSetBucketMaxAge(t *testing.T) {
+	err := bucketManager.SetBucketMaxAge(testBucket, 20)
+	if err != nil {
+		t.Fatalf("TestSetBucketMaxAge: %q\n", err)
+	}
+	err = bucketManager.SetBucketMaxAge(testBucket, 0)
+	if err != nil {
+		t.Fatalf("TestSetBucketMaxAge: %q\n", err)
+	}
+}
+
+func TestSetBucketAccessMode(t *testing.T) {
+	err := bucketManager.MakeBucketPrivate(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessMode: %q\n", err)
+	}
+	err = bucketManager.MakeBucketPublic(testBucket)
+	if err != nil {
+		t.Fatalf("TestSetBucketAccessMode: %q\n", err)
+	}
 }

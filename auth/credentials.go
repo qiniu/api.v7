@@ -34,6 +34,25 @@ func (ath *Credentials) Sign(data []byte) (token string) {
 	return fmt.Sprintf("%s:%s", ath.AccessKey, sign)
 }
 
+// SignToken 根据t的类型对请求进行签名，并把token加入req中
+func (ath *Credentials) AddToken(t TokenType, req *http.Request) error {
+	switch t {
+	case TokenQiniu:
+		token, sErr := ath.SignRequestV2(req)
+		if sErr != nil {
+			return sErr
+		}
+		req.Header.Add("Authorization", "Qiniu "+token)
+	default:
+		token, err := ath.SignRequest(req)
+		if err != nil {
+			return err
+		}
+		req.Header.Add("Authorization", "QBox "+token)
+	}
+	return nil
+}
+
 // SignWithData 对数据进行签名，一般用于上传凭证的生成用途
 func (ath *Credentials) SignWithData(b []byte) (token string) {
 	encodedData := base64.URLEncoding.EncodeToString(b)

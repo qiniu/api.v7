@@ -20,7 +20,11 @@ func New(out io.Writer, prefix string, flag int, level LogLevel) *Logger {
 	}
 }
 
-var std = New(os.Stdout, InfoPrefix, log.LstdFlags, LogInfo)
+var (
+	std  = New(os.Stdout, DebugPrefix, log.LstdFlags, LogDebug)
+	info = New(os.Stdout, InfoPrefix, log.LstdFlags, LogInfo)
+	warn = New(os.Stdout, WarnPrefix, log.LstdFlags, LogWarn)
+)
 
 type LogLevel int
 
@@ -59,14 +63,14 @@ func (l *Logger) Warn(v ...interface{}) {
 	l.output(LogWarn, v...)
 }
 
-func Info(v ...interface{}) {
-	std.Info(v...)
-}
-
 func Debug(v ...interface{}) {
 	std.Debug(v...)
 }
 
+func Info(v ...interface{}) {
+	info.Info(v...)
+}
+
 func Warn(v ...interface{}) {
-	std.Warn(v...)
+	warn.Warn(v...)
 }
