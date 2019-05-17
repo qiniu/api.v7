@@ -26,30 +26,30 @@ type SignaturePagination struct {
 	Items    []Signature `json:"items"`     // 签名
 }
 
-// CreateSignatureRequest 创建签名请求参数
-type CreateSignatureRequest struct {
+// SignatureRequest 创建签名请求参数
+type SignatureRequest struct {
 	Signature   string           `json:"signature"`
 	Source      SignatureSrcType `json:"source"`
 	Pic         string           `json:"pic"`
 	Description string           `json:"decription"`
 }
 
-// CreateSignatureResponse 签名响应
-type CreateSignatureResponse struct {
+// SignatureResponse 签名响应
+type SignatureResponse struct {
 	SignatureID string `json:"signature_id"`
 }
 
 // CreateSignature 创建签名
-func (m *Manager) CreateSignature(args CreateSignatureRequest) (ret CreateSignatureResponse, err error) {
+func (m *Manager) CreateSignature(args SignatureRequest) (ret SignatureResponse, err error) {
 	url := fmt.Sprintf("%s%s", Host, "/v1/signature")
 	err = m.client.CallWithJSON(&ret, url, args)
 	return
 }
 
 // UpdateSignature 更新签名
-func (m *Manager) UpdateSignature(args CreateSignatureRequest) (ret CreateSignatureResponse, err error) {
-	// url := fmt.Sprintf("%s%s", Host, "/v1/signature")
-	// err = m.client.PutCallWithJSON()
+func (m *Manager) UpdateSignature(id string, args SignatureRequest) (err error) {
+	url := fmt.Sprintf("%s%s/%s", Host, "/v1/signature", id)
+	_, err = m.client.PutWithJSON(url, args)
 	return
 }
 
@@ -62,27 +62,28 @@ type QuerySignatureRequest struct {
 
 // QuerySignature 查询签名
 func (m *Manager) QuerySignature(args QuerySignatureRequest) (pagination SignaturePagination, err error) {
-	value := url.Values{}
+	values := url.Values{}
 
 	if args.AuditStatus.IsValid() {
-		value.Set("audit_status", args.AuditStatus.String())
+		values.Set("audit_status", args.AuditStatus.String())
 	}
 
 	if args.Page > 0 {
-		value.Set("page", fmt.Sprintf("%d", args.Page))
+		values.Set("page", fmt.Sprintf("%d", args.Page))
 	}
 
 	if args.PageSize > 0 {
-		value.Set("page_size", fmt.Sprintf("%d", args.PageSize))
+		values.Set("page_size", fmt.Sprintf("%d", args.PageSize))
 	}
 
-	_url := fmt.Sprintf("%s%s?%s", Host, "/v1/signature", value.Encode())
-	err = m.client.GetCall(&pagination, _url)
+	url := fmt.Sprintf("%s%s?%s", Host, "/v1/signature", values.Encode())
+	err = m.client.GetCall(&pagination, url)
 	return
 }
 
 // DeleteSignature 删除签名
-func (m *Manager) DeleteSignature(args CreateSignatureRequest) (ret CreateSignatureResponse, err error) {
-
+func (m *Manager) DeleteSignature(id string) (err error) {
+	url := fmt.Sprintf("%s%s/%s", Host, "/v1/signature", id)
+	_, err = m.client.Delete(url)
 	return
 }
