@@ -43,14 +43,6 @@ func NewClientTimeout(dial, resp time.Duration) Client {
 
 // --------------------------------------------------------------------
 
-// Logger interface
-type Logger interface {
-	ReqID() string
-	Xput(logs []string)
-}
-
-// --------------------------------------------------------------------
-
 // Head send head method request
 func (r Client) Head(url string) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", url, nil)
@@ -182,8 +174,8 @@ func (r Client) Do(req *http.Request) (resp *http.Response, err error) {
 		if err != nil {
 
 		} else {
-			reqid := req.Header.Get("X-Request-Id")
-			if rid := resp.Header.Get("X-Request-Id"); len(rid) > 0 {
+			reqid := req.Header.Get("X-Reqid")
+			if rid := resp.Header.Get("X-Reqid"); len(rid) > 0 {
 				reqid = rid
 			}
 			method := req.Method
@@ -212,19 +204,12 @@ func (r Client) Do(req *http.Request) (resp *http.Response, err error) {
 
 // --------------------------------------------------------------------
 
-// RespError interface
-type RespError interface {
-	ErrorDetail() string
-	Error() string
-	HttpCode() int
-}
-
 // ErrorInfo type
 type ErrorInfo struct {
-	Err     string   `json:"error"`
-	Reqid   string   `json:"reqid"`
-	Details []string `json:"details"`
-	Code    int      `json:"code"`
+	Err     string `json:"error"`
+	Reqid   string `json:"reqid"`
+	Message string `json:"details"`
+	Code    int    `json:"code"`
 }
 
 // ErrorDetail return error detail
@@ -255,9 +240,8 @@ type errorRet struct {
 // ResponseError return response error
 func ResponseError(resp *http.Response) (err error) {
 	e := &ErrorInfo{
-		Details: resp.Header["X-Log"],
-		Reqid:   resp.Header.Get("X-Request-Id"),
-		Code:    resp.StatusCode,
+		Reqid: resp.Header.Get("X-Reqid"),
+		Code:  resp.StatusCode,
 	}
 	if resp.StatusCode > 299 {
 		if resp.ContentLength != 0 {

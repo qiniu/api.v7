@@ -36,6 +36,37 @@ func (s SignatureSrcType) String() string {
 	return string(s)
 }
 
+// TemplateType 模版类型
+type TemplateType string
+
+const (
+	// NotificationType 通知类短信
+	NotificationType TemplateType = "notification"
+
+	// VerificationType 验证码短信
+	VerificationType TemplateType = "verification"
+
+	// MarketingType 营销类短信
+	MarketingType TemplateType = "marketing"
+
+	// VoiceType 语音短信
+	VoiceType TemplateType = "voice"
+)
+
+// IsValid 是否合法Template类型
+func (t TemplateType) IsValid() bool {
+	switch t {
+	case NotificationType, VerificationType, MarketingType, VoiceType:
+		return true
+	}
+	return false
+}
+
+// String to string
+func (t TemplateType) String() string {
+	return string(t)
+}
+
 // AuditStatus 审核状态
 type AuditStatus string
 
