@@ -206,10 +206,10 @@ func (r Client) Do(req *http.Request) (resp *http.Response, err error) {
 
 // ErrorInfo type
 type ErrorInfo struct {
-	Err     string `json:"error"`
-	Reqid   string `json:"reqid"`
-	Message string `json:"message"`
-	Code    int    `json:"code"`
+	Err       string `json:"error"`
+	RequestID string `json:"reqid"`
+	Message   string `json:"message"`
+	Code      int    `json:"code"`
 }
 
 // ErrorDetail return error detail
@@ -240,8 +240,8 @@ type errorRet struct {
 // ResponseError return response error
 func ResponseError(resp *http.Response) (err error) {
 	e := &ErrorInfo{
-		Reqid: resp.Header.Get("X-Reqid"),
-		Code:  resp.StatusCode,
+		RequestID: resp.Header.Get("X-Reqid"),
+		Code:      resp.StatusCode,
 	}
 	if resp.StatusCode > 299 {
 		if resp.ContentLength != 0 {

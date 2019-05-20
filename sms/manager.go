@@ -19,13 +19,6 @@ type Manager struct {
 	client rpc.Client
 }
 
-// Error 统一错误
-type Error struct {
-	Code      string
-	Message   string
-	RequestID string
-}
-
 // NewManager 用来构建一个新的 Manager
 func NewManager(mac *auth.Credentials) (manager *Manager) {
 
