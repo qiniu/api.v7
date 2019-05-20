@@ -208,7 +208,7 @@ func (r Client) Do(req *http.Request) (resp *http.Response, err error) {
 type ErrorInfo struct {
 	Err     string `json:"error"`
 	Reqid   string `json:"reqid"`
-	Message string `json:"details"`
+	Message string `json:"message"`
 	Code    int    `json:"code"`
 }
 
