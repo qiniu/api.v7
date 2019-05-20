@@ -12,28 +12,28 @@ import (
 
 // ---------------------------------------------------
 
-type Seekabler interface {
+type Seekable interface {
 	Bytes() []byte
 	Read(val []byte) (n int, err error)
 	SeekToBegin() error
 }
 
 type SeekableCloser interface {
-	Seekabler
+	Seekable
 	io.Closer
 }
 
 // ---------------------------------------------------
 
 type readCloser struct {
-	Seekabler
+	Seekable
 	io.Closer
 }
 
 var ErrNoBody = errors.New("no body")
 var ErrTooLargeBody = errors.New("too large body")
 
-var MaxBodyLength int64 = 16 * 1024 * 1024
+const MaxBodyLength int64 = 16 * 1024 * 1024
 
 func New(req *http.Request) (r SeekableCloser, err error) {
 	if req.Body == nil {
