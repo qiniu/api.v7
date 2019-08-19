@@ -178,6 +178,17 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	return
 }
 
+// DropBucket 删除七牛存储空间
+func (m *BucketManager) DropBucket(bucketName string) (err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	var reqHost string
+
+	reqHost = m.Cfg.RsReqHost()
+	reqURL := fmt.Sprintf("%s/drop/%s", reqHost, bucketName)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
+	return
+}
+
 // Stat 用来获取一个文件的基本信息
 func (m *BucketManager) Stat(bucket, key string) (info FileInfo, err error) {
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
