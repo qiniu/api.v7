@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"fmt"
-	"github.com/qiniu/api.v7/v7/client"
 	"strings"
 	"sync"
+
+	"github.com/qiniu/api.v7/v7/auth"
+	"github.com/qiniu/api.v7/v7/client"
 )
 
 // 存储所在的地区，例如华东，华南，华北
@@ -280,5 +282,23 @@ func setSpecificHosts(ioHost string, region *Region) {
 		region.RsHost = r.RsHost
 		region.RsfHost = r.RsfHost
 		region.ApiHost = r.ApiHost
+	}
+}
+
+type RegionInfo struct {
+	ID          string `json:"id"`
+	Description string `json:"description"`
+}
+
+func GetRegionsInfo(mac *auth.Credentials) ([]RegionInfo, error) {
+	var regions struct {
+		Regions []RegionInfo `json:"regions"`
+	}
+	ctx := auth.WithCredentials(context.Background(), mac)
+	qErr := client.DefaultClient.CallWithForm(ctx, &regions, "GET", UcHost+"/regions", nil, nil)
+	if qErr != nil {
+		return nil, fmt.Errorf("query region error, %s", qErr.Error())
+	} else {
+		return regions.Regions, nil
 	}
 }
