@@ -5,8 +5,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/qiniu/api.v7/auth"
-	"github.com/qiniu/api.v7/storage"
+	"github.com/qiniu/api.v7/v7/auth"
+	"github.com/qiniu/api.v7/v7/storage"
 )
 
 var (

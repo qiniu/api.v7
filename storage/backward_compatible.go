@@ -1,4 +1,4 @@
-// 原来rpc.go包含了客户端的信息，这个部分被调整到了"github.com/qiniu/api.v7/client"
+// 原来rpc.go包含了客户端的信息，这个部分被调整到了"github.com/qiniu/api.v7/v7/client"
 // 这个文件的内容不应该再被使用
 // 客户端应该是所有服务公用的，包括kodo, cdn, dora, atlab等，不应该放在storage下
 
@@ -7,8 +7,8 @@ package storage
 
 import (
 	"fmt"
-	"github.com/qiniu/api.v7/client"
-	"github.com/qiniu/api.v7/conf"
+	"github.com/qiniu/api.v7/v7/client"
+	"github.com/qiniu/api.v7/v7/conf"
 	"runtime"
 )
 
