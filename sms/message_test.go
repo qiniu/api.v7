@@ -3,7 +3,7 @@ package sms_test
 // import (
 // 	"testing"
 
-// 	"github.com/qiniu/api.v7/sms"
+// 	"github.com/qiniu/api.v7/v7/sms"
 // )
 
 // func TestMessage(t *testing.T) {
