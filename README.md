@@ -13,7 +13,7 @@ go get -u github.com/qiniu/api.v7
 
 # go版本需求
 
-需要go1.9或者1.9以上
+需要 go1.10 或者 1.10 以上
 
 #  文档
 
