@@ -62,8 +62,8 @@ package main
 
 import (
 	// ...
-	"github.com/qiniu/api.v7/auth"
-	"github.com/qiniu/api.v7/linking"
+	"github.com/qiniu/api.v7/v7/auth"
+	"github.com/qiniu/api.v7/v7/linking"
 )
 
 var (
@@ -75,7 +75,7 @@ var (
 func main() {
 	// ...
 	mac := auth.New(testAccessKey, testSecretKey)
-	manager := linking.New(mac, nil)
+	manager := linking.NewManager(mac, nil)
 	// ...
 }
 ```
