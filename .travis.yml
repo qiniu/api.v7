@@ -29,5 +29,5 @@ script:
   - make test
 
 branches:
-  only:
-    - master
+  # only:
+  #  - master
