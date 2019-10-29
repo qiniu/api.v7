@@ -10,7 +10,7 @@ import (
 	"github.com/qiniu/api.v7/v7/auth"
 )
 
-// PutPolicy 表示文件上传的上传策略
+// PutPolicy 表示文件上传的上传策略，参考 https://developer.qiniu.com/kodo/manual/1206/put-policy
 type PutPolicy struct {
 	Scope               string `json:"scope"`
 	Expires             uint64 `json:"deadline"` // 截止时间（以秒为单位）
