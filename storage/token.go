@@ -17,8 +17,10 @@ type PutPolicy struct {
 	IsPrefixalScope     int    `json:"isPrefixalScope,omitempty"`
 	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
 	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
+	FsizeMin            int64  `json:"fsizeMin,omitempty"`
 	FsizeLimit          int64  `json:"fsizeLimit,omitempty"`
 	MimeLimit           string `json:"mimeLimit,omitempty"`
+	ForceSaveKey        bool   `json:"forceSaveKey,omitempty"`
 	SaveKey             string `json:"saveKey,omitempty"`
 	CallbackFetchKey    uint8  `json:"callbackFetchKey,omitempty"`
 	CallbackURL         string `json:"callbackUrl,omitempty"`

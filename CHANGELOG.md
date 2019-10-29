@@ -1,4 +1,7 @@
 # Changelog
+# 7.4.0 (2019-10-29)
+* 添加 linking 模块
+* PutPolicy 添加 fsizeMin  forceSaveKey 属性
 
 # 7.3.1 (2019-10-18)
 * 支持 go.mod
