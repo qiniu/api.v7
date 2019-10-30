@@ -1,5 +1,5 @@
 # Changelog
-# 7.4.0 (2019-10-29)
+# 7.4.0 (2019-10-30)
 * 添加 linking 模块
 * PutPolicy 添加 fsizeMin  forceSaveKey 属性
 
