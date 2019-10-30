@@ -166,6 +166,7 @@ func (u *uploader) init() {
 	u.retryer = &defaultChunkRetryer{
 		maxCount: defaultTryTimes,
 		delay:    3,
+		uploader: u,
 	}
 	if u.ctx == nil {
 		u.ctx = context.Background()
