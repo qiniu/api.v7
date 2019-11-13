@@ -163,7 +163,7 @@ func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error
 	var reqHost string
 
 	reqHost = m.Cfg.RsReqHost()
-	reqURL := fmt.Sprintf("%s/mkbucketv2/%s/region/%s", reqHost, EncodedEntryWithoutKey(bucketName), string(regionID))
+	reqURL := fmt.Sprintf("%s/mkbucketv3/%s/region/%s", reqHost, bucketName, string(regionID))
 	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
 }
 
