@@ -4,6 +4,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -61,6 +62,9 @@ type BucketInfo struct {
 
 	// 防盗链referer黑名单列表
 	ReferBl []string `json:"refer_bl"`
+
+	// 在源站支持的情况下开启源站的Referer防盗链
+	EnableSource bool `json:"source_enabled"`
 
 	// 是否允许空的referer访问
 	NoRefer bool `json:"no_refer"`
@@ -144,19 +148,20 @@ func (r *ReferAntiLeechConfig) SetEnableSource(enable bool) *ReferAntiLeechConfi
 
 // AsQueryString 编码成query参数格式
 func (r *ReferAntiLeechConfig) AsQueryString() string {
-	var norefer int
-	var enableSource int
+	params := make(url.Values, 4)
+	params.Add("mode", strconv.Itoa(r.Mode))
+	params.Add("pattern", r.Pattern)
 	if r.AllowEmptyReferer {
-		norefer = 1
+		params.Add("norefer", "1")
 	} else {
-		norefer = 0
+		params.Add("norefer", "0")
 	}
 	if r.EnableSource {
-		enableSource = 1
+		params.Add("source_enabled", "1")
 	} else {
-		enableSource = 0
+		params.Add("source_enabled", "0")
 	}
-	return fmt.Sprintf("mode=%d&norefer=%d&pattern=%s&source_enabled=%d", r.Mode, norefer, r.Pattern, enableSource)
+	return params.Encode()
 }
 
 // ProtectedOn 返回true or false
