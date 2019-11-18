@@ -40,6 +40,9 @@ type BucketInfo struct {
 	// 开启了根目录下的index.html, 文件将会被作为默认首页展示
 	NoIndexPage int `json:"no_index_page"`
 
+	// 在规定的时效内使客户端缓存更新的效果
+	MaxAge int `json:"max_age"`
+
 	// 图片样式分隔符， 接口返回的可能有多个
 	Separator string `json:"separator"`
 
