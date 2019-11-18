@@ -538,3 +538,17 @@ func (m *BucketManager) MakeBucketPublic(bucket string) error {
 func (m *BucketManager) MakeBucketPrivate(bucket string) error {
 	return m.SetBucketAccessMode(bucket, 1)
 }
+
+func (m *BucketManager) TurnOnIndexPage(bucket string) error {
+	return m.setIndexPage(bucket, 0)
+}
+
+func (m *BucketManager) TurnOffIndexPage(bucket string) error {
+	return m.setIndexPage(bucket, 1)
+}
+
+func (m *BucketManager) setIndexPage(bucket string, noIndexPage int) error {
+	reqURL := fmt.Sprintf("%s/noIndexPage?bucket=%s&noIndexPage=%d", UcHost, bucket, noIndexPage)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
