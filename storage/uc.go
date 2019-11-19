@@ -542,10 +542,12 @@ func (m *BucketManager) MakeBucketPrivate(bucket string) error {
 	return m.SetBucketAccessMode(bucket, 1)
 }
 
+// TurnOnIndexPage 设置默认首页
 func (m *BucketManager) TurnOnIndexPage(bucket string) error {
 	return m.setIndexPage(bucket, 0)
 }
 
+// TurnOnIndexPage 关闭默认首页
 func (m *BucketManager) TurnOffIndexPage(bucket string) error {
 	return m.setIndexPage(bucket, 1)
 }
@@ -554,4 +556,51 @@ func (m *BucketManager) setIndexPage(bucket string, noIndexPage int) error {
 	reqURL := fmt.Sprintf("%s/noIndexPage?bucket=%s&noIndexPage=%d", UcHost, bucket, noIndexPage)
 	ctx := auth.WithCredentials(context.Background(), m.Mac)
 	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
+
+// BucketTagging 为 Bucket 设置标签
+type BucketTagging struct {
+	Tags []BucketTag `json:"Tags"`
+}
+
+type BucketTag struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
+// SetTagging 设置 Bucket 标签
+
+// 该方法为覆盖所有 Bucket 上之前设置的标签，标签 Key 最大 64 字节，Value 最大 128 字节，均不能为空，且区分大小写
+// Key 不能以 kodo 为前缀，Key 和 Value 的字符只能为：字母，数字，空格，+，-，=，.，_，:，/，@，不能支持中文
+func (m *BucketManager) SetTagging(bucket string, tags map[string]string) error {
+	tagging := BucketTagging{Tags: make([]BucketTag, 0, len(tags))}
+	for key, value := range tags {
+		tagging.Tags = append(tagging.Tags, BucketTag{Key: key, Value: value})
+	}
+
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.CallWithJson(ctx, nil, "PUT", reqURL, nil, &tagging)
+}
+
+// ClearTagging 清空 Bucket 标签
+func (m *BucketManager) ClearTagging(bucket string) error {
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "DELETE", reqURL, nil)
+}
+
+// GetTagging 获取 Bucket 标签
+func (m *BucketManager) GetTagging(bucket string) (tags map[string]string, err error) {
+	var tagging BucketTagging
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	if err = m.Client.Call(ctx, &tagging, "GET", reqURL, nil); err != nil {
+		return
+	}
+	tags = make(map[string]string, len(tagging.Tags))
+	for _, tag := range tagging.Tags {
+		tags[tag.Key] = tag.Value
+	}
+	return
 }
