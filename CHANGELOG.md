@@ -1,4 +1,9 @@
 # Changelog
+
+# 7.4.1 (2019-12-09)
+* 修正 FormUploader.put 方法 extra 参数为 nil 时会导致空指针问题
+* 增加多个 Bucket 管理相关功能
+
 # 7.4.0 (2019-10-30)
 * 添加 linking 模块
 * PutPolicy 添加 fsizeMin  forceSaveKey 属性
