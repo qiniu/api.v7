@@ -4,6 +4,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -39,6 +40,9 @@ type BucketInfo struct {
 	// 开启了根目录下的index.html, 文件将会被作为默认首页展示
 	NoIndexPage int `json:"no_index_page"`
 
+	// 在规定的时效内使客户端缓存更新的效果
+	MaxAge int `json:"max_age"`
+
 	// 图片样式分隔符， 接口返回的可能有多个
 	Separator string `json:"separator"`
 
@@ -61,6 +65,9 @@ type BucketInfo struct {
 
 	// 防盗链referer黑名单列表
 	ReferBl []string `json:"refer_bl"`
+
+	// 在源站支持的情况下开启源站的Referer防盗链
+	EnableSource bool `json:"source_enabled"`
 
 	// 是否允许空的referer访问
 	NoRefer bool `json:"no_refer"`
@@ -144,19 +151,20 @@ func (r *ReferAntiLeechConfig) SetEnableSource(enable bool) *ReferAntiLeechConfi
 
 // AsQueryString 编码成query参数格式
 func (r *ReferAntiLeechConfig) AsQueryString() string {
-	var norefer int
-	var enableSource int
+	params := make(url.Values, 4)
+	params.Add("mode", strconv.Itoa(r.Mode))
+	params.Add("pattern", r.Pattern)
 	if r.AllowEmptyReferer {
-		norefer = 1
+		params.Add("norefer", "1")
 	} else {
-		norefer = 0
+		params.Add("norefer", "0")
 	}
 	if r.EnableSource {
-		enableSource = 1
+		params.Add("source_enabled", "1")
 	} else {
-		enableSource = 0
+		params.Add("source_enabled", "0")
 	}
-	return fmt.Sprintf("mode=%d&norefer=%d&pattern=%s&source_enabled=%d", r.Mode, norefer, r.Pattern, enableSource)
+	return params.Encode()
 }
 
 // ProtectedOn 返回true or false
@@ -532,4 +540,67 @@ func (m *BucketManager) MakeBucketPublic(bucket string) error {
 // MakeBucketPrivate 设置空间为私有空间
 func (m *BucketManager) MakeBucketPrivate(bucket string) error {
 	return m.SetBucketAccessMode(bucket, 1)
+}
+
+// TurnOnIndexPage 设置默认首页
+func (m *BucketManager) TurnOnIndexPage(bucket string) error {
+	return m.setIndexPage(bucket, 0)
+}
+
+// TurnOnIndexPage 关闭默认首页
+func (m *BucketManager) TurnOffIndexPage(bucket string) error {
+	return m.setIndexPage(bucket, 1)
+}
+
+func (m *BucketManager) setIndexPage(bucket string, noIndexPage int) error {
+	reqURL := fmt.Sprintf("%s/noIndexPage?bucket=%s&noIndexPage=%d", UcHost, bucket, noIndexPage)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
+}
+
+// BucketTagging 为 Bucket 设置标签
+type BucketTagging struct {
+	Tags []BucketTag `json:"Tags"`
+}
+
+type BucketTag struct {
+	Key   string `json:"Key"`
+	Value string `json:"Value"`
+}
+
+// SetTagging 设置 Bucket 标签
+
+// 该方法为覆盖所有 Bucket 上之前设置的标签，标签 Key 最大 64 字节，Value 最大 128 字节，均不能为空，且区分大小写
+// Key 不能以 kodo 为前缀，Key 和 Value 的字符只能为：字母，数字，空格，+，-，=，.，_，:，/，@，不能支持中文
+func (m *BucketManager) SetTagging(bucket string, tags map[string]string) error {
+	tagging := BucketTagging{Tags: make([]BucketTag, 0, len(tags))}
+	for key, value := range tags {
+		tagging.Tags = append(tagging.Tags, BucketTag{Key: key, Value: value})
+	}
+
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.CallWithJson(ctx, nil, "PUT", reqURL, nil, &tagging)
+}
+
+// ClearTagging 清空 Bucket 标签
+func (m *BucketManager) ClearTagging(bucket string) error {
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	return m.Client.Call(ctx, nil, "DELETE", reqURL, nil)
+}
+
+// GetTagging 获取 Bucket 标签
+func (m *BucketManager) GetTagging(bucket string) (tags map[string]string, err error) {
+	var tagging BucketTagging
+	reqURL := fmt.Sprintf("%s/bucketTagging?bucket=%s", UcHost, bucket)
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	if err = m.Client.Call(ctx, &tagging, "GET", reqURL, nil); err != nil {
+		return
+	}
+	tags = make(map[string]string, len(tagging.Tags))
+	for _, tag := range tagging.Tags {
+		tags[tag.Key] = tag.Value
+	}
+	return
 }

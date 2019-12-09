@@ -163,7 +163,7 @@ func (m *BucketManager) CreateBucket(bucketName string, regionID RegionID) error
 	var reqHost string
 
 	reqHost = m.Cfg.RsReqHost()
-	reqURL := fmt.Sprintf("%s/mkbucketv2/%s/region/%s", reqHost, EncodedEntryWithoutKey(bucketName), string(regionID))
+	reqURL := fmt.Sprintf("%s/mkbucketv3/%s/region/%s", reqHost, bucketName, string(regionID))
 	return m.Client.Call(ctx, nil, "POST", reqURL, nil)
 }
 
@@ -175,6 +175,17 @@ func (m *BucketManager) Buckets(shared bool) (buckets []string, err error) {
 	reqHost = m.Cfg.RsReqHost()
 	reqURL := fmt.Sprintf("%s/buckets?shared=%v", reqHost, shared)
 	err = m.Client.Call(ctx, &buckets, "POST", reqURL, nil)
+	return
+}
+
+// DropBucket 删除七牛存储空间
+func (m *BucketManager) DropBucket(bucketName string) (err error) {
+	ctx := auth.WithCredentials(context.Background(), m.Mac)
+	var reqHost string
+
+	reqHost = m.Cfg.RsReqHost()
+	reqURL := fmt.Sprintf("%s/drop/%s", reqHost, bucketName)
+	err = m.Client.Call(ctx, nil, "POST", reqURL, nil)
 	return
 }
 
