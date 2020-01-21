@@ -294,8 +294,7 @@ func GetRegionsInfo(mac *auth.Credentials) ([]RegionInfo, error) {
 	var regions struct {
 		Regions []RegionInfo `json:"regions"`
 	}
-	ctx := auth.WithCredentials(context.Background(), mac)
-	qErr := client.DefaultClient.CallWithForm(ctx, &regions, "GET", UcHost+"/regions", nil, nil)
+	qErr := client.DefaultClient.CredentialedCallWithForm(context.Background(), mac, auth.TokenQiniu, &regions, "GET", UcHost+"/regions", nil, nil)
 	if qErr != nil {
 		return nil, fmt.Errorf("query region error, %s", qErr.Error())
 	} else {
