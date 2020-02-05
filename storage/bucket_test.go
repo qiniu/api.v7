@@ -72,11 +72,12 @@ func TestGetZone(t *testing.T) {
 
 // TestCreate 测试创建空间的功能
 func TestCreate(t *testing.T) {
-	err := bucketManager.CreateBucket("gosdk-test111111111", RIDHuadong)
+	const bucketName = "gosdk-test111111111"
+	bucketManager.DropBucket(bucketName)
+	err := bucketManager.CreateBucket(bucketName, RIDHuadong)
+	bucketManager.DropBucket(bucketName)
 	if err != nil {
-		if err.Error() != "bucket exists" {
-			t.Fatalf("CreateBucket() error: %v\n", err)
-		}
+		t.Fatalf("CreateBucket() error: %v\n", err)
 	}
 }
 
