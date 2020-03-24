@@ -251,7 +251,7 @@ func TestRestoreAr(t *testing.T) {
 	if err != nil || info.Type != fileType {
 		t.Fatalf("ChangeMime() failed, %s", err)
 	}
-	bucketManager.Delete(testBucket, toRestoreArKey)
+	defer bucketManager.Delete(testBucket, toRestoreArKey)
 }
 
 /*
