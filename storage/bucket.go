@@ -248,7 +248,7 @@ func (m *BucketManager) ChangeMime(bucket, key, newMime string) (err error) {
 	return
 }
 
-// ChangeType 用来更新文件的存储类型，0表示普通存储，1表示低频存储
+// ChangeType 用来更新文件的存储类型，0 表示普通存储，1 表示低频存储，2 表示归档存储
 func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error) {
 	reqHost, reqErr := m.RsReqHost(bucket)
 	if reqErr != nil {
@@ -256,6 +256,18 @@ func (m *BucketManager) ChangeType(bucket, key string, fileType int) (err error)
 		return
 	}
 	reqURL := fmt.Sprintf("%s%s", reqHost, URIChangeType(bucket, key, fileType))
+	err = m.Client.CredentialedCall(context.Background(), m.Mac, auth.TokenQiniu, nil, "POST", reqURL, nil)
+	return
+}
+
+// RestoreAr 解冻归档存储类型的文件，可设置解冻有效期1～7天, 完成解冻任务通常需要1～5分钟
+func (m *BucketManager) RestoreAr(bucket, key string, freezeAfterDays int) (err error) {
+	reqHost, reqErr := m.RsReqHost(bucket)
+	if reqErr != nil {
+		err = reqErr
+		return
+	}
+	reqURL := fmt.Sprintf("%s%s", reqHost, URIRestoreAr(bucket, key, freezeAfterDays))
 	err = m.Client.CredentialedCall(context.Background(), m.Mac, auth.TokenQiniu, nil, "POST", reqURL, nil)
 	return
 }
@@ -631,6 +643,11 @@ func URIChangeMime(bucket, key, newMime string) string {
 // URIChangeType 构建 chtype 接口的请求命令
 func URIChangeType(bucket, key string, fileType int) string {
 	return fmt.Sprintf("/chtype/%s/type/%d", EncodedEntry(bucket, key), fileType)
+}
+
+// URIRestoreAr 构建 restoreAr 接口的请求命令
+func URIRestoreAr(bucket, key string, afterDay int) string {
+	return fmt.Sprintf("/restoreAr/%s/freezeAfterDays/%d", EncodedEntry(bucket, key), afterDay)
 }
 
 // 构建op的方法，非导出的方法无法用在Batch操作中

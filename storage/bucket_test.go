@@ -235,6 +235,25 @@ func TestChangeType(t *testing.T) {
 	bucketManager.Delete(testBucket, toChangeKey)
 }
 
+func TestRestoreAr(t *testing.T) {
+	toRestoreArKey := fmt.Sprintf("%s_RestoreAr_%d", testKey, rand.Int())
+	bucketManager.Copy(testBucket, testKey, testBucket, toRestoreArKey, true)
+	fileType := 2
+	err := bucketManager.ChangeType(testBucket, toRestoreArKey, fileType)
+	if err != nil {
+		t.Fatalf("ChangeType() error, %s", err)
+	}
+
+	err := bucketManager.RestoreAr(testBucket, toRestoreArKey, 5)
+
+	info, err := bucketManager.Stat(testBucket, toRestoreArKey)
+
+	if err != nil || info.Type != fileType {
+		t.Fatalf("ChangeMime() failed, %s", err)
+	}
+	defer bucketManager.Delete(testBucket, toRestoreArKey)
+}
+
 /*
 // SetImage成功以后， 后台生效需要一段时间；导致集成测试经常失败。
 // 如果要修改这一部分代码可以重新开启这个测试
