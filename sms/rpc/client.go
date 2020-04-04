@@ -221,7 +221,7 @@ func (r *ErrorInfo) ErrorDetail() string {
 // Error return error message
 func (r *ErrorInfo) Error() string {
 	if r.Err != "" {
-		return r.Err
+		return r.Err + ": " + r.Message
 	}
 	return http.StatusText(r.Code)
 }
@@ -234,7 +234,8 @@ func (r *ErrorInfo) HTTPCode() int {
 // --------------------------------------------------------------------
 
 type errorRet struct {
-	Error string `json:"error"`
+	Error   string `json:"error"`
+	Message string `json:"message"`
 }
 
 // ResponseError return response error
@@ -249,6 +250,7 @@ func ResponseError(resp *http.Response) (err error) {
 				var ret1 errorRet
 				json.NewDecoder(resp.Body).Decode(&ret1)
 				e.Err = ret1.Error
+				e.Message = ret1.Message
 			}
 		}
 	}
