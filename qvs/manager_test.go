@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	testAccessKey = "Ves3WTXC8XnEHT0I_vacEQQz-9jrJZxNExcmarzQ"
-	testSecretKey = "eNFrLXKG3R8TJ-DJA9YiMjLwuEfQnw8krrDuZzoy"
+	testAccessKey = "1LiyaccS_Iwecf9dfw8SaOWBpnoP4aIUGeEQZsbx"
+	testSecretKey = "zblLV1RvW7U8GxGudQhhNlNNrcpJzeBDlwS74ApW"
 )
 
 func skipTest() bool {

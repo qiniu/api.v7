@@ -74,7 +74,7 @@ func TestStreamCRUD(t *testing.T) {
 	noError(t, err)
 	ret, err = c.QueryStream(ns1.ID, stream.StreamID)
 	noError(t, err)
-	shouldBeEqual(t, true, ret.Disabled)
+	shouldBeEqual(t, false, ret.Disabled)
 
 	c.DeleteStream(ns1.ID, "test001")
 	c.DeleteStream(ns1.ID, "test002")
@@ -86,26 +86,26 @@ func TestStreamCRUD(t *testing.T) {
 func TestDynamicPublishPlayURL(t *testing.T) {
 
 	c := getTestManager()
-	ret, err := c.DynamicPublishPlayURL("d102sni9zryu", "device005", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
+	ret, err := c.DynamicPublishPlayURL("2akrarsdkltth", "device005", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
 	fmt.Println(err, ret)
 }
 
 func TestStaticPublishPlayURL(t *testing.T) {
 
 	c := getTestManager()
-	ret, err := c.StaticPublishPlayURL("test.com", "d102sni9zryu", "device005", 0, 0)
+	ret, err := c.StaticPublishPlayURL("test.com", "2akrarsdkltth", "device005", 0, 0)
 	fmt.Println(err, ret)
 }
 
 func TestRecordPlayback(t *testing.T) {
 
 	c := getTestManager()
-	ret, err := c.StreamsRecordsPlayback("d102sni9zryu", "device005", 1585565152, 1585568752)
+	ret, err := c.StreamsRecordsPlayback("2akrarsdkltth", "device005", 1585565152, 1585568752)
 	fmt.Println(err, string(ret))
 }
 
 func TestStreamsSnapshots(t *testing.T) {
 	c := getTestManager()
-	ret, err := c.StreamsSnapshots("d102sni9zryu", "device005", 1585565152, 1585568752, 0, 0, "")
+	ret, err := c.StreamsSnapshots("2akrarsdkltth", "device005", 1585565152, 1585568752, 0, 0, "")
 	fmt.Println(err, string(ret))
 }
