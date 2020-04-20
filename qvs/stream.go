@@ -187,29 +187,6 @@ func (manager *Manager) QueryStreamPubHistories(nsId string, streamId string, st
 	return ret.Items, ret.Total, err
 }
 
-// 流回放
-func (manager *Manager) StreamsRecordsPlayback(nsId string, streamId string, start, end int) ([]byte, error) {
-
-	query := url.Values{}
-	setQuery(query, "start", start)
-	setQuery(query, "end", end)
-
-	fmt.Println(manager.url("/namespaces/%s/streams/%s/records/playback.m3u8?%v", nsId, streamId, query.Encode()))
-	req, err := http.NewRequest("GET", manager.url("/namespaces/%s/streams/%s/records/playback.m3u8?%v", nsId, streamId, query.Encode()), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := manager.client.Do(context.Background(), req)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
 // 查询截图列表
 func (manager *Manager) StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, limit int, marker string) ([]byte, error) {
 

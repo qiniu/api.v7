@@ -36,6 +36,10 @@ type NameSpace struct {
 	SnapTemplateApplyAll   bool         `json:"snapshotTemplateApplyAll"`     // 截图模版是否应用到全局
 	CreatedAt              int64        `json:"createdAt,omitempty"`          // 空间创建时间
 	UpdatedAt              int64        `json:"updatedAt,omitempty"`          // 空间更新时间
+	DevicesCount           int64        `json:"deviceCount"`                  // 设备数量
+	StreamCount            int64        `json:"streamCount"`                  // 流数量
+	OnlineStreamCount      int64        `json:"onlineStreamCount"`            // 在线流数量
+	DisabledStreamCount    int64        `json:"disabledStreamCount"`          // 禁用流数量
 }
 
 /*
