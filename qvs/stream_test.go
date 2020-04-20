@@ -97,13 +97,6 @@ func TestStaticPublishPlayURL(t *testing.T) {
 	fmt.Println(err, ret)
 }
 
-func TestRecordPlayback(t *testing.T) {
-
-	c := getTestManager()
-	ret, err := c.StreamsRecordsPlayback("2akrarsdkltth", "device005", 1585565152, 1585568752)
-	fmt.Println(err, string(ret))
-}
-
 func TestStreamsSnapshots(t *testing.T) {
 	c := getTestManager()
 	ret, err := c.StreamsSnapshots("2akrarsdkltth", "device005", 1585565152, 1585568752, 0, 0, "")
