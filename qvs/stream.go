@@ -133,14 +133,15 @@ func (manager *Manager) DynamicPublishPlayURL(nsId string, streamId string, rout
 func (manager *Manager) StaticPublishPlayURL(domain, nsId, streamId string, urlExpireSec int64, authEnable uint8) (*RouteRet, error) {
 
 	expire := time.Now().Unix() + urlExpireSec
-	path := fmt.Sprintf("/%s/%s?e=%d", nsId, streamId, expire)
-	token := manager.mac.Sign([]byte(path))
+	path1 := fmt.Sprintf("/%s/%s?e=%d", nsId, streamId, expire)
+	token := manager.mac.Sign([]byte(path1))
+	path2 := fmt.Sprintf("/%s/%s", nsId, streamId)
 	return &RouteRet{
-		PublishUrl: fmt.Sprintf("rtmp://qvs-publish.%s%s&token=%s", domain, path, token),
+		PublishUrl: fmt.Sprintf("rtmp://qvs-publish.%s%s&token=%s", domain, path1, token),
 		PlayUrls: RoutePlayUrls{
-			Rtmp: fmt.Sprintf("rtmp://qvs-live-rtmp.%s%s&token=%s", domain, path, token),
-			Hls:  fmt.Sprintf("rtmp://qvs-live-hls..%s%s&token=%s", domain, path, token),
-			Flv:  fmt.Sprintf("rtmp://qvs-live-hdl.%s%s&token=%s", domain, path, token),
+			Rtmp: fmt.Sprintf("rtmp://qvs-live-rtmp.%s%s", domain, path2),
+			Hls:  fmt.Sprintf("rtmp://qvs-live-hls.%s%s", domain, path2),
+			Flv:  fmt.Sprintf("rtmp://qvs-live-hdl.%s%s", domain, path2),
 		},
 	}, nil
 }
