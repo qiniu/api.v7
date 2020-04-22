@@ -140,8 +140,8 @@ func (manager *Manager) StaticPublishPlayURL(domain, nsId, streamId string, urlE
 		PublishUrl: fmt.Sprintf("rtmp://qvs-publish.%s%s&token=%s", domain, path1, token),
 		PlayUrls: RoutePlayUrls{
 			Rtmp: fmt.Sprintf("rtmp://qvs-live-rtmp.%s%s", domain, path2),
-			Hls:  fmt.Sprintf("rtmp://qvs-live-hls.%s%s", domain, path2),
-			Flv:  fmt.Sprintf("rtmp://qvs-live-hdl.%s%s", domain, path2),
+			Hls:  fmt.Sprintf("http://qvs-live-hls.%s%s", domain, path2),
+			Flv:  fmt.Sprintf("http://qvs-live-hdl.%s%s", domain, path2),
 		},
 	}, nil
 }
