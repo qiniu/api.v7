@@ -78,7 +78,7 @@ func (manager *Manager) DeleteStream(nsId string, streamId string) error {
 /*
 	查询流列表API
 */
-func (manager *Manager) ListStream(nsId string, offset, line int, sortBy string) ([]Stream, int64, error) {
+func (manager *Manager) ListStream(nsId string, offset, line int, prefix, sortBy string, qType int) ([]Stream, int64, error) {
 
 	ret := struct {
 		Items []Stream `json:"items"`
@@ -89,6 +89,8 @@ func (manager *Manager) ListStream(nsId string, offset, line int, sortBy string)
 	setQuery(query, "offset", offset)
 	setQuery(query, "line", line)
 	setQuery(query, "sortBy", sortBy)
+	setQuery(query, "prefix", prefix)
+	setQuery(query, "qtype", qType)
 
 	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams?%v", nsId, query.Encode()), nil)
 	return ret.Items, ret.Total, err

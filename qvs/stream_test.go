@@ -54,12 +54,12 @@ func TestStreamCRUD(t *testing.T) {
 	_, err = c.AddStream(ns1.ID, stream5)
 	noError(t, err)
 
-	streams, total, err := c.ListStream(ns1.ID, 0, 2, "")
+	streams, total, err := c.ListStream(ns1.ID, 0, 2, "", "", 0)
 	noError(t, err)
 	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 2, len(streams))
 
-	streams, total, err = c.ListStream(ns1.ID, 2, 2, "")
+	streams, total, err = c.ListStream(ns1.ID, 2, 2, "", "", 0)
 	noError(t, err)
 	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 1, len(streams))
