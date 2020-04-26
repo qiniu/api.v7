@@ -244,12 +244,14 @@ func TestRestoreAr(t *testing.T) {
 		t.Fatalf("ChangeType() error, %s", err)
 	}
 
-	err := bucketManager.RestoreAr(testBucket, toRestoreArKey, 5)
+	err = bucketManager.RestoreAr(testBucket, toRestoreArKey, 5)
+	if err != nil {
+		t.Fatalf("RestoreAr() failed, %s", err)
+	}
 
 	info, err := bucketManager.Stat(testBucket, toRestoreArKey)
-
 	if err != nil || info.Type != fileType {
-		t.Fatalf("ChangeMime() failed, %s", err)
+		t.Fatalf("Stat() failed, %s", err)
 	}
 	defer bucketManager.Delete(testBucket, toRestoreArKey)
 }
