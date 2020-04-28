@@ -173,7 +173,7 @@ type StreamPublishHistory struct {
 }
 
 // 查询推流历史记录
-func (manager *Manager) QueryStreamPubHistories(nsId string, streamId string, start, end int, line, offset int) ([]StreamPublishHistory, int64, error) {
+func (manager *Manager) QueryStreamPubhistories(nsId string, streamId string, start, end int, line, offset int) ([]StreamPublishHistory, int64, error) {
 
 	ret := struct {
 		Items []StreamPublishHistory `json:"items"`
@@ -186,7 +186,7 @@ func (manager *Manager) QueryStreamPubHistories(nsId string, streamId string, st
 	setQuery(query, "offset", offset)
 	setQuery(query, "line", line)
 
-	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/pub/histories?%v", nsId, streamId, query.Encode()), nil)
+	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/pubhistories?%v", nsId, streamId, query.Encode()), nil)
 	return ret.Items, ret.Total, err
 }
 
