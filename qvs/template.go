@@ -88,7 +88,7 @@ func (manager *Manager) DeleteTemplate(templId string) error {
 /*
 	获取模版列表API
 */
-func (manager *Manager) ListTemplate(offset, line, sortBy string, templateType int, match string) ([]Template, int64, error) {
+func (manager *Manager) ListTemplate(offset, line int, sortBy string, templateType int, match string) ([]Template, int64, error) {
 
 	ret := struct {
 		Items []Template `json:"items"`
