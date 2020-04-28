@@ -88,7 +88,7 @@ func (manager *Manager) DeleteTemplate(templId string) error {
 /*
 	获取模版列表API
 */
-func (manager *Manager) ListTemplate(offset, line, qtype int, sortBy string, templateType int) ([]Template, int64, error) {
+func (manager *Manager) ListTemplate(offset, line, sortBy string, templateType int, match string) ([]Template, int64, error) {
 
 	ret := struct {
 		Items []Template `json:"items"`
@@ -98,8 +98,8 @@ func (manager *Manager) ListTemplate(offset, line, qtype int, sortBy string, tem
 	query := url.Values{}
 	setQuery(query, "offset", offset)
 	setQuery(query, "line", line)
-	setQuery(query, "qtype", qtype)
 	setQuery(query, "sortBy", sortBy)
+	setQuery(query, "match", match)
 	setQuery(query, "templateType", templateType)
 
 	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/templates?%v", query.Encode()), nil)
