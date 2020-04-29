@@ -105,3 +105,15 @@ func TestStreamsSnapshots(t *testing.T) {
 	ret, err := c.StreamsSnapshots("2akrarsdkltth", "device005", 1585565152, 1585568752, 0, 0, "")
 	fmt.Println(err, string(ret))
 }
+
+func TestQueryRecordHistories(t *testing.T) {
+	c := getTestManager()
+	ret, marker, err := c.QueryStreamRecordHistories("2akrarrzns76w", "t0", 1588153619, 1588158619, "", 1)
+	fmt.Println(ret, marker, err)
+}
+
+func TestQueryStreamCover(t *testing.T) {
+	c := getTestManager()
+	ret, err := c.QueryStreamCover("2akrarrzns76w", "t0")
+	fmt.Println(ret, err)
+}

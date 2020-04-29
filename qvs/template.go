@@ -13,7 +13,6 @@ type Template struct {
 	DeleteAfterDays  int    `json:"deleteAfterDays"`  // 存储过期时间,默认永久不过期
 	TemplateType     int    `json:"templateType"`     // 模板类型,取值：0（录制模版）, 1（截图模版）
 	FileType         int    `json:"fileType"`         // 文件存储类型,取值：0（普通存储）,1（低频存储）
-	Interval         int    `json:"interval"`         // 录截图时间间隔,5~10秒
 	RecordType       int    `json:"recordType"`       // 录制模式, 0（不录制）,1（实时录制）, 2（按需录制）
 	RecordFileFormat int    `json:"recordFileFormat"` // 录制文件存储格式,取值：0（ts格式存储）
 
@@ -21,6 +20,9 @@ type Template struct {
 	TSFileNameTemplate string `json:"tsFileNameTemplate"`
 	//record/snap/${namespaceId}/${streamId}/${startMs}.jpg // 录制封面
 	RecordSnapFileNameFmt string `json:"recordSnapFileNameTemplate"`
+	RecordInterval       int    `json:"recordInterval"` //录制文件长度
+
+	M3u8FileNameTemplate string `json:"m3u8FileNameTemplate,omitempty"`  // m3u8文件命名格式
 
 	JpgOverwriteStatus bool `json:"jpgOverwriteStatus"` // 开启覆盖式截图(一般用于流封面)
 	JpgSequenceStatus  bool `json:"jpgSequenceStatus"`  // 开启序列式截图
@@ -32,6 +34,7 @@ type Template struct {
 	JpgSequenceFileNameTemplate string `json:"jpgSequenceFileNameTemplate"`
 	// 按需式截图文件命名格式:snapshot/jpg/${namespaceId}/${streamId}/ondemand-${startMs}.jpg
 	JpgOnDemandFileNameTemplate string `json:"jpgOnDemandFileNameTemplate"`
+	SnapInterval       int  `json:"snapInterval"`             // 序列式截图时间间隔
 
 	CreatedAt int64 `json:"createdAt,omitempty"` // 模板创建时间
 	UpdatedAt int64 `json:"updatedAt,omitempty"` // 模板更新时间

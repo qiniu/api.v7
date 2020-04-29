@@ -68,7 +68,7 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 2, len(nss))
 
-	nss, total, err = c.ListTemplate(2, 2, "",1, "")
+	nss, total, err = c.ListTemplate(2, 2, "", 1, "")
 	noError(t, err)
 	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 1, len(nss))
