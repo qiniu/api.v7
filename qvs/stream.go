@@ -6,7 +6,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
+)
+
+const (
+	DomainPublishRTMP string = "publishRtmp"
+	DomainLiveRTMP    string = "liveRtmp"
+	DomainLiveHLS     string = "liveHls"
+	DomainLiveHDL     string = "liveHdl"
 )
 
 type Stream struct {
@@ -102,6 +108,12 @@ type DynamicLiveRoute struct {
 	UrlExpireSec int64  `json:"urlExpireSec"` // 地址过期时间,urlExpireSec:100代表100秒后过期;  默认urlExpireSec:0,永不过期.
 }
 
+type StaticLiveRoute struct {
+	Domain       string `json:"domain"`       // 域名
+	DomainType   string `json:"domainType"`   // 域名类型
+	UrlExpireSec int64  `json:"urlExpireSec"` // 地址过期时间,urlExpireSec:100代表100秒后过期;  默认urlExpireSec:0,永不过期.
+}
+
 type RouteRet struct {
 	PublishUrl        string        `json:"publishUrl"`        // rtmp推流地址
 	PlayUrls          RoutePlayUrls `json:"playUrls"`          // 拉流URLs
@@ -115,7 +127,7 @@ type RoutePlayUrls struct {
 }
 
 /*
-	获取流地址API：推拉流IP地址计算最合适的设备端推拉流地址
+	动态获取流地址API：推拉流IP地址计算最合适的设备端推拉流地址
 */
 func (manager *Manager) DynamicPublishPlayURL(nsId string, streamId string, route *DynamicLiveRoute) (*RouteRet, error) {
 
@@ -128,24 +140,26 @@ func (manager *Manager) DynamicPublishPlayURL(nsId string, streamId string, rout
 }
 
 /*
-	获取流地址API：
-	生成推拉流地址-domain urlExpireSec: urlExpireSec:100代表100秒后过期;  默认urlExpireSec:0,永不过期.  authEnable 0:开启鉴权 1:关闭鉴权
- 	domain 如推流地址为qvs-publish.test.com, 拉流地址为qvs-live-rtmp.test.com, qvs-live-hls.test.com, qvs-live-hdl.test.com, domain传入test.com
+	静态获取流地址API：根据domain生成推拉流地址
 */
-func (manager *Manager) StaticPublishPlayURL(domain, nsId, streamId string, urlExpireSec int64, authEnable uint8) (*RouteRet, error) {
+func (manager *Manager) StaticPublishPlayURL(nsId, streamId string, route *StaticLiveRoute) (string, error) {
 
-	expire := time.Now().Unix() + urlExpireSec
-	path1 := fmt.Sprintf("/%s/%s?e=%d", nsId, streamId, expire)
-	token := manager.mac.Sign([]byte(path1))
-	path2 := fmt.Sprintf("/%s/%s", nsId, streamId)
-	return &RouteRet{
-		PublishUrl: fmt.Sprintf("rtmp://qvs-publish.%s%s&token=%s", domain, path1, token),
-		PlayUrls: RoutePlayUrls{
-			Rtmp: fmt.Sprintf("rtmp://qvs-live-rtmp.%s%s", domain, path2),
-			Hls:  fmt.Sprintf("http://qvs-live-hls.%s%s", domain, path2),
-			Flv:  fmt.Sprintf("http://qvs-live-hdl.%s%s", domain, path2),
-		},
-	}, nil
+	var ret RouteRet
+	err := manager.client.CallWithJson(context.Background(), &ret, "POST", manager.url("/namespaces/%s/streams/%s/domain", nsId, streamId), nil, route)
+	if err != nil {
+		return "", err
+	}
+	switch route.DomainType {
+	case DomainPublishRTMP:
+		return ret.PublishUrl, nil
+	case DomainLiveRTMP:
+		return ret.PlayUrls.Rtmp, nil
+	case DomainLiveHLS:
+		return ret.PlayUrls.Hls, nil
+	case DomainLiveHDL:
+		return ret.PlayUrls.Flv, nil
+	}
+	return "", nil
 }
 
 // 禁用流
@@ -173,7 +187,7 @@ type StreamPublishHistory struct {
 }
 
 // 查询推流历史记录
-func (manager *Manager) QueryStreamPubHistories(nsId string, streamId string, start, end int, line, offset int) ([]StreamPublishHistory, int64, error) {
+func (manager *Manager) QueryStreamPubhistories(nsId string, streamId string, start, end int, line, offset int) ([]StreamPublishHistory, int64, error) {
 
 	ret := struct {
 		Items []StreamPublishHistory `json:"items"`
@@ -186,7 +200,7 @@ func (manager *Manager) QueryStreamPubHistories(nsId string, streamId string, st
 	setQuery(query, "offset", offset)
 	setQuery(query, "line", line)
 
-	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/pub/histories?%v", nsId, streamId, query.Encode()), nil)
+	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/pubhistories?%v", nsId, streamId, query.Encode()), nil)
 	return ret.Items, ret.Total, err
 }
 

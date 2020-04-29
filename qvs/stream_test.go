@@ -86,14 +86,17 @@ func TestStreamCRUD(t *testing.T) {
 func TestDynamicPublishPlayURL(t *testing.T) {
 
 	c := getTestManager()
-	ret, err := c.DynamicPublishPlayURL("2akrarsdkltth", "device005", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
+	ret, err := c.DynamicPublishPlayURL("2akrarsj8zp0w", "device005", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
 	fmt.Println(err, ret)
 }
 
 func TestStaticPublishPlayURL(t *testing.T) {
 
 	c := getTestManager()
-	ret, err := c.StaticPublishPlayURL("test.com", "2akrarsdkltth", "device005", 0, 0)
+	ret, err := c.StaticPublishPlayURL("2akrarsj8zp0w", "device005", &StaticLiveRoute{Domain: "qvs-publish.qtest.com", DomainType: DomainPublishRTMP})
+	fmt.Println(err, ret)
+
+	ret, err = c.StaticPublishPlayURL("3k5ndkiqvggnz", "device005", &StaticLiveRoute{Domain: "qvs-live-hdl.sina.com", DomainType: DomainLiveHDL})
 	fmt.Println(err, ret)
 }
 
