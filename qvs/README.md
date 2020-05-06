@@ -35,6 +35,90 @@
     - [x] 查询录制记录: QueryStreamRecordHistories(nsId string, streamId string, start, end int, marker string, line int)
     - [x] 获取截图列表: StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, limit int, marker string)
     - [x] 获取直播封面截图: QueryStreamCover(nsId string, streamId string)
-     
 
-    
+## Contents
+
+- [Usage](#usage)
+    - [Configuration](#configuration)
+	- [Namespace](#namespace)
+		- [Add Namespace](#add-namespace)
+		- [Delete Namespace](#delete-namespace)
+		- [Update Namespace](#update-namespace)
+		- [Query Namespace](#query-namespace)
+		- [List Namespace](#list-namespace)
+		- [Disable Namespace](#disable-namespace)
+		- [Enable Namespace](#enable-namespace)
+
+## Usage
+
+### Configuration
+
+```go
+package main
+
+import (
+	// ...
+	"github.com/qiniu/api.v7/v7/auth"
+	"github.com/qiniu/api.v7/v7/qvs"
+)
+
+var (
+	AccessKey = "<QINIU ACCESS KEY>" // 替换成自己 Qiniu 账号的 AccessKey.
+	SecretKey = "<QINIU SECRET KEY>" // 替换成自己 Qiniu 账号的 SecretKey.
+	nsid   = "<Namespace>"    // Namespace必须事先创建.
+)
+
+func main() {
+	// ...
+	mac := auth.New(AccessKey, SecretKey)
+	manager := qvs.NewManager(mac, nil)
+	// ...
+}
+```
+
+### URL
+
+#### Add Namespace
+
+```go
+manager.AddNamespace(ns)
+```
+
+#### Delete Namespace
+
+```go
+manager.DeleteNamespace(nsId)
+```
+
+#### Update Namespace
+
+```go
+ops := []PatchOperation{
+		PatchOperation{Op: "replace", Key: "desc", Value: "description"},
+	}
+manager.UpdateNamespace(nsId, ops)
+```
+
+#### Query Namespace
+
+```go
+ns2, err := manager.QueryNamespace(nsId)
+```
+
+#### List Namespace
+
+```go
+items, total, err := manager.ListDevice(Appid, 10, "")
+```
+
+#### Disable Namespace
+```go
+err := manager.DisableNamespace(nsId)
+```
+
+#### Enable Namespace
+```go
+err := manager.EnableNamespace(nsId)
+```
+
+
