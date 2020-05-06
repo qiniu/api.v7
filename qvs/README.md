@@ -17,7 +17,7 @@
     - [x] 查询流信息: QueryStream(nsId string, streamId string)
     - [x] 更新流: UpdateStream(nsId string, streamId string, ops []PatchOperation)
     - [x] 获取流列表: ListStream(nsId string, offset, line int, prefix, sortBy string, qType int)
-    - [x] 查询流列表
+    - [x] 获取流地址
         - [x] 动态模式: DynamicPublishPlayURL(nsId string, streamId string, route *DynamicLiveRoute)
         - [x] 静态模式: StaticPublishPlayURL(nsId string, streamId string, route *StaticLiveRoute)
     - [x] 禁用流: DisableStream(nsId string, streamId string)  
@@ -36,22 +36,8 @@
     - [x] 获取截图列表: StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, limit int, marker string)
     - [x] 获取直播封面截图: QueryStreamCover(nsId string, streamId string)
 
-## Contents
-
-- [Usage](#usage)
-    - [Configuration](#configuration)
-	- [Namespace](#namespace)
-		- [Add Namespace](#add-namespace)
-		- [Delete Namespace](#delete-namespace)
-		- [Update Namespace](#update-namespace)
-		- [Query Namespace](#query-namespace)
-		- [List Namespace](#list-namespace)
-		- [Disable Namespace](#disable-namespace)
-		- [Enable Namespace](#enable-namespace)
 
 ## Usage
-
-### Configuration
 
 ```go
 package main
@@ -65,7 +51,6 @@ import (
 var (
 	AccessKey = "<QINIU ACCESS KEY>" // 替换成自己 Qiniu 账号的 AccessKey.
 	SecretKey = "<QINIU SECRET KEY>" // 替换成自己 Qiniu 账号的 SecretKey.
-	nsid   = "<Namespace>"    // Namespace必须事先创建.
 )
 
 func main() {
@@ -75,50 +60,4 @@ func main() {
 	// ...
 }
 ```
-
-### URL
-
-#### Add Namespace
-
-```go
-manager.AddNamespace(ns)
-```
-
-#### Delete Namespace
-
-```go
-manager.DeleteNamespace(nsId)
-```
-
-#### Update Namespace
-
-```go
-ops := []PatchOperation{
-		PatchOperation{Op: "replace", Key: "desc", Value: "description"},
-	}
-manager.UpdateNamespace(nsId, ops)
-```
-
-#### Query Namespace
-
-```go
-ns2, err := manager.QueryNamespace(nsId)
-```
-
-#### List Namespace
-
-```go
-items, total, err := manager.ListDevice(Appid, 10, "")
-```
-
-#### Disable Namespace
-```go
-err := manager.DisableNamespace(nsId)
-```
-
-#### Enable Namespace
-```go
-err := manager.EnableNamespace(nsId)
-```
-
 
