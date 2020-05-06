@@ -120,7 +120,7 @@ func TestStaticPublishPlayURL(t *testing.T) {
 	ns1, err := c.AddNamespace(ns)
 	noError(t, err)
 
-	ret, err := c.StaticPublishPlayURL(ns1.ID, "1", &StaticLiveRoute{Domain: "qvs-live-rtmp.qiniu1.com", DomainType: DomainPublishRTMP})
+	ret, err := c.StaticPublishPlayURL(ns1.ID, "1", &StaticLiveRoute{Domain: "qvs-publish.qiniu1.com", DomainType: DomainPublishRTMP})
 	fmt.Println(err, ret)
 
 	ret, err = c.StaticPublishPlayURL(ns1.ID, "1", &StaticLiveRoute{Domain: "qvs-live-hdl.qiniu1.com", DomainType: DomainLiveHDL})
