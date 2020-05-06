@@ -13,7 +13,7 @@ func TestNamespaceCRUD(t *testing.T) {
 	nsName := "testNamespace"
 	nsAccessType := "rtmp"
 	nsRTMPURLType := 1
-	domain := []string{"qtest.com"}
+	domain := []string{"qiniu1.com"}
 	ns := &NameSpace{
 		Name:        nsName,
 		AccessType:  nsAccessType,
@@ -48,7 +48,7 @@ func TestNamespaceCRUD(t *testing.T) {
 		Name:        "testNamespace3",
 		AccessType:  "rtmp",
 		RTMPURLType: 1,
-		Domains:     []string{"atest.com"},
+		Domains:     []string{"qiniu2.com"},
 	}
 	ns5, err := c.AddNamespace(ns4)
 	noError(t, err)
@@ -96,7 +96,7 @@ func TestDomainCRUD(t *testing.T) {
 	nsName := "testNamespace"
 	nsAccessType := "rtmp"
 	nsRTMPURLType := 1
-	domain := []string{"qtest.com"}
+	domain := []string{"qiniu1.com"}
 	ns := &NameSpace{
 		Name:        nsName,
 		AccessType:  nsAccessType,
@@ -106,19 +106,19 @@ func TestDomainCRUD(t *testing.T) {
 	ns1, err := c.AddNamespace(ns)
 	noError(t, err)
 
-	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "test001.com", Type: "publishRtmp"})
+	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "qiniu2.com", Type: "publishRtmp"})
 	noError(t, err)
 
-	err = c.DeleteDomain(ns1.ID, "test001.com")
+	err = c.DeleteDomain(ns1.ID, "qiniu2.com")
 	noError(t, err)
 
-	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "test001.com", Type: "publishRtmp"})
+	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "qiniu2.com", Type: "publishRtmp"})
 	noError(t, err)
 
-	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "test002.com", Type: "publishRtmp"})
+	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "qiniu3.com", Type: "publishRtmp"})
 	noError(t, err)
 
-	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "test003.com", Type: "publishRtmp"})
+	err = c.AddDomain(ns1.ID, &DomainInfo{Domain: "qiniu4.com", Type: "publishRtmp"})
 	noError(t, err)
 
 	domains, err := c.ListDomain(ns1.ID)

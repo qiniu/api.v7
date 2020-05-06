@@ -15,7 +15,7 @@ func TestStreamCRUD(t *testing.T) {
 		Name:        "testNamespace",
 		AccessType:  "rtmp",
 		RTMPURLType: 1,
-		Domains:     []string{"qtest.com"},
+		Domains:     []string{"qiniu1.com"},
 	}
 	ns1, err := c.AddNamespace(ns)
 	noError(t, err)
@@ -84,36 +84,48 @@ func TestStreamCRUD(t *testing.T) {
 }
 
 func TestDynamicPublishPlayURL(t *testing.T) {
-
+	if skipTest() {
+		t.SkipNow()
+	}
 	c := getTestManager()
-	ret, err := c.DynamicPublishPlayURL("2akrarsj8zp0w", "device005", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
+
+	ns := &NameSpace{
+		Name:        "testNamespace",
+		AccessType:  "rtmp",
+		RTMPURLType: 2,
+	}
+	ns1, err := c.AddNamespace(ns)
+	noError(t, err)
+
+	ret, err := c.DynamicPublishPlayURL(ns1.ID, "1", &DynamicLiveRoute{PublishIP: "127.0.0.1", PlayIP: "127.0.0.1", UrlExpireSec: 0})
 	fmt.Println(err, ret)
+
+	err = c.DeleteNamespace(ns1.ID)
+	noError(t, err)
 }
 
 func TestStaticPublishPlayURL(t *testing.T) {
 
+	if skipTest() {
+		t.SkipNow()
+	}
 	c := getTestManager()
-	ret, err := c.StaticPublishPlayURL("2akrarsj8zp0w", "device005", &StaticLiveRoute{Domain: "qvs-publish.qtest.com", DomainType: DomainPublishRTMP})
+
+	ns := &NameSpace{
+		Name:        "testNamespace",
+		AccessType:  "rtmp",
+		RTMPURLType: 1,
+		Domains:     []string{"qiniu1.com"},
+	}
+	ns1, err := c.AddNamespace(ns)
+	noError(t, err)
+
+	ret, err := c.StaticPublishPlayURL(ns1.ID, "1", &StaticLiveRoute{Domain: "qvs-live-rtmp.qiniu1.com", DomainType: DomainPublishRTMP})
 	fmt.Println(err, ret)
 
-	ret, err = c.StaticPublishPlayURL("3k5ndkiqvggnz", "device005", &StaticLiveRoute{Domain: "qvs-live-hdl.sina.com", DomainType: DomainLiveHDL})
+	ret, err = c.StaticPublishPlayURL(ns1.ID, "1", &StaticLiveRoute{Domain: "qvs-live-hdl.qiniu1.com", DomainType: DomainLiveHDL})
 	fmt.Println(err, ret)
-}
 
-func TestStreamsSnapshots(t *testing.T) {
-	c := getTestManager()
-	ret, err := c.StreamsSnapshots("2akrarsdkltth", "device005", 1585565152, 1585568752, 0, 0, "")
-	fmt.Println(err, string(ret))
-}
-
-func TestQueryRecordHistories(t *testing.T) {
-	c := getTestManager()
-	ret, marker, err := c.QueryStreamRecordHistories("2akrarrzns76w", "t0", 1588153619, 1588158619, "", 1)
-	fmt.Println(ret, marker, err)
-}
-
-func TestQueryStreamCover(t *testing.T) {
-	c := getTestManager()
-	ret, err := c.QueryStreamCover("2akrarrzns76w", "t0")
-	fmt.Println(ret, err)
+	err = c.DeleteNamespace(ns1.ID)
+	noError(t, err)
 }
