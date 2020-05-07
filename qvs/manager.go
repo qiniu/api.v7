@@ -2,10 +2,11 @@ package qvs
 
 import (
 	"fmt"
-	"github.com/qiniu/api.v7/v7/auth"
-	"github.com/qiniu/api.v7/v7/client"
 	"net/http"
 	"net/url"
+
+	"github.com/qiniu/api.v7/v7/auth"
+	"github.com/qiniu/api.v7/v7/client"
 )
 
 // Manager 代表一个 qvs 用户的客户端
