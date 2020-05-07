@@ -72,11 +72,12 @@ func TestGetZone(t *testing.T) {
 
 // TestCreate 测试创建空间的功能
 func TestCreate(t *testing.T) {
-	err := bucketManager.CreateBucket("gosdk-test111111111", RIDHuadong)
+	const bucketName = "gosdk-test111111111"
+	bucketManager.DropBucket(bucketName)
+	err := bucketManager.CreateBucket(bucketName, RIDHuadong)
+	bucketManager.DropBucket(bucketName)
 	if err != nil {
-		if err.Error() != "bucket exists" {
-			t.Fatalf("CreateBucket() error: %v\n", err)
-		}
+		t.Fatalf("CreateBucket() error: %v\n", err)
 	}
 }
 
@@ -232,6 +233,27 @@ func TestChangeType(t *testing.T) {
 		t.Fatalf("ChangeMime() failed, %s", err)
 	}
 	bucketManager.Delete(testBucket, toChangeKey)
+}
+
+func TestRestoreAr(t *testing.T) {
+	toRestoreArKey := fmt.Sprintf("%s_RestoreAr_%d", testKey, rand.Int())
+	bucketManager.Copy(testBucket, testKey, testBucket, toRestoreArKey, true)
+	fileType := 2
+	err := bucketManager.ChangeType(testBucket, toRestoreArKey, fileType)
+	if err != nil {
+		t.Fatalf("ChangeType() error, %s", err)
+	}
+
+	err = bucketManager.RestoreAr(testBucket, toRestoreArKey, 5)
+	if err != nil {
+		t.Fatalf("RestoreAr() failed, %s", err)
+	}
+
+	info, err := bucketManager.Stat(testBucket, toRestoreArKey)
+	if err != nil || info.Type != fileType {
+		t.Fatalf("Stat() failed, %s", err)
+	}
+	defer bucketManager.Delete(testBucket, toRestoreArKey)
 }
 
 /*

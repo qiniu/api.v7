@@ -10,15 +10,17 @@ import (
 	"github.com/qiniu/api.v7/v7/auth"
 )
 
-// PutPolicy 表示文件上传的上传策略
+// PutPolicy 表示文件上传的上传策略，参考 https://developer.qiniu.com/kodo/manual/1206/put-policy
 type PutPolicy struct {
 	Scope               string `json:"scope"`
 	Expires             uint64 `json:"deadline"` // 截止时间（以秒为单位）
 	IsPrefixalScope     int    `json:"isPrefixalScope,omitempty"`
 	InsertOnly          uint16 `json:"insertOnly,omitempty"` // 若非0, 即使Scope为 Bucket:Key 的形式也是insert only
 	DetectMime          uint8  `json:"detectMime,omitempty"` // 若非0, 则服务端根据内容自动确定 MimeType
+	FsizeMin            int64  `json:"fsizeMin,omitempty"`
 	FsizeLimit          int64  `json:"fsizeLimit,omitempty"`
 	MimeLimit           string `json:"mimeLimit,omitempty"`
+	ForceSaveKey        bool   `json:"forceSaveKey,omitempty"`
 	SaveKey             string `json:"saveKey,omitempty"`
 	CallbackFetchKey    uint8  `json:"callbackFetchKey,omitempty"`
 	CallbackURL         string `json:"callbackUrl,omitempty"`

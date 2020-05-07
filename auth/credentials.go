@@ -8,8 +8,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/textproto"
+	"sort"
+	"strings"
 
-	"github.com/qiniu/api.v7/v7"
+	api "github.com/qiniu/api.v7/v7"
 	"github.com/qiniu/api.v7/v7/conf"
 )
 
@@ -82,6 +85,32 @@ func collectData(req *http.Request) (data []byte, err error) {
 	return
 }
 
+type (
+	xQiniuHeaderItem struct {
+		HeaderName  string
+		HeaderValue string
+	}
+	xQiniuHeaders []xQiniuHeaderItem
+)
+
+func (headers xQiniuHeaders) Len() int {
+	return len(headers)
+}
+
+func (headers xQiniuHeaders) Less(i, j int) bool {
+	if headers[i].HeaderName < headers[j].HeaderName {
+		return true
+	} else if headers[i].HeaderName > headers[j].HeaderName {
+		return false
+	} else {
+		return headers[i].HeaderValue < headers[j].HeaderValue
+	}
+}
+
+func (headers xQiniuHeaders) Swap(i, j int) {
+	headers[i], headers[j] = headers[j], headers[i]
+}
+
 func collectDataV2(req *http.Request) (data []byte, err error) {
 	u := req.URL
 
@@ -93,16 +122,34 @@ func collectDataV2(req *http.Request) (data []byte, err error) {
 	}
 
 	//write host and post
-	s += "\nHost: "
-	s += req.Host
+	s += "\nHost: " + req.Host + "\n"
 
 	//write content type
 	contentType := req.Header.Get("Content-Type")
-	if contentType != "" {
-		s += "\n"
-		s += fmt.Sprintf("Content-Type: %s", contentType)
+	if contentType == "" {
+		contentType = "application/x-www-form-urlencoded"
+		req.Header.Set("Content-Type", contentType)
 	}
-	s += "\n\n"
+	s += fmt.Sprintf("Content-Type: %s\n", contentType)
+
+	xQiniuHeaders := make(xQiniuHeaders, 0, len(req.Header))
+	for headerName, headerValues := range req.Header {
+		if len(headerName) > len("X-Qiniu-") && strings.HasPrefix(headerName, "X-Qiniu-") {
+			for _, headerValue := range headerValues {
+				xQiniuHeaders = append(xQiniuHeaders, xQiniuHeaderItem{
+					HeaderName:  textproto.CanonicalMIMEHeaderKey(headerName),
+					HeaderValue: headerValue,
+				})
+			}
+		}
+	}
+	if len(xQiniuHeaders) > 0 {
+		sort.Sort(xQiniuHeaders)
+		for _, xQiniuHeader := range xQiniuHeaders {
+			s += fmt.Sprintf("%s: %s\n", xQiniuHeader.HeaderName, xQiniuHeader.HeaderValue)
+		}
+	}
+	s += "\n"
 
 	data = []byte(s)
 	//write body

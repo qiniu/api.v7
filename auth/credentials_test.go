@@ -89,29 +89,29 @@ func TestCollectData(t *testing.T) {
 
 func TestCollectDataV2(t *testing.T) {
 	inputs := []ReqParams{
-		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "GET", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "", Headers: http.Header{"X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "GET", Url: "", Headers: http.Header{"X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "POST", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, Body: strings.NewReader(`name=test&language=go`)},
-		{Method: "", Url: "http://upload.qiniup.com?v=2", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, Body: strings.NewReader(`name=test&language=go`)},
-		{Method: "", Url: "http://upload.qiniup.com/find/sdk?v=2", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, Body: strings.NewReader(`name=test&language=go`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`name=test&language=go`)},
+		{Method: "", Url: "http://upload.qiniup.com?v=2", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`name=test&language=go`)},
+		{Method: "", Url: "http://upload.qiniup.com/find/sdk?v=2", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`name=test&language=go`)},
 	}
 
 	wants := []string{
 		"GET \nHost: \nContent-Type: application/json\n\n{\"name\": \"test\"}",
-		"GET \nHost: \n\n",
+		"GET \nHost: \nContent-Type: application/x-www-form-urlencoded\n\n{\"name\": \"test\"}",
 		"GET \nHost: \nContent-Type: application/json\n\n{\"name\": \"test\"}",
-		"GET \nHost: \n\n",
+		"GET \nHost: \nContent-Type: application/x-www-form-urlencoded\n\n{\"name\": \"test\"}",
 		"POST \nHost: \nContent-Type: application/json\n\n{\"name\": \"test\"}",
-		"GET \nHost: upload.qiniup.com\n\n",
-		"GET \nHost: upload.qiniup.com\nContent-Type: application/json\n\n{\"name\": \"test\"}",
-		"GET \nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\n\nname=test&language=go",
-		"GET ?v=2\nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\n\nname=test&language=go",
-		"GET /find/sdk?v=2\nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\n\nname=test&language=go",
+		"GET \nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\nX-Qiniu-Aaa: CCC\nX-Qiniu-Aaa: DDD\nX-Qiniu-Bbb: AAA\nX-Qiniu-Bbb: BBB\n\n{\"name\": \"test\"}",
+		"GET \nHost: upload.qiniup.com\nContent-Type: application/json\nX-Qiniu-Aaa: CCC\nX-Qiniu-Aaa: DDD\nX-Qiniu-Bbb: AAA\nX-Qiniu-Bbb: BBB\n\n{\"name\": \"test\"}",
+		"GET \nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\nX-Qiniu-Aaa: CCC\nX-Qiniu-Aaa: DDD\nX-Qiniu-Bbb: AAA\nX-Qiniu-Bbb: BBB\n\nname=test&language=go",
+		"GET ?v=2\nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\nX-Qiniu-Aaa: CCC\nX-Qiniu-Aaa: DDD\nX-Qiniu-Bbb: AAA\nX-Qiniu-Bbb: BBB\n\nname=test&language=go",
+		"GET /find/sdk?v=2\nHost: upload.qiniup.com\nContent-Type: application/x-www-form-urlencoded\nX-Qiniu-Aaa: CCC\nX-Qiniu-Aaa: DDD\nX-Qiniu-Bbb: AAA\nX-Qiniu-Bbb: BBB\n\nname=test&language=go",
 	}
 	reqs, gErr := genRequests(inputs)
 	if gErr != nil {
@@ -160,9 +160,9 @@ func genRequests(params []ReqParams) (reqs []*http.Request, err error) {
 func TestAuthSignRequest(t *testing.T) {
 	inputs := []ReqParams{
 		{Method: "", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "GET", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "POST", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "POST", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "", Url: "http://upload.qiniup.com", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, Body: strings.NewReader(`name=test&language=go`)},
@@ -193,22 +193,22 @@ func TestAuthSignRequest(t *testing.T) {
 
 func TestAuthSignRequestV2(t *testing.T) {
 	inputs := []ReqParams{
-		{Method: "", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "", Headers: http.Header{"X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "GET", Url: "", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "GET", Url: "", Headers: http.Header{"X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
 		{Method: "POST", Url: "", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: nil, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/json"}}, Body: strings.NewReader(`{"name": "test"}`)},
-		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}}, Body: strings.NewReader(`name=test&language=go`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/json"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`{"name": "test"}`)},
+		{Method: "", Url: "http://upload.qiniup.com", Headers: http.Header{"Content-Type": []string{"application/x-www-form-urlencoded"}, "X-Qiniu-BBB": []string{"BBB", "AAA"}, "X-Qiniu-AAA": []string{"DDD", "CCC"}, "X-Qiniu-": []string{"a"}, "X-Qiniu": []string{"b"}}, Body: strings.NewReader(`name=test&language=go`)},
 	}
 	wants := []string{
-		"ak:XNay-AIghhXfytRKsKNj0DQqV2E=",
+		"ak:0i1vKClRDWFyNkcTFzwcE7PzX74=",
 		"ak:K1DI0goT05yhGizDFE5FiPJxAj4=",
-		"ak:XNay-AIghhXfytRKsKNj0DQqV2E=",
+		"ak:0i1vKClRDWFyNkcTFzwcE7PzX74=",
 		"ak:0ujEjW_vLRZxebsveBgqa3JyQ-w=",
-		"ak:Eadl-_gKUNECGo3mcikiTBoNfqI=",
-		"ak:Pkuq20x3HNWJlHDbRLW1kDYmXF0=",
-		"ak:rZjOJKtlePVSegqoSO8p6Gpsr64=",
+		"ak:GShw5NitGmd5TLoo38nDkGUofRw=",
+		"ak:N1JHCQfjs0zX00yNP59ajZI41W8=",
+		"ak:s2cp5btoYoHaraDW2CAGBxj0OvU=",
 	}
 	reqs, gErr := genRequests(inputs)
 	if gErr != nil {

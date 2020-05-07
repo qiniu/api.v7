@@ -110,3 +110,45 @@ func TestPutWithoutSize(t *testing.T) {
 		t.Logf("Key: %s, Hash:%s", putRet.Key, putRet.Hash)
 	}
 }
+
+func TestRetryChecker(t *testing.T) {
+	var putRet PutRet
+	putPolicy := PutPolicy{
+		Scope:           testBucket,
+		DeleteAfterDays: 7,
+	}
+
+	upToken := putPolicy.UploadToken(mac)
+	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
+
+	mycfg := Config{}
+	wrongZone := Region{
+		SrcUpHosts: []string{
+			"nocname-up.qiniup.com",
+			"nocname-up-nb.qiniup.com",
+			"nocname-up-xs.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"nocname-upload.qiniup.com",
+			"nocname-upload-nb.qiniup.com",
+			"nocname-upload-xs.qiniup.com",
+		},
+		RsHost:    "rs.qbox.me",
+		RsfHost:   "rsf.qbox.me",
+		ApiHost:   "api.qiniu.com",
+		IovipHost: "iovip.qbox.me",
+	}
+	mycfg.Zone = &wrongZone
+	mycfg.UseCdnDomains = true
+	myResumeUploader := NewResumeUploaderEx(&mycfg, &clt)
+
+	rd := strings.NewReader("hello world")
+	// host unkown, so go to retry,
+	// any way, no : panic: runtime error: invalid memory address or nil pointer dereference
+	err := myResumeUploader.PutWithoutSize(context.Background(), &putRet, upToken, testKey, rd, nil)
+	if err != nil {
+		t.Logf("TestRetryChecker() error, %s", err)
+	} else {
+		t.Fatalf("TestRetryChecker() should failed, %s", putRet)
+	}
+}
