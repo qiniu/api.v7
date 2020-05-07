@@ -346,6 +346,36 @@ func (r Client) Call(ctx context.Context, ret interface{}, method, reqUrl string
 	return CallRet(ctx, ret, resp)
 }
 
+func (r Client) CredentialedCallWithForm(ctx context.Context, cred *auth.Credentials, tokenType auth.TokenType, ret interface{},
+	method, reqUrl string, headers http.Header, param map[string][]string) error {
+	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
+	return r.CallWithForm(ctx, ret, method, reqUrl, headers, param)
+}
+
+func (r Client) CredentialedCallWithJson(ctx context.Context, cred *auth.Credentials, tokenType auth.TokenType, ret interface{},
+	method, reqUrl string, headers http.Header, param interface{}) error {
+	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
+	return r.CallWithJson(ctx, ret, method, reqUrl, headers, param)
+}
+
+func (r Client) CredentialedCallWith(ctx context.Context, cred *auth.Credentials, tokenType auth.TokenType, ret interface{},
+	method, reqUrl string, headers http.Header, body io.Reader, bodyLength int) error {
+	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
+	return r.CallWith(ctx, ret, method, reqUrl, headers, body, bodyLength)
+}
+
+func (r Client) CredentialedCallWith64(ctx context.Context, cred *auth.Credentials, tokenType auth.TokenType, ret interface{},
+	method, reqUrl string, headers http.Header, body io.Reader, bodyLength int64) error {
+	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
+	return r.CallWith64(ctx, ret, method, reqUrl, headers, body, bodyLength)
+}
+
+func (r Client) CredentialedCall(ctx context.Context, cred *auth.Credentials, tokenType auth.TokenType, ret interface{},
+	method, reqUrl string, headers http.Header) error {
+	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
+	return r.Call(ctx, ret, method, reqUrl, headers)
+}
+
 // ---------------------------------------------------------------------------
 
 type requestCanceler interface {
