@@ -27,7 +27,6 @@ type NameSpace struct {
 	AccessType             string       `json:"accessType"`     // 接入类型"gb28181"或者“rtmp”
 	RTMPURLType            int          `json:"rtmpUrlType"`    // accessType为“rtmp”时，推拉流地址计算方式，1:static, 2:dynamic
 	Domains                []string     `json:"domains"`        // 直播域名
-	DomainDetails          []DomainInfo `json:"domainDetails"`
 	Callback               string       `json:"callback,omitempty""`          // 后台服务器回调URL
 	Disabled               bool         `json:"disabled"`                     // 流是否被启用, false:启用,true:禁用
 	RecordTemplateId       string       `jons:"recordTemplateId,omitempty"`   // 录制模版id
