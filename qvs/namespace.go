@@ -26,7 +26,7 @@ type NameSpace struct {
 	Desc                   string   `json:"desc,omitempty"`               // 空间描述
 	AccessType             string   `json:"accessType"`                   // 接入类型"gb28181"或者“rtmp”
 	RTMPURLType            int      `json:"rtmpUrlType"`                  // accessType为“rtmp”时，推拉流地址计算方式，1:static, 2:dynamic
-	Zone                   string   `json:"zone"`                         // zone为服务区域配置项，可选项为z0, z1, z2华北、华东、华南，默认为华东
+	Zone                   string   `json:"zone"`                         // zone为服务区域配置项，可选项为z0, z1, z2,默认为z0. z0表示华东, z1表示华北、z2表示华南
 	Domains                []string `json:"domains"`                      // 直播域名
 	Callback               string   `json:"callback,omitempty""`          // 后台服务器回调URL
 	Disabled               bool     `json:"disabled"`                     // 流是否被启用, false:启用,true:禁用

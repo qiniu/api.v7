@@ -14,7 +14,7 @@ func TestNamespaceCRUD(t *testing.T) {
 	nsAccessType := "rtmp"
 	nsRTMPURLType := 1
 	domain := []string{"qiniu1.com"}
-	zone := "huadong"
+	zone := "z0"
 	hlslowlatency := false
 	ns := &NameSpace{
 		Name:          nsName,
@@ -44,7 +44,7 @@ func TestNamespaceCRUD(t *testing.T) {
 		{
 			Op:    "replace",
 			Key:   "zone",
-			Value: "huabei",
+			Value: "z1",
 		},
 		{
 			Op:    "replace",
@@ -58,7 +58,7 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns3.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns3.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns3.Domains[0])
-	shouldBeEqual(t, "huabei", ns3.Zone)
+	shouldBeEqual(t, "z1", ns3.Zone)
 	shouldBeEqual(t, true, ns3.HLSLowLatency)
 
 	ns4 := &NameSpace{
