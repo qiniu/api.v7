@@ -16,6 +16,7 @@ func TestTemplateCRUD(t *testing.T) {
 		TemplateType:       1,
 		JpgOverwriteStatus: true,
 		RecordType:         2,
+		Zone:               "huadong",
 	}
 	tmpl1, err := c.AddTemplate(tmpl)
 	noError(t, err)
@@ -27,12 +28,18 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, tmpl.TemplateType, tmpl2.TemplateType)
 	shouldBeEqual(t, tmpl.JpgOverwriteStatus, tmpl2.JpgOverwriteStatus)
 	shouldBeEqual(t, tmpl.RecordType, tmpl2.RecordType)
+	shouldBeEqual(t,tmpl.Zone,tmpl2.Zone)
 
 	ops := []PatchOperation{
 		{
 			Op:    "replace",
 			Key:   "name",
 			Value: "test002",
+		},
+		{
+			Op: "replace",
+			Key: "zone",
+			Value: "huabei",
 		},
 	}
 	tmpl3, err := c.UpdateTemplate(tmpl2.ID, ops)
@@ -42,6 +49,7 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, tmpl.TemplateType, tmpl3.TemplateType)
 	shouldBeEqual(t, tmpl.JpgOverwriteStatus, tmpl3.JpgOverwriteStatus)
 	shouldBeEqual(t, tmpl.RecordType, tmpl3.RecordType)
+	shouldBeEqual(t,"huabei",tmpl3.Zone)
 
 	tmpl4 := &Template{
 		Name:               "test003",

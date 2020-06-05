@@ -14,11 +14,15 @@ func TestNamespaceCRUD(t *testing.T) {
 	nsAccessType := "rtmp"
 	nsRTMPURLType := 1
 	domain := []string{"qiniu1.com"}
+	zone := "huadong"
+	hlslowlatency := false
 	ns := &NameSpace{
 		Name:        nsName,
 		AccessType:  nsAccessType,
 		RTMPURLType: nsRTMPURLType,
 		Domains:     domain,
+		Zone:        zone,
+		HLSLowLatency: hlslowlatency,
 	}
 	ns1, err := c.AddNamespace(ns)
 	noError(t, err)
@@ -29,12 +33,23 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns2.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns2.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns2.Domains[0])
+	shouldBeEqual(t,hlslowlatency,ns2.HLSLowLatency)
 
 	ops := []PatchOperation{
 		{
 			Op:    "replace",
 			Key:   "name",
 			Value: "testNamespace2",
+		},
+		{
+			Op: "replace",
+			Key: "zone",
+			Value: "huabei",
+		},
+		{
+			Op: "replace",
+			Key: "hlslowlatency",
+			Value: true,
 		},
 	}
 	ns3, err := c.UpdateNamespace(ns1.ID, ops)
@@ -43,6 +58,8 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns3.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns3.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns3.Domains[0])
+	shouldBeEqual(t,"huabei",ns3.Zone)
+	shouldBeEqual(t,true,ns3.HLSLowLatency)
 
 	ns4 := &NameSpace{
 		Name:        "testNamespace3",
