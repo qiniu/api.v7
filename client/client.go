@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptrace"
 	"net/http/httputil"
 	"net/url"
 	"runtime"
@@ -24,6 +25,7 @@ var DefaultClient = Client{&http.Client{Transport: http.DefaultTransport}}
 
 // 用来打印调试信息
 var DebugMode = false
+var DeepDebugInfo = false
 
 // --------------------------------------------------------------------
 
@@ -68,7 +70,14 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 		}
 	}
 	if DebugMode {
-		bs, bErr := httputil.DumpRequest(req, true)
+		trace := &httptrace.ClientTrace{
+			GotConn: func(connInfo httptrace.GotConnInfo) {
+				remoteAddr := connInfo.Conn.RemoteAddr()
+				log.Debug(fmt.Sprintf("Network: %s, Remote ip:%s, URL: %s", remoteAddr.Network(), remoteAddr.String(), req.URL))
+			},
+		}
+		req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
+		bs, bErr := httputil.DumpRequest(req, DeepDebugInfo)
 		if bErr != nil {
 			err = bErr
 			return
@@ -276,7 +285,7 @@ func CallRet(ctx context.Context, ret interface{}, resp *http.Response) (err err
 	}()
 
 	if DebugMode {
-		bs, dErr := httputil.DumpResponse(resp, true)
+		bs, dErr := httputil.DumpResponse(resp, DeepDebugInfo)
 		if dErr != nil {
 			err = dErr
 			return
