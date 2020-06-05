@@ -38,6 +38,7 @@ type Template struct {
 
 	CreatedAt int64 `json:"createdAt,omitempty"` // 模板创建时间
 	UpdatedAt int64 `json:"updatedAt,omitempty"` // 模板更新时间
+	Zone string     `json:"zone"`  //服务区域配置项，可选项为华北、华东、华南，默认为华东
 }
 
 /*
