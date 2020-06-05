@@ -26,7 +26,7 @@ type NameSpace struct {
 	Desc                   string   `json:"desc,omitempty"`               // 空间描述
 	AccessType             string   `json:"accessType"`                   // 接入类型"gb28181"或者“rtmp”
 	RTMPURLType            int      `json:"rtmpUrlType"`                  // accessType为“rtmp”时，推拉流地址计算方式，1:static, 2:dynamic
-	Zone                   string   `json:"zone"`          				  // 服务区域配置项，可选项为华北、华东、华南，默认为华东
+	Zone                   string   `json:"zone"`                         // zone为服务区域配置项，可选项为z0, z1, z2华北、华东、华南，默认为华东
 	Domains                []string `json:"domains"`                      // 直播域名
 	Callback               string   `json:"callback,omitempty""`          // 后台服务器回调URL
 	Disabled               bool     `json:"disabled"`                     // 流是否被启用, false:启用,true:禁用
@@ -34,13 +34,13 @@ type NameSpace struct {
 	SnapShotTemplateId     string   `jons:"snapshotTemplateId,omitempty"` // 截图模版id
 	RecordTemplateApplyAll bool     `json:"snapshotTemplateApplyAll"`     // 空间模版是否应用到全局
 	SnapTemplateApplyAll   bool     `json:"snapshotTemplateApplyAll"`     // 截图模版是否应用到全局
-	HLSLowLatency          bool     `json:"hlsLowLatency"`		 // HLS低延时开关
-	CreatedAt              int64    `json:"createdAt,omitempty"` // 空间创建时间
-	UpdatedAt              int64    `json:"updatedAt,omitempty"` // 空间更新时间
-	DevicesCount           int64    `json:"deviceCount"`         // 设备数量
-	StreamCount            int64    `json:"streamCount"`         // 流数量
-	OnlineStreamCount      int64    `json:"onlineStreamCount"`   // 在线流数量
-	DisabledStreamCount    int64    `json:"disabledStreamCount"` // 禁用流数量
+	HLSLowLatency          bool     `json:"hlsLowLatency"`                // HLS低延时开关
+	CreatedAt              int64    `json:"createdAt,omitempty"`          // 空间创建时间
+	UpdatedAt              int64    `json:"updatedAt,omitempty"`          // 空间更新时间
+	DevicesCount           int64    `json:"deviceCount"`                  // 设备数量
+	StreamCount            int64    `json:"streamCount"`                  // 流数量
+	OnlineStreamCount      int64    `json:"onlineStreamCount"`            // 在线流数量
+	DisabledStreamCount    int64    `json:"disabledStreamCount"`          // 禁用流数量
 }
 
 /*

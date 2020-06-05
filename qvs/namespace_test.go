@@ -17,11 +17,11 @@ func TestNamespaceCRUD(t *testing.T) {
 	zone := "huadong"
 	hlslowlatency := false
 	ns := &NameSpace{
-		Name:        nsName,
-		AccessType:  nsAccessType,
-		RTMPURLType: nsRTMPURLType,
-		Domains:     domain,
-		Zone:        zone,
+		Name:          nsName,
+		AccessType:    nsAccessType,
+		RTMPURLType:   nsRTMPURLType,
+		Domains:       domain,
+		Zone:          zone,
 		HLSLowLatency: hlslowlatency,
 	}
 	ns1, err := c.AddNamespace(ns)
@@ -33,7 +33,7 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns2.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns2.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns2.Domains[0])
-	shouldBeEqual(t,hlslowlatency,ns2.HLSLowLatency)
+	shouldBeEqual(t, hlslowlatency, ns2.HLSLowLatency)
 
 	ops := []PatchOperation{
 		{
@@ -42,13 +42,13 @@ func TestNamespaceCRUD(t *testing.T) {
 			Value: "testNamespace2",
 		},
 		{
-			Op: "replace",
-			Key: "zone",
+			Op:    "replace",
+			Key:   "zone",
 			Value: "huabei",
 		},
 		{
-			Op: "replace",
-			Key: "hlslowlatency",
+			Op:    "replace",
+			Key:   "hlslowlatency",
 			Value: true,
 		},
 	}
@@ -58,8 +58,8 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns3.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns3.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns3.Domains[0])
-	shouldBeEqual(t,"huabei",ns3.Zone)
-	shouldBeEqual(t,true,ns3.HLSLowLatency)
+	shouldBeEqual(t, "huabei", ns3.Zone)
+	shouldBeEqual(t, true, ns3.HLSLowLatency)
 
 	ns4 := &NameSpace{
 		Name:        "testNamespace3",

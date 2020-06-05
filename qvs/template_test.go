@@ -28,7 +28,7 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, tmpl.TemplateType, tmpl2.TemplateType)
 	shouldBeEqual(t, tmpl.JpgOverwriteStatus, tmpl2.JpgOverwriteStatus)
 	shouldBeEqual(t, tmpl.RecordType, tmpl2.RecordType)
-	shouldBeEqual(t,tmpl.Zone,tmpl2.Zone)
+	shouldBeEqual(t, tmpl.Zone, tmpl2.Zone)
 
 	ops := []PatchOperation{
 		{
@@ -37,8 +37,8 @@ func TestTemplateCRUD(t *testing.T) {
 			Value: "test002",
 		},
 		{
-			Op: "replace",
-			Key: "zone",
+			Op:    "replace",
+			Key:   "zone",
 			Value: "huabei",
 		},
 	}
@@ -49,7 +49,7 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, tmpl.TemplateType, tmpl3.TemplateType)
 	shouldBeEqual(t, tmpl.JpgOverwriteStatus, tmpl3.JpgOverwriteStatus)
 	shouldBeEqual(t, tmpl.RecordType, tmpl3.RecordType)
-	shouldBeEqual(t,"huabei",tmpl3.Zone)
+	shouldBeEqual(t, "huabei", tmpl3.Zone)
 
 	tmpl4 := &Template{
 		Name:               "test003",
