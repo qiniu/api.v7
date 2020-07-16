@@ -12,8 +12,8 @@ import (
 //global variables
 
 var (
-	ak     = os.Getenv("QINIU_ACCESS_KEY")
-	sk     = os.Getenv("QINIU_SECRET_KEY")
+	ak     = os.Getenv("accessKey")
+	sk     = os.Getenv("secretKey")
 	domain = os.Getenv("QINIU_TEST_DOMAIN")
 
 	layout    = "2006-01-02"

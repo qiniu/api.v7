@@ -3,7 +3,9 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 )
@@ -41,6 +43,13 @@ func TestWorkerCopy(t *testing.T) {
 }
 
 func TestWorkerUpload(t *testing.T) {
+	// prepare file for test uploading
+	testLocalFile, err := ioutil.TempFile("", "TestWorkerUpload")
+	if err != nil {
+		t.Fatalf("ioutil.TempFile file failed, err: %v", err)
+	}
+	defer os.Remove(testLocalFile.Name())
+
 	wg := sync.WaitGroup{}
 	var initOnce sync.Once
 	workers := 10
@@ -70,9 +79,9 @@ func TestWorkerUpload(t *testing.T) {
 				DeleteAfterDays: 7,
 			}
 			upToken := putPolicy.UploadToken(mac)
-			err := uploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile, nil)
+			err := uploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile.Name(), nil)
 			if err != nil {
-				t.Fatalf("TestWorkerUpload error, %s", err)
+				t.Errorf("TestWorkerUpload error, %s", err)
 			}
 
 			t.Logf("upload success, key: %s, hash:%s", putRet.Key, putRet.Hash)
