@@ -1,19 +1,19 @@
 package cdn
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"fmt"
 	"github.com/qiniu/api.v7/v7/auth"
 )
 
 //global variables
 
 var (
-	ak     = os.Getenv("accessKey")
-	sk     = os.Getenv("secretKey")
+	ak     = os.Getenv("QINIU_ACCESS_KEY")
+	sk     = os.Getenv("QINIU_SECRET_KEY")
 	domain = os.Getenv("QINIU_TEST_DOMAIN")
 
 	layout    = "2006-01-02"
