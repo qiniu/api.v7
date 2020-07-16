@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 )
@@ -19,7 +21,14 @@ func TestResumeUploadPutFile(t *testing.T) {
 	upToken := putPolicy.UploadToken(mac)
 	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
 
-	err := resumeUploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile, nil)
+	// prepare file for test uploading
+	testLocalFile, err := ioutil.TempFile("", "TestResumeUploadPutFile")
+	if err != nil {
+		t.Fatalf("ioutil.TempFile file failed, err: %v", err)
+	}
+	defer os.Remove(testLocalFile.Name())
+
+	err = resumeUploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile.Name(), nil)
 	if err != nil {
 		t.Fatalf("ResumeUploader#PutFile() error, %s", err)
 	}

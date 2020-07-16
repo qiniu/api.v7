@@ -1,11 +1,11 @@
 package cdn
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
-	"fmt"
 	"github.com/qiniu/api.v7/v7/auth"
 )
 
