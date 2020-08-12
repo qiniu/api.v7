@@ -183,10 +183,6 @@ func (p *FormUploader) put(
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
 
-	if extra == nil {
-		extra = &PutExtra{}
-	}
-
 	if extra.OnProgress != nil {
 		data = &readerWithProgress{reader: data, fsize: size, onProgress: extra.OnProgress}
 	}
