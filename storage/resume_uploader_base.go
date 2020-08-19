@@ -27,17 +27,19 @@ const (
 
 // Settings 为分片上传设置
 type Settings struct {
-	TaskQsize int // 可选。任务队列大小。为 0 表示取 Workers * 4。
-	Workers   int // 并行 Goroutine 数目。
-	ChunkSize int // 默认的Chunk大小，不设定则为4M
-	TryTimes  int // 默认的尝试次数，不设定则为3
+	TaskQsize int   // 可选。任务队列大小。为 0 表示取 Workers * 4。
+	Workers   int   // 并行 Goroutine 数目。
+	ChunkSize int   // 默认的Chunk大小，不设定则为4M（仅在分片上传 v1 中使用）
+	PartSize  int64 // 默认的Part大小，不设定则为4M（仅在分片上传 v2 中使用）
+	TryTimes  int   // 默认的尝试次数，不设定则为3
 }
 
 // 分片上传默认参数设置
 const (
 	defaultWorkers   = 4               // 默认的并发上传的块数量
-	defaultChunkSize = 4 * 1024 * 1024 // 默认的分片大小，4MB
-	defaultTryTimes  = 3               // bput 失败重试次数
+	defaultChunkSize = 4 * 1024 * 1024 // 默认的分片大小，4MB（仅在分片上传 v1 中使用）
+	defaultPartSize  = 4 * 1024 * 1024 // 默认的分片大小，4MB（仅在分片上传 v2 中使用）
+	defaultTryTimes  = 3               // mkblk / bput / uploadParts 失败重试次数
 )
 
 // 分片上传的默认设置
@@ -45,6 +47,7 @@ var settings = Settings{
 	TaskQsize: defaultWorkers * 4,
 	Workers:   defaultWorkers,
 	ChunkSize: defaultChunkSize,
+	PartSize:  defaultPartSize,
 	TryTimes:  defaultTryTimes,
 }
 
@@ -59,6 +62,9 @@ func SetSettings(v *Settings) {
 	}
 	if settings.ChunkSize == 0 {
 		settings.ChunkSize = defaultChunkSize
+	}
+	if settings.PartSize == 0 {
+		settings.PartSize = defaultPartSize
 	}
 	if settings.TryTimes == 0 {
 		settings.TryTimes = defaultTryTimes
@@ -106,7 +112,7 @@ type (
 	resumeUploaderBase interface {
 		// 开始上传前调用一次用于初始化，在 v1 中该接口不做任何事情，而在 v2 中该接口对应 initParts
 		initUploader(context.Context) error
-		// 上传实际的分片数据，允许并发上传。在 v1 中该接口对应 mkblk 和 bput 组合，而在 v2 中该接口对应 uploadPart
+		// 上传实际的分片数据，允许并发上传。在 v1 中该接口对应 mkblk 和 bput 组合，而在 v2 中该接口对应 uploadParts
 		uploadChunk(context.Context, chunk) error
 		// 上传所有分片后调用一次用于结束上传，在 v1 中该接口对应 mkfile，而在 v2 中该接口对应 completeParts
 		final(context.Context) error

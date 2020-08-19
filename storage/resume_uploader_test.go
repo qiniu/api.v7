@@ -124,7 +124,7 @@ func TestPutWithSize(t *testing.T) {
 				},
 			})
 			if err != nil {
-				t.Fatalf("PutWithoutSize() error, %s", err)
+				t.Fatalf("Put() error, %s", err)
 			}
 			md5ByteArray := md5.Sum(data)
 			md5Value := hex.EncodeToString(md5ByteArray[:])

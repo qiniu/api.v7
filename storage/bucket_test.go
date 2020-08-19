@@ -37,6 +37,7 @@ var (
 	operationManager *OperationManager
 	formUploader     *FormUploader
 	resumeUploader   *ResumeUploader
+	resumeUploaderV2 *ResumeUploaderV2
 	base64Uploader   *Base64Uploader
 	clt              client.Client
 )
@@ -58,6 +59,7 @@ func init() {
 	operationManager = NewOperationManagerEx(mac, &cfg, &clt)
 	formUploader = NewFormUploaderEx(&cfg, &clt)
 	resumeUploader = NewResumeUploaderEx(&cfg, &clt)
+	resumeUploaderV2 = NewResumeUploaderV2Ex(&cfg, &clt)
 	base64Uploader = NewBase64UploaderEx(&cfg, &clt)
 	rand.Seed(time.Now().Unix())
 }

@@ -172,25 +172,20 @@ func (p *ResumeUploader) resumeUploaderAPIs() *resumeUploaderAPIs {
 	return &resumeUploaderAPIs{Client: p.Client, Cfg: p.Cfg}
 }
 
-type (
-	notifyFunc    func(blkIdx, blkSize int, ret *BlkputRet)
-	notifyErrFunc func(blkIdx, blkSize int, err error)
-
-	// 用于实现 resumeUploaderBase 的 V1 分片接口
-	resumeUploaderImpl struct {
-		ctx      context.Context
-		client   *client.Client
-		cfg      *Config
-		key      string
-		hasKey   bool
-		upToken  string
-		upHost   string
-		extra    *RputExtra
-		ret      interface{}
-		fileSize int64
-		lock     sync.Mutex
-	}
-)
+// 用于实现 resumeUploaderBase 的 V1 分片接口
+type resumeUploaderImpl struct {
+	ctx      context.Context
+	client   *client.Client
+	cfg      *Config
+	key      string
+	hasKey   bool
+	upToken  string
+	upHost   string
+	extra    *RputExtra
+	ret      interface{}
+	fileSize int64
+	lock     sync.Mutex
+}
 
 func newResumeUploaderImpl(resumeUploader *ResumeUploader, key string, hasKey bool, upToken string, upHost string, extra *RputExtra, ret interface{}) *resumeUploaderImpl {
 	return &resumeUploaderImpl{
@@ -264,7 +259,7 @@ func (impl *resumeUploaderImpl) uploadChunk(ctx context.Context, c chunk) error 
 }
 
 func (impl *resumeUploaderImpl) final(ctx context.Context) error {
-	sort.Sort(BlkputRets(impl.extra.Progresses))
+	sort.Sort(blkputRets(impl.extra.Progresses))
 	return impl.resumeUploaderAPIs().mkfile(ctx, impl.upToken, impl.upHost, impl.ret, impl.key, impl.hasKey, impl.fileSize, impl.extra)
 }
 

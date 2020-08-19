@@ -27,7 +27,7 @@ install:
   go get github.com/qiniu/x
 
 script:
-  - make test
+  - travis_wait make test
 
 after_success:
   - bash <(curl -s https://codecov.io/bash) -f coverage.txt
