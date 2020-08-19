@@ -19,6 +19,7 @@ var (
 	testSK                  = os.Getenv("secretKey")
 	testBucket              = os.Getenv("QINIU_TEST_BUCKET")
 	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
+	testBucketDomain        = os.Getenv("QINIU_TEST_DOMAIN")
 	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
 	testPipeline            = os.Getenv("QINIU_TEST_PIPELINE")
 	testDebug               = os.Getenv("QINIU_SDK_DEBUG")
