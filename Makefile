@@ -1,5 +1,5 @@
 test:
-	go test -v -timeout 30m -coverprofile=coverage.txt `go list ./... | grep -E  'auth|conf|cdn|storage|rtc|internal'`
+	go test -v -timeout 50m -coverprofile=coverage.txt `go list ./... | grep -E  'auth|conf|cdn|storage|rtc|internal'`
 
 unittest:
 	go test -v ./auth/...
