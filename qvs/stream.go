@@ -182,6 +182,13 @@ func (manager *Manager) EnableStream(nsId string, streamId string) error {
 	return err
 }
 
+// 停止推流
+func (manager *Manager) StopStream(nsId string, streamId string) error {
+
+	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/stop", nsId, streamId), nil, nil)
+	return err
+}
+
 type StreamPublishHistory struct {
 	StreamId string `json:"streamId"`
 	NsId     string `json:"nsId"`
