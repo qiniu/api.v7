@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
 	"testing"
 	"time"
@@ -103,6 +104,37 @@ func TestPutWithSizeV2(t *testing.T) {
 			t.Logf("Size: %d, Part: %d, Key: %s, Hash:%s", size, partSize, putRet.Key, putRet.Hash)
 		}
 	}
+	for _, partSize := range partSizes {
+		for _, size := range sizes {
+			md5Sumer := md5.New()
+			testKey := fmt.Sprintf("testRPutFileV2Key_%d_*", rand.Int())
+			tmpFile, err := ioutil.TempFile("", testKey)
+			if err != nil {
+				t.Error(err)
+			}
+			if _, err = io.CopyN(tmpFile, io.TeeReader(r, md5Sumer), size); err != nil {
+				t.Error(err)
+			} else if err = tmpFile.Close(); err != nil {
+				t.Error(err)
+			}
+			err = resumeUploaderV2.PutFile(context.Background(), &putRet, upToken, testKey, tmpFile.Name(), &RputV2Extra{
+				PartSize: partSize,
+				Notify: func(partNumber int64, ret *UploadPartsRet) {
+					t.Logf("Notify: partNumber: %d, ret: %#v", partNumber, ret)
+				},
+				NotifyErr: func(partNumber int64, err error) {
+					t.Logf("NotifyErr: partNumber: %d, err: %s", partNumber, err)
+				},
+			})
+			if err != nil {
+				t.Fatalf("PutFile() error, %s", err)
+			}
+			md5ByteArray := md5Sumer.Sum(nil)
+			md5Value := hex.EncodeToString(md5ByteArray[:])
+			validateMD5(t, testKey, md5Value, size)
+			t.Logf("Size: %d, Part: %d, Key: %s, Hash:%s", size, partSize, putRet.Key, putRet.Hash)
+		}
+	}
 }
 
 func TestPutWithoutKeyV2(t *testing.T) {
@@ -119,6 +151,28 @@ func TestPutWithoutKeyV2(t *testing.T) {
 		t.Error(err)
 	}
 	err := resumeUploaderV2.PutWithoutKey(context.Background(), &putRet, upToken, bytes.NewReader(data), int64(len(data)), &RputV2Extra{
+		Notify: func(partNumber int64, ret *UploadPartsRet) {
+			t.Logf("Notify: partNumber: %d, ret: %#v", partNumber, ret)
+		},
+		NotifyErr: func(partNumber int64, err error) {
+			t.Logf("NotifyErr: partNumber: %d, err: %s", partNumber, err)
+		},
+	})
+	if err != nil {
+		t.Fatalf("PutWithoutKey() error, %s", err)
+	}
+	t.Logf("Key: %s, Hash:%s", putRet.Key, putRet.Hash)
+
+	tmpFile, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Error(err)
+	}
+	if _, err = io.Copy(tmpFile, bytes.NewReader(data)); err != nil {
+		t.Error(err)
+	} else if err = tmpFile.Close(); err != nil {
+		t.Error(err)
+	}
+	err = resumeUploaderV2.PutFileWithoutKey(context.Background(), &putRet, upToken, tmpFile.Name(), &RputV2Extra{
 		Notify: func(partNumber int64, ret *UploadPartsRet) {
 			t.Logf("Notify: partNumber: %d, ret: %#v", partNumber, ret)
 		},
