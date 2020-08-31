@@ -83,3 +83,4 @@ func TestTemplateCRUD(t *testing.T) {
 	c.DeleteTemplate(tmpl5.ID)
 	c.DeleteTemplate(tmpl7.ID)
 }
+
