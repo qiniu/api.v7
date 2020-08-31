@@ -76,6 +76,9 @@ func TestStreamCRUD(t *testing.T) {
 	noError(t, err)
 	shouldBeEqual(t, false, ret.Disabled)
 
+	err = c.StopStream(ns1.ID, stream.StreamID)
+	fmt.Println(err)
+
 	c.DeleteStream(ns1.ID, "test001")
 	c.DeleteStream(ns1.ID, "test002")
 	c.DeleteStream(ns1.ID, "test003")

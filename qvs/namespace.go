@@ -20,6 +20,12 @@ type DomainInfo struct {
 	State  int    `json:"state"`
 }
 
+type SipAddr struct {
+	SipServerID   string   `json:"sipServerId,omitempty"`
+	SipServerIP   string   `json:"sipServerIP,omitempty"`
+	SipServerPort []string `json:"sipServerPort,omitempty"`
+}
+
 type NameSpace struct {
 	ID                     string   `json:"id"`
 	Name                   string   `json:"name"`                         // 空间名称(格式"^[a-zA-Z0-9_-]{1,100}$")
@@ -41,6 +47,9 @@ type NameSpace struct {
 	StreamCount            int64    `json:"streamCount"`                  // 流数量
 	OnlineStreamCount      int64    `json:"onlineStreamCount"`            // 在线流数量
 	DisabledStreamCount    int64    `json:"disabledStreamCount"`          // 禁用流数量
+
+	UrlMode  int       `json:"urlMode"`  // 推拉流地址计算方式，1:static, 2:dynamic
+	SipAddrs []SipAddr `json:"sipAddrs"` // sip信息数组
 }
 
 /*
