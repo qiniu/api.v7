@@ -25,9 +25,7 @@ func TestPutWithoutSizeV2(t *testing.T) {
 	sizes := []int64{
 		64,
 		1 << blockBits,
-		1 << blockBits,
 		(1 << blockBits) - 1,
-		(1 << blockBits) + 1,
 		(1 << blockBits) + 1,
 		(1 << (blockBits + 2)) + 1,
 		(1 << (blockBits + 4)) + 1,
@@ -70,9 +68,7 @@ func TestPutWithSizeV2(t *testing.T) {
 	sizes := []int64{
 		64,
 		1 << blockBits,
-		1 << blockBits,
 		(1 << blockBits) - 1,
-		(1 << blockBits) + 1,
 		(1 << blockBits) + 1,
 		(1 << (blockBits + 2)) + 1,
 		(1 << (blockBits + 4)) + 1,
