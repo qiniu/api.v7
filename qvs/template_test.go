@@ -12,7 +12,7 @@ func TestTemplateCRUD(t *testing.T) {
 
 	tmpl := &Template{
 		Name:               "test001",
-		Bucket:             "xxxx",
+		Bucket:             "bucket-test1",
 		TemplateType:       1,
 		JpgOverwriteStatus: true,
 		RecordType:         2,
@@ -38,8 +38,8 @@ func TestTemplateCRUD(t *testing.T) {
 		},
 		{
 			Op:    "replace",
-			Key:   "zone",
-			Value: "z1",
+			Key:   "desc",
+			Value: "desc",
 		},
 	}
 	tmpl3, err := c.UpdateTemplate(tmpl2.ID, ops)
@@ -49,11 +49,11 @@ func TestTemplateCRUD(t *testing.T) {
 	shouldBeEqual(t, tmpl.TemplateType, tmpl3.TemplateType)
 	shouldBeEqual(t, tmpl.JpgOverwriteStatus, tmpl3.JpgOverwriteStatus)
 	shouldBeEqual(t, tmpl.RecordType, tmpl3.RecordType)
-	shouldBeEqual(t, "z1", tmpl3.Zone)
+	shouldBeEqual(t, "desc", tmpl3.Desc)
 
 	tmpl4 := &Template{
 		Name:               "test003",
-		Bucket:             "xxxx",
+		Bucket:             "bucket-test1",
 		TemplateType:       1,
 		JpgOverwriteStatus: true,
 		RecordType:         2,
@@ -63,7 +63,7 @@ func TestTemplateCRUD(t *testing.T) {
 
 	tmpl6 := &Template{
 		Name:               "test004",
-		Bucket:             "xxxx",
+		Bucket:             "bucket-test1",
 		TemplateType:       1,
 		JpgOverwriteStatus: true,
 		RecordType:         2,
@@ -71,17 +71,16 @@ func TestTemplateCRUD(t *testing.T) {
 	tmpl7, err := c.AddTemplate(tmpl6)
 	noError(t, err)
 
-	nss, total, err := c.ListTemplate(0, 2, "", 1, "")
+	nss, _, err := c.ListTemplate(0, 2, "", 1, "")
 	noError(t, err)
-	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 2, len(nss))
 
-	nss, total, err = c.ListTemplate(2, 2, "", 1, "")
+	nss, _, err = c.ListTemplate(2, 1, "", 1, "")
 	noError(t, err)
-	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 1, len(nss))
 
 	c.DeleteTemplate(tmpl1.ID)
 	c.DeleteTemplate(tmpl5.ID)
 	c.DeleteTemplate(tmpl7.ID)
 }
+

@@ -35,6 +35,33 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, domain[0], ns2.Domains[0])
 	shouldBeEqual(t, hlslowlatency, ns2.HLSLowLatency)
 
+	nsName2 := "testNamespace2"
+	nsAccessType2 := "gb28181"
+	urlMode := 1
+	domain2 := []string{"qiniuUM.com"}
+	zone2 := "z0"
+	hlslowlatency2 := false
+	nsUM := &NameSpace{
+		Name:          nsName2,
+		AccessType:    nsAccessType2,
+		UrlMode:       urlMode,
+		Domains:       domain2,
+		Zone:          zone2,
+		HLSLowLatency: hlslowlatency2,
+	}
+	nsUMPost, err := c.AddNamespace(nsUM)
+	noError(t, err)
+
+	nsUMQuery, err := c.QueryNamespace(nsUMPost.ID)
+	noError(t, err)
+	shouldBeEqual(t, nsName2, nsUMQuery.Name)
+	shouldBeEqual(t, nsAccessType2, nsUMQuery.AccessType)
+	shouldBeEqual(t, urlMode, nsUMQuery.UrlMode)
+	shouldBeEqual(t, domain2[0], nsUMQuery.Domains[0])
+	shouldBeEqual(t, hlslowlatency2, nsUMQuery.HLSLowLatency)
+
+	c.DeleteNamespace(nsUMPost.ID)
+
 	ops := []PatchOperation{
 		{
 			Op:    "replace",
@@ -43,12 +70,7 @@ func TestNamespaceCRUD(t *testing.T) {
 		},
 		{
 			Op:    "replace",
-			Key:   "zone",
-			Value: "z1",
-		},
-		{
-			Op:    "replace",
-			Key:   "hlslowlatency",
+			Key:   "hlsLowLatency",
 			Value: true,
 		},
 	}
@@ -58,7 +80,6 @@ func TestNamespaceCRUD(t *testing.T) {
 	shouldBeEqual(t, nsAccessType, ns3.AccessType)
 	shouldBeEqual(t, nsRTMPURLType, ns3.RTMPURLType)
 	shouldBeEqual(t, domain[0], ns3.Domains[0])
-	shouldBeEqual(t, "z1", ns3.Zone)
 	shouldBeEqual(t, true, ns3.HLSLowLatency)
 
 	ns4 := &NameSpace{
@@ -71,21 +92,20 @@ func TestNamespaceCRUD(t *testing.T) {
 	noError(t, err)
 
 	ns6 := &NameSpace{
-		Name:       "testNamespace4",
-		AccessType: "gb28181",
+		Name:        "testNamespace4",
+		AccessType:  "gb28181",
+		RTMPURLType: 2,
 	}
 	ns7, err := c.AddNamespace(ns6)
 	noError(t, err)
 
-	nss, total, err := c.ListNamespace(0, 2, "")
+	nss, _, err := c.ListNamespace(0, 2, "")
 	noError(t, err)
-	shouldBeEqual(t, int64(3), total)
 	shouldBeEqual(t, 2, len(nss))
 
-	nss, total, err = c.ListNamespace(2, 2, "")
+	nss, _, err = c.ListNamespace(1, 2, "")
 	noError(t, err)
-	shouldBeEqual(t, int64(3), total)
-	shouldBeEqual(t, 1, len(nss))
+	shouldBeEqual(t, 2, len(nss))
 
 	err = c.DisableNamespace(ns1.ID)
 	noError(t, err)
