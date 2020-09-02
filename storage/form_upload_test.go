@@ -3,14 +3,10 @@ package storage
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"testing"
-)
-
-var (
-	testLocalFile = filepath.Join(os.Getenv("TRAVIS_BUILD_DIR"), "Makefile")
 )
 
 func TestFormUploadPutFile(t *testing.T) {
@@ -20,10 +16,18 @@ func TestFormUploadPutFile(t *testing.T) {
 		Scope:           testBucket,
 		DeleteAfterDays: 7,
 	}
+
+	// prepare file for test uploading
+	testLocalFile, err := ioutil.TempFile("", "TestFormUploadPutFile")
+	if err != nil {
+		t.Fatalf("ioutil.TempFile file failed, err: %v", err)
+	}
+	defer os.Remove(testLocalFile.Name())
+
 	upToken := putPolicy.UploadToken(mac)
 	testKey := fmt.Sprintf("testPutFileKey_%d", rand.Int())
 
-	err := formUploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile, nil)
+	err = formUploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile.Name(), nil)
 	if err != nil {
 		t.Fatalf("FormUploader#PutFile() error, %s", err)
 	}

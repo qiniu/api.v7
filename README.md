@@ -1,7 +1,12 @@
 github.com/qiniu/api.v7 (Qiniu Go SDK v7.x)
 ===============
 
-[![Build Status](https://travis-ci.org/qiniu/api.v7.svg?branch=master)](https://travis-ci.org/qiniu/api.v7) [![GoDoc](https://godoc.org/github.com/qiniu/api.v7?status.svg)](https://godoc.org/github.com/qiniu/api.v7)
+[![LICENSE](https://img.shields.io/github/license/qiniu/api.v7.svg)](https://github.com/qiniu/api.v7/blob/master/LICENSE)
+[![Build Status](https://travis-ci.org/qiniu/api.v7.svg?branch=master)](https://travis-ci.org/qiniu/api.v7) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/qiniu/api.v7)](https://goreportcard.com/report/github.com/qiniu/api.v7)
+[![GitHub release](https://img.shields.io/github/v/tag/qiniu/api.v7.svg?label=release)](https://github.com/qiniu/api.v7/releases)
+[![codecov](https://codecov.io/gh/qiniu/api.v7/branch/master/graph/badge.svg)](https://codecov.io/gh/qiniu/api.v7)
+[![GoDoc](https://godoc.org/github.com/qiniu/api.v7?status.svg)](https://godoc.org/github.com/qiniu/api.v7)
 
 [![Qiniu Logo](http://open.qiniudn.com/logo.png)](http://qiniu.com/)
 
