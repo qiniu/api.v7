@@ -148,5 +148,28 @@ func (p *Base64Uploader) put(
 }
 
 func (p *Base64Uploader) upHost(ak, bucket string) (upHost string, err error) {
-	return getUpHost(p.cfg, ak, bucket)
+	var zone *Zone
+	if p.cfg.Zone != nil {
+		zone = p.cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
+	}
+
+	scheme := "http://"
+	if p.cfg.UseHTTPS {
+		scheme = "https://"
+	}
+
+	host := zone.SrcUpHosts[0]
+	if p.cfg.UseCdnDomains {
+		host = zone.CdnUpHosts[0]
+	}
+
+	upHost = fmt.Sprintf("%s%s", scheme, host)
+	return
 }
