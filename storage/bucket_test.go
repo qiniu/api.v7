@@ -19,7 +19,6 @@ var (
 	testSK                  = os.Getenv("secretKey")
 	testBucket              = os.Getenv("QINIU_TEST_BUCKET")
 	testBucketPrivate       = os.Getenv("QINIU_TEST_BUCKET_PRIVATE")
-	testBucketDomain        = os.Getenv("QINIU_TEST_DOMAIN")
 	testBucketPrivateDomain = os.Getenv("QINIU_TEST_DOMAIN_PRIVATE")
 	testPipeline            = os.Getenv("QINIU_TEST_PIPELINE")
 	testDebug               = os.Getenv("QINIU_SDK_DEBUG")
@@ -37,7 +36,6 @@ var (
 	operationManager *OperationManager
 	formUploader     *FormUploader
 	resumeUploader   *ResumeUploader
-	resumeUploaderV2 *ResumeUploaderV2
 	base64Uploader   *Base64Uploader
 	clt              client.Client
 )
@@ -59,7 +57,6 @@ func init() {
 	operationManager = NewOperationManagerEx(mac, &cfg, &clt)
 	formUploader = NewFormUploaderEx(&cfg, &clt)
 	resumeUploader = NewResumeUploaderEx(&cfg, &clt)
-	resumeUploaderV2 = NewResumeUploaderV2Ex(&cfg, &clt)
 	base64Uploader = NewBase64UploaderEx(&cfg, &clt)
 	rand.Seed(time.Now().Unix())
 }

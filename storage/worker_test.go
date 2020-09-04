@@ -10,6 +10,13 @@ import (
 	"testing"
 )
 
+func doWork(tasks chan func()) {
+	for {
+		task := <-tasks
+		task()
+	}
+}
+
 func TestWorkerCopy(t *testing.T) {
 	wg := sync.WaitGroup{}
 	var initOnce sync.Once
@@ -18,7 +25,7 @@ func TestWorkerCopy(t *testing.T) {
 	initOnce.Do(func() {
 		tasks = make(chan func(), workers)
 		for i := 0; i < workers; i++ {
-			go worker(tasks)
+			go doWork(tasks)
 		}
 	})
 
@@ -50,7 +57,7 @@ func TestWorkerUpload(t *testing.T) {
 	initOnce.Do(func() {
 		tasks = make(chan func(), workers)
 		for i := 0; i < workers; i++ {
-			go worker(tasks)
+			go doWork(tasks)
 		}
 	})
 
