@@ -167,12 +167,25 @@ func (p *FormUploader) put(
 	}
 	if extra.UpHost != "" {
 		upHost = extra.UpHost
-	} else if upHost, err = p.getUpHostFromUploadToken(uptoken); err != nil {
-		return
+	} else {
+		ak, bucket, gErr := getAkBucketFromUploadToken(uptoken)
+		if gErr != nil {
+			err = gErr
+			return
+		}
+
+		upHost, err = p.UpHost(ak, bucket)
+		if err != nil {
+			return
+		}
 	}
 
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
+
+	if extra == nil {
+		extra = &PutExtra{}
+	}
 
 	if extra.OnProgress != nil {
 		data = &readerWithProgress{reader: data, fsize: size, onProgress: extra.OnProgress}
@@ -226,16 +239,6 @@ func (p *FormUploader) put(
 	return
 }
 
-func (p *FormUploader) getUpHostFromUploadToken(upToken string) (upHost string, err error) {
-	var ak, bucket string
-
-	if ak, bucket, err = getAkBucketFromUploadToken(upToken); err != nil {
-		return
-	}
-	upHost, err = p.UpHost(ak, bucket)
-	return
-}
-
 type crc32Reader struct {
 	h                hash.Hash32
 	boundary         string
@@ -273,7 +276,30 @@ func (r crc32Reader) length() (length int64) {
 }
 
 func (p *FormUploader) UpHost(ak, bucket string) (upHost string, err error) {
-	return getUpHost(p.Cfg, ak, bucket)
+	var zone *Zone
+	if p.Cfg.Zone != nil {
+		zone = p.Cfg.Zone
+	} else {
+		if v, zoneErr := GetZone(ak, bucket); zoneErr != nil {
+			err = zoneErr
+			return
+		} else {
+			zone = v
+		}
+	}
+
+	scheme := "http://"
+	if p.Cfg.UseHTTPS {
+		scheme = "https://"
+	}
+
+	host := zone.SrcUpHosts[0]
+	if p.Cfg.UseCdnDomains {
+		host = zone.CdnUpHosts[0]
+	}
+
+	upHost = fmt.Sprintf("%s%s", scheme, host)
+	return
 }
 
 type readerWithProgress struct {
