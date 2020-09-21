@@ -347,12 +347,33 @@ func TestBatch(t *testing.T) {
 		statOps = append(statOps, URIStat(testBucket, k))
 	}
 	batchOpRets, bErr := bucketManager.Batch(statOps)
-	_, bErr = bucketManager.Batch(copyOps)
 	if bErr != nil {
 		t.Fatalf("BatchStat error, %s", bErr)
 	}
 
 	t.Logf("BatchStat: %v", batchOpRets)
+}
+
+func TestBatchPartialFailure(t *testing.T) {
+	copyOps := make([]string, 0, 2)
+	cpKey := fmt.Sprintf("%s_batchcopy_%d", testKey, 0)
+	copyOps = append(copyOps, URICopy(testBucket, testKey, testBucket, cpKey, true))
+	cpKey = fmt.Sprintf("%s_batchcopy_%d", testKey, 0)
+	copyOps = append(copyOps, URICopy(testBucket, testKey+".notexisted", testBucket, cpKey, true))
+
+	rets, bErr := bucketManager.Batch(copyOps)
+	if bErr != nil {
+		t.Fatalf("BatchCopy error, %s", bErr)
+	}
+	if len(rets) != 2 {
+		t.Fatalf("BatchCopy returns wrong number of results")
+	}
+	if rets[0].Code != 200 {
+		t.Fatalf("BatchCopy[0] error, status = %d", rets[0].Code)
+	}
+	if rets[1].Code != 612 {
+		t.Fatalf("BatchCopy[1] error, status = %d", rets[1].Code)
+	}
 }
 
 func TestListBucket(t *testing.T) {
