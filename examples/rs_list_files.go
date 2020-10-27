@@ -32,7 +32,7 @@ func main() {
 	//初始列举marker为空
 	marker := ""
 	for {
-		entries, _, nextMarker, hashNext, err := bucketManager.ListFiles(bucket, prefix, delimiter, marker, limit)
+		entries, _, nextMarker, hasNext, err := bucketManager.ListFiles(bucket, prefix, delimiter, marker, limit)
 		if err != nil {
 			fmt.Println("list error,", err)
 			break
@@ -41,7 +41,7 @@ func main() {
 		for _, entry := range entries {
 			fmt.Println(entry.Key)
 		}
-		if hashNext {
+		if hasNext {
 			marker = nextMarker
 		} else {
 			//list end
