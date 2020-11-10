@@ -2,8 +2,6 @@ package qvs
 
 import (
 	"context"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 )
 
@@ -215,65 +213,4 @@ func (manager *Manager) QueryStreamPubhistories(nsId string, streamId string, st
 
 	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/pubhistories?%v", nsId, streamId, query.Encode()), nil)
 	return ret.Items, ret.Total, err
-}
-
-// 查询截图列表
-func (manager *Manager) StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, limit int, marker string) ([]byte, error) {
-
-	query := url.Values{}
-	setQuery(query, "start", start)
-	setQuery(query, "end", end)
-	setQuery(query, "type", qtype)
-	setQuery(query, "limit", limit)
-	setQuery(query, "marker", marker)
-
-	req, err := http.NewRequest("GET", manager.url("/namespaces/%s/streams/%s/snapshots?%v", nsId, streamId, query.Encode()), nil)
-	if err != nil {
-		return nil, err
-	}
-	resp, err := manager.client.Do(context.Background(), req)
-	if err != nil {
-		return nil, err
-	}
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return body, nil
-}
-
-type RecordHistory struct {
-	Url      string `json:"url"`
-	Start    int    `json:"start"`
-	End      int    `json:"end"`
-	Duration int    `json:"duration"`
-	Format   int    `json:"format"`
-	Snap     string `json:"snap"`
-}
-
-// 查询视频流的录制记录
-func (manager *Manager) QueryStreamRecordHistories(nsId string, streamId string, start, end int, marker string, line int) ([]RecordHistory, string, error) {
-
-	ret := struct {
-		Items  []RecordHistory `json:"items"`
-		Marker string          `json:"marker"`
-	}{}
-
-	query := url.Values{}
-	setQuery(query, "start", start)
-	setQuery(query, "end", end)
-	setQuery(query, "marker", marker)
-	setQuery(query, "line", line)
-
-	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/recordhistories?%v", nsId, streamId, query.Encode()), nil)
-	return ret.Items, ret.Marker, err
-}
-
-// 查询流封面
-func (manager *Manager) QueryStreamCover(nsId string, streamId string) (string, error) {
-	var ret = struct {
-		Url string `json:"url"`
-	}{}
-	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/cover", nsId, streamId), nil)
-	return ret.Url, err
 }

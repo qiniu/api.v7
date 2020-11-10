@@ -22,6 +22,7 @@ func getTestManager() *Manager {
 }
 func noError(t *testing.T, err error) {
 	if err != nil {
+		t.Helper()
 		debug.PrintStack()
 		t.Fatalf("should be nil, err = %s", err.Error())
 	}
@@ -29,6 +30,7 @@ func noError(t *testing.T, err error) {
 
 func shouldBeEqual(t *testing.T, a interface{}, b interface{}) {
 	if a != b {
+		t.Helper()
 		debug.PrintStack()
 		t.Fatalf("should be equal, expect = %#v, but got  = %#v", a, b)
 	}

@@ -89,4 +89,26 @@ func TestDeviceCRUD(t *testing.T) {
 
 	c.DeleteNamespace(ns1.ID)
 
+	channel, err := c.QueryChannel("3nm4x0vyz7xlu", "31011500991180000270", "31011500991180000135")
+	noError(t, err)
+	fmt.Println(*channel)
+
+	//err = c.DeleteChannel("3nm4x0vyz7xlu", "31011500991180000270", "31011500991180000135")
+	//noError(t, err)
+
+	err = c.FetchCatalog("3nm4x0vyz7xlu", "31011500991180000270")
+	noError(t, err)
+}
+
+func TestQueryGBRecordHistories(t *testing.T) {
+	if skipTest() {
+		t.SkipNow()
+	}
+	c := getTestManager()
+
+	ret, err := c.QueryGBRecordHistories("3nm4x0vyz7xlu", "31011500991180000270", "34020000001310000020", 1604817540, 1604903940)
+	noError(t, err)
+	for _, v := range ret.Items {
+		fmt.Println(v)
+	}
 }
