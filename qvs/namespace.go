@@ -50,6 +50,8 @@ type NameSpace struct {
 
 	UrlMode  int       `json:"urlMode"`  // 推拉流地址计算方式，1:static, 2:dynamic
 	SipAddrs []SipAddr `json:"sipAddrs"` // sip信息数组
+
+	OnDemandPull bool `json:"onDemandPull"` // 按需拉流开关
 }
 
 /*

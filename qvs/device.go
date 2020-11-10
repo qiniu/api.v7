@@ -44,6 +44,17 @@ type DeviceChannels struct {
 	Items        []Channel `json:"items"`
 }
 
+type DeviceVideoItems struct {
+	Items []deviceVideoItem `json:"items"`
+}
+
+type deviceVideoItem struct {
+	PlayUrls RoutePlayUrls `json:"playUrls"`
+	Start    int           `json:"start"`
+	End      int           `json:"end"`
+	Type     string        `json:"type"`
+}
+
 /*
    创建设备API
    参数device需要赋值字段:
@@ -144,3 +155,54 @@ func (manager *Manager) ListChannels(nsId string, gbId string, prefix string) (*
 	}
 	return &ret, nil
 }
+
+/*
+   同步设备通道
+*/
+func (manager *Manager) FetchCatalog(nsId , gbId string) error {
+	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/devices/%s/catalog/fetch", nsId, gbId), nil, nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+   查询通道详情
+*/
+func (manager *Manager) QueryChannel(nsId, gbId, channelId string) (*Channel, error) {
+	var ret Channel
+	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/devices/%s/channels/%s", nsId, gbId, channelId), nil)
+	if err != nil {
+		return nil, err
+	}
+	return &ret, nil
+}
+
+/*
+   删除通道
+*/
+func (manager *Manager) DeleteChannel(nsId, gbId, channelId string) error {
+	err := manager.client.Call(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/devices/%s/channels/%s", nsId, gbId, channelId), nil)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
+   查询本地录像列表
+   普通设备chId可以忽略, 置为空字符串即可
+*/
+func (manager *Manager) QueryGBRecordHistories(nsId, gbId, chId string, start, end int) (*DeviceVideoItems, error) {
+	var ret DeviceVideoItems
+	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/devices/%s/recordhistories?start=%d&end=%d&chId=%s", nsId, gbId, start, end, chId), nil)
+    if err != nil {
+    	return nil, err
+	}
+	return &ret, nil
+}
+
+
+
+
