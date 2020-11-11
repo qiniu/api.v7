@@ -9,20 +9,17 @@ import (
 
 // 启动按需录制
 func (manager *Manager) StartRecord(nsId, streamId string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/record/start", nsId, streamId), nil, nil)
-	return err
+	return manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/record/start", nsId, streamId), nil, nil)
 }
 
 // 停止按需录制
 func (manager *Manager) StopRecord(nsId, streamId string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/record/stop", nsId, streamId), nil, nil)
-	return err
+	return manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/record/stop", nsId, streamId), nil, nil)
 }
 
 // 删除录制片段
 func (manager *Manager) DeleteStreamRecordHistories(nsId, streamId string, files []string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/streams/%s/recordhistories", nsId, streamId), nil, M{"files": files})
-	return err
+	return manager.client.CallWithJson(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/streams/%s/recordhistories", nsId, streamId), nil, M{"files": files})
 }
 
 type saveasArgs struct {
@@ -67,14 +64,12 @@ func (manager *Manager) RecordsPlayback(nsId, streamId string, start, end int) (
 
 // 按需截图
 func (manager *Manager) OndemandSnap(nsId, streamId string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/snap", nsId, streamId), nil, nil)
-	return err
+	return manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/snap", nsId, streamId), nil, nil)
 }
 
 // 删除截图
 func (manager *Manager) DeleteSnapshots(nsId, streamId string, files []string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/streams/%s/snapshots", nsId, streamId), nil, M{"files": files})
-	return err
+	return manager.client.CallWithJson(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/streams/%s/snapshots", nsId, streamId), nil, M{"files": files})
 }
 
 // 查询截图列表
