@@ -159,7 +159,7 @@ func (manager *Manager) ListChannels(nsId string, gbId string, prefix string) (*
 /*
    同步设备通道
 */
-func (manager *Manager) FetchCatalog(nsId , gbId string) error {
+func (manager *Manager) FetchCatalog(nsId, gbId string) error {
 	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/devices/%s/catalog/fetch", nsId, gbId), nil, nil)
 	if err != nil {
 		return err
@@ -197,12 +197,8 @@ func (manager *Manager) DeleteChannel(nsId, gbId, channelId string) error {
 func (manager *Manager) QueryGBRecordHistories(nsId, gbId, chId string, start, end int) (*DeviceVideoItems, error) {
 	var ret DeviceVideoItems
 	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/devices/%s/recordhistories?start=%d&end=%d&chId=%s", nsId, gbId, start, end, chId), nil)
-    if err != nil {
-    	return nil, err
+	if err != nil {
+		return nil, err
 	}
 	return &ret, nil
 }
-
-
-
-

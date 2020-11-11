@@ -10,7 +10,7 @@ func TestQueryStats(t *testing.T) {
 		t.SkipNow()
 	}
 	c := getTestManager()
-	ret, err := c.QueryFlow("", "","5min", 20200901, 20200902)
+	ret, err := c.QueryFlow("", "", "5min", 20200901, 20200902)
 	noError(t, err)
 	fmt.Println(*ret)
 

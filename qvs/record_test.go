@@ -76,8 +76,8 @@ func TestRecordClipsSaveasAndDeleteRecord(t *testing.T) {
 
 	ret, err := c.RecordClipsSaveas("2xenzw5o81ods", "31011500991320000356", &saveasArgs{
 		Format: "m3u8",
-		Start: 1604989846,
-		End: 1604990735,
+		Start:  1604989846,
+		End:    1604990735,
 	})
 	noError(t, err)
 	shouldBeEqual(t, ret.Fname, "record/2xenzw5o81ods/31011500991320000356/1604989846152-1604990735281-852640.m3u8")
@@ -85,5 +85,3 @@ func TestRecordClipsSaveasAndDeleteRecord(t *testing.T) {
 	err = c.DeleteStreamRecordHistories("2xenzw5o81ods", "31011500991320000356", []string{"record/2xenzw5o81ods/31011500991320000356/1604989846152-1604990735281-852640.m3u8"})
 	noError(t, err)
 }
-
-
