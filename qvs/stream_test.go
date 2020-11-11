@@ -132,4 +132,3 @@ func TestStaticPublishPlayURL(t *testing.T) {
 	err = c.DeleteNamespace(ns1.ID)
 	noError(t, err)
 }
-
