@@ -160,11 +160,7 @@ func (manager *Manager) ListChannels(nsId string, gbId string, prefix string) (*
    同步设备通道
 */
 func (manager *Manager) FetchCatalog(nsId, gbId string) error {
-	err := manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/devices/%s/catalog/fetch", nsId, gbId), nil, nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/devices/%s/catalog/fetch", nsId, gbId), nil, nil)
 }
 
 /*
@@ -183,11 +179,7 @@ func (manager *Manager) QueryChannel(nsId, gbId, channelId string) (*Channel, er
    删除通道
 */
 func (manager *Manager) DeleteChannel(nsId, gbId, channelId string) error {
-	err := manager.client.Call(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/devices/%s/channels/%s", nsId, gbId, channelId), nil)
-	if err != nil {
-		return err
-	}
-	return nil
+	return manager.client.Call(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/devices/%s/channels/%s", nsId, gbId, channelId), nil)
 }
 
 /*
