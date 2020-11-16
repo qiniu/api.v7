@@ -1,4 +1,4 @@
-# QVS Cloud Server-Side Library for Go test
+# QVS Cloud Server-Side Library for Go
 
 ## Features
 
