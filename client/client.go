@@ -154,12 +154,11 @@ func (r Client) DoRequestWithJson(ctx context.Context, method, reqUrl string, he
 }
 
 func (r Client) Do(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-
-	if ctx == nil {
-		ctx = context.Background()
-	}
+	reqctx := req.Context()
 
 	if reqId, ok := reqid.ReqidFromContext(ctx); ok {
+		req.Header.Set("X-Reqid", reqId)
+	} else if reqId, ok = reqid.ReqidFromContext(reqctx); ok {
 		req.Header.Set("X-Reqid", reqId)
 	}
 
@@ -167,36 +166,7 @@ func (r Client) Do(ctx context.Context, req *http.Request) (resp *http.Response,
 		req.Header.Set("User-Agent", UserAgent)
 	}
 
-	transport := r.Transport // don't change r.Transport
-	if transport == nil {
-		transport = http.DefaultTransport
-	}
-
-	// avoid cancel() is called before Do(req), but isn't accurate
-	select {
-	case <-ctx.Done():
-		err = ctx.Err()
-		return
-	default:
-	}
-
-	if tr, ok := getRequestCanceler(transport); ok {
-		// support CancelRequest
-		reqC := make(chan bool, 1)
-		go func() {
-			resp, err = r.Client.Do(req)
-			reqC <- true
-		}()
-		select {
-		case <-reqC:
-		case <-ctx.Done():
-			tr.CancelRequest(req)
-			<-reqC
-			err = ctx.Err()
-		}
-	} else {
-		resp, err = r.Client.Do(req)
-	}
+	resp, err = r.Client.Do(req)
 	return
 }
 
@@ -384,34 +354,3 @@ func (r Client) CredentialedCall(ctx context.Context, cred *auth.Credentials, to
 	ctx = auth.WithCredentialsType(ctx, cred, tokenType)
 	return r.Call(ctx, ret, method, reqUrl, headers)
 }
-
-// ---------------------------------------------------------------------------
-
-type requestCanceler interface {
-	CancelRequest(req *http.Request)
-}
-
-type nestedObjectGetter interface {
-	NestedObject() interface{}
-}
-
-func getRequestCanceler(tp http.RoundTripper) (rc requestCanceler, ok bool) {
-
-	if rc, ok = tp.(requestCanceler); ok {
-		return
-	}
-
-	p := interface{}(tp)
-	for {
-		getter, ok1 := p.(nestedObjectGetter)
-		if !ok1 {
-			return
-		}
-		p = getter.NestedObject()
-		if rc, ok = p.(requestCanceler); ok {
-			return
-		}
-	}
-}
-
-// --------------------------------------------------------------------
