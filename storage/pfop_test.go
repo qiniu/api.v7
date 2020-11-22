@@ -11,15 +11,6 @@ var (
 	testVideoKey = "qiniu.mp4"
 )
 
-func TestPrefop(t *testing.T) {
-	pid := "na0.597802c092129336c20f3f91"
-	prefopRet, err := operationManager.Prefop(pid)
-	if err != nil {
-		t.Fatalf("Prefop() error, %s", err)
-	}
-	t.Logf("%s", prefopRet.String())
-}
-
 func TestPfop(t *testing.T) {
 	saveBucket := testBucket
 
@@ -42,4 +33,9 @@ func TestPfop(t *testing.T) {
 	}
 	t.Logf("persistentId: %s", pid)
 
+	prefopRet, err := operationManager.Prefop(pid)
+	if err != nil {
+		t.Fatalf("Prefop() error, %s", err)
+	}
+	t.Logf("%s", prefopRet.String())
 }
