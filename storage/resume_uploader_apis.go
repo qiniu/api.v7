@@ -19,13 +19,15 @@ type resumeUploaderAPIs struct {
 
 // BlkputRet 表示分片上传每个片上传完毕的返回值
 type BlkputRet struct {
-	Ctx       string `json:"ctx"`
-	Checksum  string `json:"checksum"`
-	Crc32     uint32 `json:"crc32"`
-	Offset    uint32 `json:"offset"`
-	Host      string `json:"host"`
-	ExpiredAt int64  `json:"expired_at"`
-	blkIdx    int
+	Ctx        string `json:"ctx"`
+	Checksum   string `json:"checksum"`
+	Crc32      uint32 `json:"crc32"`
+	Offset     uint32 `json:"offset"`
+	Host       string `json:"host"`
+	ExpiredAt  int64  `json:"expired_at"`
+	chunkSize  int
+	fileOffset int64
+	blkIdx     int
 }
 
 func (p *resumeUploaderAPIs) mkBlk(ctx context.Context, upToken, upHost string, ret *BlkputRet, blockSize int, body io.Reader, size int) error {
@@ -42,6 +44,7 @@ func (p *resumeUploaderAPIs) bput(ctx context.Context, upToken string, ret *Blkp
 
 // RputExtra 表示分片上传额外可以指定的参数
 type RputExtra struct {
+	Recorder   Recorder          // 可选。上传进度记录
 	Params     map[string]string // 可选。用户自定义参数，以"x:"开头，而且值不能为空，否则忽略
 	UpHost     string
 	MimeType   string                                        // 可选。
@@ -102,10 +105,13 @@ func (p *resumeUploaderAPIs) uploadParts(ctx context.Context, upToken, upHost, b
 type uploadPartInfo struct {
 	Etag       string `json:"etag"`
 	PartNumber int64  `json:"partNumber"`
+	partSize   int
+	fileOffset int64
 }
 
 // RputV2Extra 表示分片上传 v2 额外可以指定的参数
 type RputV2Extra struct {
+	Recorder   Recorder          // 可选。上传进度记录
 	Metadata   map[string]string // 可选。用户自定义文件 metadata 信息
 	CustomVars map[string]string // 可选。用户自定义参数，以"x:"开头，而且值不能为空，否则忽略
 	UpHost     string
@@ -154,8 +160,11 @@ func (p *resumeUploaderAPIs) getUpHostFromUploadToken(upToken string) (upHost st
 }
 
 func (p *resumeUploaderAPIs) getBucketAndUpHostFromUploadToken(upToken string) (bucket, upHost string, err error) {
-	var ak string
+	_, bucket, upHost, err = p.getAkAndBucketAndUpHostFromUploadToken(upToken)
+	return
+}
 
+func (p *resumeUploaderAPIs) getAkAndBucketAndUpHostFromUploadToken(upToken string) (ak, bucket, upHost string, err error) {
 	if ak, bucket, err = getAkBucketFromUploadToken(upToken); err != nil {
 		return
 	}

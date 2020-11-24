@@ -9,6 +9,9 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -178,6 +181,57 @@ func TestPutWithoutKeyV2(t *testing.T) {
 		t.Fatalf("PutWithoutKey() error, %s", err)
 	}
 	t.Logf("Key: %s, Hash:%s", putRet.Key, putRet.Hash)
+}
+func TestPutWithRecoveryV2(t *testing.T) {
+	var putRet PutRet
+	putPolicy := PutPolicy{
+		Scope:           testBucket,
+		DeleteAfterDays: 7,
+	}
+	upToken := putPolicy.UploadToken(mac)
+
+	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
+	dirName, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dirName)
+	recorder, err := NewFileRecorder(dirName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fileName := filepath.Join(dirName, "originalFile")
+	testFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer testFile.Close()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	size := int64(4 * (1 << blockBits))
+	io.CopyN(testFile, r, size)
+
+	for i := 0; i < 4; i++ {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		counter := uint32(0)
+		err = resumeUploaderV2.PutFile(ctx, &putRet, upToken, testKey, fileName, &RputV2Extra{
+			Recorder: recorder,
+			Notify: func(partNumber int64, ret *UploadPartsRet) {
+				t.Logf("Notify: partNumber: %d, ret: %#v", partNumber, ret)
+				if atomic.AddUint32(&counter, 1) >= 2 {
+					cancelFunc()
+				}
+			},
+			NotifyErr: func(partNumber int64, err error) {
+				t.Logf("NotifyErr: partNumber: %d, err: %s", partNumber, err)
+			},
+		})
+		if err == nil {
+			return
+		}
+	}
+	t.Fatal(err)
 }
 
 func TestPutWithEmptyKeyV2(t *testing.T) {

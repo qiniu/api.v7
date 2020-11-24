@@ -111,7 +111,7 @@ type (
 	// 通用分片上传接口，同时适用于分片上传 v1 和 v2 接口
 	resumeUploaderBase interface {
 		// 开始上传前调用一次用于初始化，在 v1 中该接口不做任何事情，而在 v2 中该接口对应 initParts
-		initUploader(context.Context) error
+		initUploader(context.Context) ([]int64, error)
 		// 上传实际的分片数据，允许并发上传。在 v1 中该接口对应 mkblk 和 bput 组合，而在 v2 中该接口对应 uploadParts
 		uploadChunk(context.Context, chunk) error
 		// 上传所有分片后调用一次用于结束上传，在 v1 中该接口对应 mkfile，而在 v2 中该接口对应 completeParts
@@ -120,7 +120,7 @@ type (
 
 	// 将已知数据流大小的情况和未知数据流大小的情况抽象成一个接口
 	chunkReader interface {
-		readChunks(func(chunkID int64, off int64, data []byte) error) error
+		readChunks([]int64, func(chunkID int64, off int64, data []byte) error) error
 	}
 
 	// 已知数据流大小的情况下读取数据流
@@ -142,15 +142,17 @@ func uploadByWorkers(uploader resumeUploaderBase, ctx context.Context, body chun
 	var (
 		wg           sync.WaitGroup
 		failedChunks sync.Map
+		recovered    []int64
 	)
 
 	initWorkers()
 
-	if err = uploader.initUploader(ctx); err != nil {
+	if recovered, err = uploader.initUploader(ctx); err != nil {
 		return
 	}
+
 	// 读取 Chunk 并创建任务
-	err = body.readChunks(func(chunkID int64, off int64, data []byte) error {
+	err = body.readChunks(recovered, func(chunkID int64, off int64, data []byte) error {
 		newChunk := chunk{id: chunkID, offset: off, data: data, retried: 0}
 		wg.Add(1)
 		tasks <- func() {
@@ -173,6 +175,11 @@ func uploadByWorkers(uploader resumeUploaderBase, ctx context.Context, body chun
 		failedTasks := 0
 		failedChunks.Range(func(key, chunkValue interface{}) bool {
 			chunkErr := chunkValue.(chunkError)
+			if chunkErr.err == context.Canceled {
+				err = chunkErr.err
+				return false
+			}
+
 			failedChunks.Delete(key)
 			if chunkErr.retried < tryTimes {
 				failedTasks += 1
@@ -206,14 +213,20 @@ func newUnsizedChunkReader(body io.Reader, blockSize int64) *unsizedChunkReader 
 	return &unsizedChunkReader{body: body, blockSize: blockSize}
 }
 
-func (r *unsizedChunkReader) readChunks(f func(chunkID int64, off int64, data []byte) error) error {
+func (r *unsizedChunkReader) readChunks(recovered []int64, f func(chunkID int64, off int64, data []byte) error) error {
 	var (
-		lastChunk       = false
-		chunkID   int64 = 0
-		off       int64 = 0
-		chunkSize int
-		err       error
+		lastChunk          = false
+		chunkID      int64 = 0
+		off          int64 = 0
+		chunkSize    int
+		err          error
+		recoveredMap = make(map[int64]struct{}, len(recovered))
 	)
+
+	for _, roff := range recovered {
+		recoveredMap[roff] = struct{}{}
+	}
+
 	for !lastChunk {
 		buf := make([]byte, r.blockSize)
 		if chunkSize, err = io.ReadFull(r.body, buf); err != nil {
@@ -229,8 +242,10 @@ func (r *unsizedChunkReader) readChunks(f func(chunkID int64, off int64, data []
 			}
 		}
 
-		if err = f(chunkID, off, buf); err != nil {
-			return err
+		if _, ok := recoveredMap[off]; !ok {
+			if err = f(chunkID, off, buf); err != nil {
+				return err
+			}
 		}
 		chunkID += 1
 		off += int64(chunkSize)
@@ -242,30 +257,39 @@ func newSizedChunkReader(body io.ReaderAt, totalSize, blockSize int64) *sizedChu
 	return &sizedChunkReader{body: body, totalSize: totalSize, blockSize: blockSize}
 }
 
-func (r *sizedChunkReader) readChunks(f func(chunkID int64, off int64, data []byte) error) error {
+func (r *sizedChunkReader) readChunks(recovered []int64, f func(chunkID int64, off int64, data []byte) error) error {
 	var (
-		chunkID int64 = 0
-		off     int64 = 0
-		buf     []byte
-		err     error
+		chunkID      int64 = 0
+		off          int64 = 0
+		buf          []byte
+		err          error
+		recoveredMap = make(map[int64]struct{}, len(recovered))
 	)
+
+	for _, roff := range recovered {
+		recoveredMap[roff] = struct{}{}
+	}
 
 	for off < r.totalSize {
 		shouldRead := r.totalSize - off
 		if shouldRead > r.blockSize {
 			shouldRead = r.blockSize
 		}
-		if buf, err = ioutil.ReadAll(io.NewSectionReader(r.body, off, shouldRead)); err != nil {
-			return err
-		}
-		if len(buf) == 0 { // 理论上应该读到 shouldRead 个字节，实际上为空，将直接结束该方法
-			return nil
-		}
-		if err = f(chunkID, off, buf); err != nil {
-			return err
+		if _, ok := recoveredMap[off]; ok {
+			off += shouldRead
+		} else {
+			if buf, err = ioutil.ReadAll(io.NewSectionReader(r.body, off, shouldRead)); err != nil {
+				return err
+			}
+			if len(buf) == 0 { // 理论上应该读到 shouldRead 个字节，实际上为空，将直接结束该方法
+				return nil
+			}
+			if err = f(chunkID, off, buf); err != nil {
+				return err
+			}
+			off += int64(len(buf))
 		}
 		chunkID += 1
-		off += int64(len(buf))
 	}
 	return nil
 }
