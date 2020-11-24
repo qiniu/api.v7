@@ -12,7 +12,9 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -111,7 +113,7 @@ func TestPutWithSize(t *testing.T) {
 		for _, size := range sizes {
 			data := make([]byte, size)
 			if _, err := io.ReadFull(r, data); err != nil {
-				t.Error(err)
+				t.Fatal(err)
 			}
 			testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
 			err := resumeUploader.Put(context.Background(), &putRet, upToken, testKey, bytes.NewReader(data), size, &RputExtra{
@@ -134,6 +136,59 @@ func TestPutWithSize(t *testing.T) {
 	}
 }
 
+func TestPutWithRecovery(t *testing.T) {
+	var putRet PutRet
+	putPolicy := PutPolicy{
+		Scope:           testBucket,
+		DeleteAfterDays: 7,
+	}
+	upToken := putPolicy.UploadToken(mac)
+
+	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
+	dirName, err := ioutil.TempDir("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dirName)
+	recorder, err := NewFileRecorder(dirName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fileName := filepath.Join(dirName, "originalFile")
+	testFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer testFile.Close()
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	size := int64(4 * (1 << blockBits))
+	io.CopyN(testFile, r, size)
+
+	for i := 0; i < 4; i++ {
+		ctx, cancelFunc := context.WithCancel(context.Background())
+		counter := uint32(0)
+		err = resumeUploader.PutFile(ctx, &putRet, upToken, testKey, fileName, &RputExtra{
+			Recorder:  recorder,
+			ChunkSize: (1 << blockBits) / 2,
+			Notify: func(blkIdx int, blkSize int, ret *BlkputRet) {
+				t.Logf("Notify: blkIdx: %d, blkSize: %d, ret: %#v", blkIdx, blkSize, ret)
+				if atomic.AddUint32(&counter, 1) >= 2 {
+					cancelFunc()
+				}
+			},
+			NotifyErr: func(blkIdx int, blkSize int, err error) {
+				t.Logf("NotifyErr: blkIdx: %d, blkSize: %d, err: %s", blkIdx, blkSize, err)
+			},
+		})
+		if err == nil {
+			return
+		}
+	}
+	t.Fatal(err)
+}
+
 func validateMD5(t *testing.T, key, md5Expected string, sizeExpected int64) {
 	var (
 		body struct {
@@ -145,16 +200,16 @@ func validateMD5(t *testing.T, key, md5Expected string, sizeExpected int64) {
 
 	response, err := httpClient.Get("http://" + testBucketDomain + "/" + key + "?qhash/md5")
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if err = json.NewDecoder(response.Body).Decode(&body); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	if body.Hash != md5Expected {
-		t.Errorf("MD5 Dismatch, expected: %s, actual: %s", md5Expected, body.Hash)
+		t.Fatalf("MD5 Dismatch, expected: %s, actual: %s", md5Expected, body.Hash)
 	}
 	if body.Fsize != sizeExpected {
-		t.Errorf("File Size Dismatch, expected: %d, actual: %d", sizeExpected, body.Fsize)
+		t.Fatalf("File Size Dismatch, expected: %d, actual: %d", sizeExpected, body.Fsize)
 	}
 }
 
