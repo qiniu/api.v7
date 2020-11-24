@@ -217,14 +217,23 @@ func (manager *Manager) QueryStreamPubhistories(nsId string, streamId string, st
 	return ret.Items, ret.Total, err
 }
 
-// 查询截图列表
-func (manager *Manager) StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, limit int, marker string) ([]byte, error) {
+// 按需截图
+func (manager *Manager) OndemandSnap(nsId, streamId string) error {
+	return manager.client.CallWithJson(context.Background(), nil, "POST", manager.url("/namespaces/%s/streams/%s/snap", nsId, streamId), nil, nil)
+}
 
+// 删除截图
+func (manager *Manager) DeleteSnapshots(nsId, streamId string, files []string) error {
+	return manager.client.CallWithJson(context.Background(), nil, "DELETE", manager.url("/namespaces/%s/streams/%s/snapshots", nsId, streamId), nil, M{"files": files})
+}
+
+// 查询截图列表
+func (manager *Manager) StreamsSnapshots(nsId string, streamId string, start, end int, qtype int, line int, marker string) ([]byte, error) {
 	query := url.Values{}
 	setQuery(query, "start", start)
 	setQuery(query, "end", end)
 	setQuery(query, "type", qtype)
-	setQuery(query, "limit", limit)
+	setQuery(query, "line", line)
 	setQuery(query, "marker", marker)
 
 	req, err := http.NewRequest("GET", manager.url("/namespaces/%s/streams/%s/snapshots?%v", nsId, streamId, query.Encode()), nil)
@@ -249,11 +258,11 @@ type RecordHistory struct {
 	Duration int    `json:"duration"`
 	Format   int    `json:"format"`
 	Snap     string `json:"snap"`
+	File     string `json:"file"`
 }
 
 // 查询视频流的录制记录
-func (manager *Manager) QueryStreamRecordHistories(nsId string, streamId string, start, end int, marker string, line int) ([]RecordHistory, string, error) {
-
+func (manager *Manager) QueryStreamRecordHistories(nsId string, streamId string, start, end int, marker string, line int, format string) ([]RecordHistory, string, error) {
 	ret := struct {
 		Items  []RecordHistory `json:"items"`
 		Marker string          `json:"marker"`
@@ -264,6 +273,7 @@ func (manager *Manager) QueryStreamRecordHistories(nsId string, streamId string,
 	setQuery(query, "end", end)
 	setQuery(query, "marker", marker)
 	setQuery(query, "line", line)
+	setQuery(query, "format", format)
 
 	err := manager.client.Call(context.Background(), &ret, "GET", manager.url("/namespaces/%s/streams/%s/recordhistories?%v", nsId, streamId, query.Encode()), nil)
 	return ret.Items, ret.Marker, err

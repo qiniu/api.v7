@@ -14,7 +14,7 @@ type Template struct {
 	TemplateType     int    `json:"templateType"`     // 模板类型,取值：0（录制模版）, 1（截图模版）
 	FileType         int    `json:"fileType"`         // 文件存储类型,取值：0（普通存储）,1（低频存储）
 	RecordType       int    `json:"recordType"`       // 录制模式, 0（不录制）,1（实时录制）, 2（按需录制）
-	RecordFileFormat int    `json:"recordFileFormat"` // 录制文件存储格式,取值：0（ts格式存储）
+	RecordFileFormat int    `json:"recordFileFormat"` // 录制文件存储格式(多选), 范围：1(001)～7(111), 从左往右的三位二进制数分别代表MP4, FLV, M3U8; 0代表不选择该格式, 1代表选择;例如：2(010)代表选择FLV格式，6(110)代表选择MP4和FLV格式，1(001)代表选择M3U8格式，7(111)代表三种格式均选择
 
 	//record/ts/${namespaceId}/${streamId}/${startMs}-${endMs}.ts
 	TSFileNameTemplate string `json:"tsFileNameTemplate"`
@@ -23,6 +23,8 @@ type Template struct {
 	RecordInterval        int    `json:"recordInterval"` //录制文件长度
 
 	M3u8FileNameTemplate string `json:"m3u8FileNameTemplate,omitempty"` // m3u8文件命名格式
+	FlvFileNameTemplate  string `json:"flvFileNameTemplate,omitempty"`  // flv文件命名格式
+	Mp4FileNameTemplate  string `json:"mp4FileNameTemplate,omitempty"`  // mp4文件命名格式
 
 	JpgOverwriteStatus bool `json:"jpgOverwriteStatus"` // 开启覆盖式截图(一般用于流封面)
 	JpgSequenceStatus  bool `json:"jpgSequenceStatus"`  // 开启序列式截图
