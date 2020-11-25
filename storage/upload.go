@@ -171,11 +171,11 @@ func (u *uploader) init() {
 	if u.ctx == nil {
 		u.ctx = context.Background()
 	}
-	if u.errChan == nil {
-		u.errChan = make(chan struct{})
-	}
 	if u.workers <= 0 {
 		u.workers = 10
+	}
+	if u.errChan == nil {
+		u.errChan = make(chan struct{}, u.workers)
 	}
 	if u.success == nil {
 		u.success = make(chan *Chunk)
