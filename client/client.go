@@ -269,9 +269,7 @@ func CallRet(ctx context.Context, ret interface{}, resp *http.Response) (err err
 				return
 			}
 		}
-		if resp.StatusCode == 200 {
-			return nil
-		}
+		return nil
 	}
 	return ResponseError(resp)
 }
