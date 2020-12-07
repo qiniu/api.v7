@@ -174,17 +174,17 @@ func (p *ResumeUploaderV2) rputFile(ctx context.Context, ret interface{}, upToke
 	return p.rput(ctx, ret, upToken, key, hasKey, file, fileInfo.Size(), fileDetails, extra)
 }
 
-// 创建块请求
+// 初始化块请求
 func (p *ResumeUploaderV2) InitParts(ctx context.Context, upToken, upHost, bucket, key string, hasKey bool, ret *InitPartsRet) error {
 	return p.resumeUploaderAPIs().initParts(ctx, upToken, upHost, bucket, key, hasKey, ret)
 }
 
-// 发送bput请求
+// 发送块请求
 func (p *ResumeUploaderV2) UploadParts(ctx context.Context, upToken, upHost, bucket, key string, hasKey bool, uploadId string, partNumber int64, partMD5 string, ret *UploadPartsRet, body io.Reader, size int) error {
 	return p.resumeUploaderAPIs().uploadParts(ctx, upToken, upHost, bucket, key, hasKey, uploadId, partNumber, partMD5, ret, body, size)
 }
 
-// 创建文件请求
+// 完成块请求
 func (p *ResumeUploaderV2) CompleteParts(ctx context.Context, upToken, upHost string, ret interface{}, bucket, key string, hasKey bool, uploadId string, extra *RputV2Extra) (err error) {
 	return p.resumeUploaderAPIs().completeParts(ctx, upToken, upHost, ret, bucket, key, hasKey, uploadId, extra)
 }
