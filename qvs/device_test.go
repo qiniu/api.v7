@@ -112,3 +112,23 @@ func TestQueryGBRecordHistories(t *testing.T) {
 		fmt.Println(v)
 	}
 }
+
+func TestDevicePTZ(t *testing.T) {
+	if skipTest() {
+		t.SkipNow()
+	}
+	c := getTestManager()
+
+	err := c.DevicePtz("3nm4x0vyz7xlu", "31011500991180000270", "34020000001310000034", "left", 10)
+	noError(t, err)
+
+	err = c.DeviceFocus("3nm4x0vyz7xlu", "31011500991180000270", "34020000001310000034", "focusnear", 10)
+	noError(t, err)
+
+	err = c.DeviceIris("3nm4x0vyz7xlu", "31011500991180000270", "34020000001310000034", "irisin", 10)
+	noError(t, err)
+
+	items, err := c.QueryDevicePresets("3nm4x0vyz7xlu", "31011500991180000270", "34020000001310000034", true)
+	noError(t, err)
+	fmt.Println("items", items)
+}
