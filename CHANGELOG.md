@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.8.0 (2020-12-07)
+对象存储：
+* 新增[v2版分片上传](https://developer.qiniu.com/kodo/api/6364/multipartupload-interface)支持
+
 ## 7.7.0 (2020-11-27)
 QVS视频监控：
 * 新增录制管理相关api
