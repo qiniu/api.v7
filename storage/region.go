@@ -2,9 +2,14 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/qiniu/api.v7/v7/auth"
 	"github.com/qiniu/api.v7/v7/client"
@@ -14,21 +19,21 @@ import (
 // 每个存储区域可能有多个机房信息，每个机房可能有多个上传入口
 type Region struct {
 	// 上传入口
-	SrcUpHosts []string
+	SrcUpHosts []string `json:"src_up,omitempty"`
 
 	// 加速上传入口
-	CdnUpHosts []string
+	CdnUpHosts []string `json:"cdn_up,omitempty"`
 
 	// 获取文件信息入口
-	RsHost string
+	RsHost string `json:"rs,omitempty"`
 
 	// bucket列举入口
-	RsfHost string
+	RsfHost string `json:"rsf,omitempty"`
 
-	ApiHost string
+	ApiHost string `json:"api,omitempty"`
 
 	// 存储io 入口
-	IovipHost string
+	IovipHost string `json:"io,omitempty"`
 }
 
 type RegionID string
@@ -199,20 +204,73 @@ type UcQueryUp struct {
 	Info   string   `json:"info,omitempty"`
 }
 
+type regionCacheValue struct {
+	region   *Region   `json:"region"`
+	deadline time.Time `json:"deadline"`
+}
+
+type regionCacheMap map[string]regionCacheValue
+
 var (
-	regionMutex sync.RWMutex
-	regionCache = make(map[string]*Region)
+	regionCachePath   = filepath.Join(os.TempDir(), "qiniu-golang-sdk", "query.cache.json")
+	regionCache       sync.Map
+	regionCacheLoaded int32 = 0
 )
+
+func SetRegionCachePath(newPath string) {
+	regionCachePath = newPath
+	atomic.StoreInt32(&regionCacheLoaded, 0)
+}
+
+func loadRegionCache() {
+	cacheFile, err := os.Open(regionCachePath)
+	if err != nil {
+		return
+	}
+	defer cacheFile.Close()
+
+	var cacheMap regionCacheMap
+	if err = json.NewDecoder(cacheFile).Decode(&cacheMap); err != nil {
+		return
+	}
+	for cacheKey, cacheValue := range cacheMap {
+		regionCache.Store(cacheKey, cacheValue)
+	}
+}
+
+func storeRegionCache() {
+	err := os.MkdirAll(filepath.Dir(regionCachePath), 0700)
+	if err != nil {
+		return
+	}
+
+	cacheFile, err := os.OpenFile(regionCachePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return
+	}
+	defer cacheFile.Close()
+
+	cacheMap := make(regionCacheMap)
+	regionCache.Range(func(cacheKey, cacheValue interface{}) bool {
+		cacheMap[cacheKey.(string)] = cacheValue.(regionCacheValue)
+		return true
+	})
+	if err = json.NewEncoder(cacheFile).Encode(cacheMap); err != nil {
+		return
+	}
+}
 
 // GetRegion 用来根据ak和bucket来获取空间相关的机房信息
 func GetRegion(ak, bucket string) (region *Region, err error) {
+	if atomic.CompareAndSwapInt32(&regionCacheLoaded, 0, 1) {
+		loadRegionCache()
+	}
+
 	regionID := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
-	regionMutex.RLock()
-	if v, ok := regionCache[regionID]; ok {
-		region = v
+	if v, ok := regionCache.Load(regionID); ok && time.Now().Before(v.(regionCacheValue).deadline) {
+		region = v.(regionCacheValue).region
 	}
-	regionMutex.RUnlock()
 	if region != nil {
 		return
 	}
@@ -253,9 +311,11 @@ func GetRegion(ak, bucket string) (region *Region, err error) {
 	//set specific hosts if possible
 	setSpecificHosts(ioHost, region)
 
-	regionMutex.Lock()
-	regionCache[regionID] = region
-	regionMutex.Unlock()
+	regionCache.Store(regionID, regionCacheValue{
+		region:   region,
+		deadline: time.Now().Add(time.Duration(ret.TTL) * time.Second),
+	})
+	storeRegionCache()
 	return
 }
 
