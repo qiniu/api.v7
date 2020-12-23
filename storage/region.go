@@ -120,7 +120,7 @@ var (
 		},
 		RsHost:    "rs-z1.qbox.me",
 		RsfHost:   "rsf-z1.qbox.me",
-		ApiHost:   "api-z1.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-z1.qbox.me",
 	}
 	// regionHuanan 表示华南机房
@@ -137,7 +137,7 @@ var (
 		},
 		RsHost:    "rs-z2.qbox.me",
 		RsfHost:   "rsf-z2.qbox.me",
-		ApiHost:   "api-z2.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-z2.qbox.me",
 	}
 
@@ -151,7 +151,7 @@ var (
 		},
 		RsHost:    "rs-na0.qbox.me",
 		RsfHost:   "rsf-na0.qbox.me",
-		ApiHost:   "api-na0.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-na0.qbox.me",
 	}
 	// regionSingapore 表示新加坡机房
@@ -164,8 +164,21 @@ var (
 		},
 		RsHost:    "rs-as0.qbox.me",
 		RsfHost:   "rsf-as0.qbox.me",
-		ApiHost:   "api-as0.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-as0.qbox.me",
+	}
+	// regionFogCnEast1 表示雾存储华东区
+	regionFogCnEast1 = Region{
+		SrcUpHosts: []string{
+			"up-fog-cn-east-1.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-fog-cn-east-1.qiniup.com",
+		},
+		RsHost:    "rs-fog-cn-east-1.qbox.me",
+		RsfHost:   "rsf-fog-cn-east-1.qbox.me",
+		ApiHost:   "api.qiniu.com",
+		IovipHost: "iovip-fog-cn-east-1.qbox.me",
 	}
 )
 
@@ -176,6 +189,7 @@ const (
 	RIDHuanan       = RegionID("z2")
 	RIDNorthAmerica = RegionID("na0")
 	RIDSingapore    = RegionID("as0")
+	RIDFogCnEast1   = RegionID("fog-cn-east-1")
 )
 
 // regionMap 是RegionID到具体的Region的映射
@@ -185,6 +199,7 @@ var regionMap = map[RegionID]Region{
 	RIDHuabei:       regionHuabei,
 	RIDSingapore:    regionSingapore,
 	RIDNorthAmerica: regionNorthAmerica,
+	RIDFogCnEast1:   regionFogCnEast1,
 }
 
 // UcHost 为查询空间相关域名的API服务地址
