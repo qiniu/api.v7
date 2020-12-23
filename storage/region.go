@@ -8,11 +8,11 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/qiniu/api.v7/v7/auth"
 	"github.com/qiniu/api.v7/v7/client"
+	"golang.org/x/sync/singleflight"
 )
 
 // 存储所在的地区，例如华东，华南，华北
@@ -205,21 +205,27 @@ type UcQueryUp struct {
 }
 
 type regionCacheValue struct {
-	region   *Region   `json:"region"`
-	deadline time.Time `json:"deadline"`
+	Region   *Region   `json:"region"`
+	Deadline time.Time `json:"deadline"`
 }
 
 type regionCacheMap map[string]regionCacheValue
 
 var (
-	regionCachePath   = filepath.Join(os.TempDir(), "qiniu-golang-sdk", "query.cache.json")
-	regionCache       sync.Map
-	regionCacheLoaded int32 = 0
+	regionCachePath     = filepath.Join(os.TempDir(), "qiniu-golang-sdk", "query.cache.json")
+	regionCache         sync.Map
+	regionCacheLock     sync.RWMutex
+	regionCacheSyncLock sync.Mutex
+	regionCacheGroup    singleflight.Group
+	regionCacheLoaded   bool = false
 )
 
 func SetRegionCachePath(newPath string) {
+	regionCacheLock.Lock()
+	defer regionCacheLock.Unlock()
+
 	regionCachePath = newPath
-	atomic.StoreInt32(&regionCacheLoaded, 0)
+	regionCacheLoaded = false
 }
 
 func loadRegionCache() {
@@ -261,62 +267,80 @@ func storeRegionCache() {
 }
 
 // GetRegion 用来根据ak和bucket来获取空间相关的机房信息
-func GetRegion(ak, bucket string) (region *Region, err error) {
-	if atomic.CompareAndSwapInt32(&regionCacheLoaded, 0, 1) {
-		loadRegionCache()
+func GetRegion(ak, bucket string) (*Region, error) {
+	regionCacheLock.RLock()
+	if regionCacheLoaded {
+		regionCacheLock.RUnlock()
+	} else {
+		regionCacheLock.RUnlock()
+		func() {
+			regionCacheLock.Lock()
+			defer regionCacheLock.Unlock()
+
+			if !regionCacheLoaded {
+				loadRegionCache()
+				regionCacheLoaded = true
+			}
+		}()
 	}
 
 	regionID := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
-	if v, ok := regionCache.Load(regionID); ok && time.Now().Before(v.(regionCacheValue).deadline) {
-		region = v.(regionCacheValue).region
-	}
-	if region != nil {
-		return
+	if v, ok := regionCache.Load(regionID); ok && time.Now().Before(v.(regionCacheValue).Deadline) {
+		return v.(regionCacheValue).Region, nil
 	}
 
-	//query from server
-	reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
-	var ret UcQueryRet
-	ctx := context.TODO()
-	qErr := client.DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil, nil)
-	if qErr != nil {
-		err = fmt.Errorf("query region error, %s", qErr.Error())
-		return
-	}
+	newRegion, err, _ := regionCacheGroup.Do(regionID, func() (interface{}, error) {
+		reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
 
-	if len(ret.Io["src"]["main"]) <= 0 {
-		return nil, fmt.Errorf("empty io host list")
-	}
+		var ret UcQueryRet
+		err := client.DefaultClient.CallWithForm(context.Background(), &ret, "GET", reqURL, nil, nil)
+		if err != nil {
+			return nil, fmt.Errorf("query region error, %s", err.Error())
+		}
 
-	ioHost := ret.Io["src"]["main"][0]
-	srcUpHosts := ret.Up["src"].Main
-	if ret.Up["src"].Backup != nil {
-		srcUpHosts = append(srcUpHosts, ret.Up["src"].Backup...)
-	}
-	cdnUpHosts := ret.Up["acc"].Main
-	if ret.Up["acc"].Backup != nil {
-		cdnUpHosts = append(cdnUpHosts, ret.Up["acc"].Backup...)
-	}
+		if len(ret.Io["src"]["main"]) <= 0 {
+			return nil, fmt.Errorf("empty io host list")
+		}
 
-	region = &Region{
-		SrcUpHosts: srcUpHosts,
-		CdnUpHosts: cdnUpHosts,
-		IovipHost:  ioHost,
-		RsHost:     DefaultRsHost,
-		RsfHost:    DefaultRsfHost,
-		ApiHost:    DefaultAPIHost,
-	}
+		ioHost := ret.Io["src"]["main"][0]
+		srcUpHosts := ret.Up["src"].Main
+		if ret.Up["src"].Backup != nil {
+			srcUpHosts = append(srcUpHosts, ret.Up["src"].Backup...)
+		}
+		cdnUpHosts := ret.Up["acc"].Main
+		if ret.Up["acc"].Backup != nil {
+			cdnUpHosts = append(cdnUpHosts, ret.Up["acc"].Backup...)
+		}
 
-	//set specific hosts if possible
-	setSpecificHosts(ioHost, region)
+		region := &Region{
+			SrcUpHosts: srcUpHosts,
+			CdnUpHosts: cdnUpHosts,
+			IovipHost:  ioHost,
+			RsHost:     DefaultRsHost,
+			RsfHost:    DefaultRsfHost,
+			ApiHost:    DefaultAPIHost,
+		}
 
-	regionCache.Store(regionID, regionCacheValue{
-		region:   region,
-		deadline: time.Now().Add(time.Duration(ret.TTL) * time.Second),
+		//set specific hosts if possible
+		setSpecificHosts(ioHost, region)
+		regionCache.Store(regionID, regionCacheValue{
+			Region:   region,
+			Deadline: time.Now().Add(time.Duration(ret.TTL) * time.Second),
+		})
+
+		regionCacheSyncLock.Lock()
+		defer regionCacheSyncLock.Unlock()
+
+		storeRegionCache()
+		return region, nil
 	})
-	storeRegionCache()
-	return
+
+	if err != nil {
+		return nil, err
+	} else {
+		return newRegion.(*Region), nil
+	}
 }
 
 func regionFromHost(ioHost string) (Region, bool) {
