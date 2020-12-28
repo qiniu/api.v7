@@ -38,7 +38,7 @@ func TestPutWithoutSizeV2(t *testing.T) {
 		for _, size := range sizes {
 			md5Sumer := md5.New()
 			rd := io.TeeReader(&io.LimitedReader{R: r, N: size}, md5Sumer)
-			testKey := fmt.Sprintf("testRPutFileV2Key_%d", rand.Int())
+			testKey := fmt.Sprintf("testRPutFileV2Key_%d", r.Int())
 			err := resumeUploaderV2.PutWithoutSize(context.Background(), &putRet, upToken, testKey, rd, &RputV2Extra{
 				PartSize: partSize,
 				Notify: func(partNumber int64, ret *UploadPartsRet) {
@@ -82,7 +82,7 @@ func TestPutWithSizeV2(t *testing.T) {
 			if _, err := io.ReadFull(r, data); err != nil {
 				t.Error(err)
 			}
-			testKey := fmt.Sprintf("testRPutFileV2Key_%d", rand.Int())
+			testKey := fmt.Sprintf("testRPutFileV2Key_%d", r.Int())
 			err := resumeUploaderV2.Put(context.Background(), &putRet, upToken, testKey, bytes.NewReader(data), size, &RputV2Extra{
 				PartSize: partSize,
 				Notify: func(partNumber int64, ret *UploadPartsRet) {
@@ -104,7 +104,7 @@ func TestPutWithSizeV2(t *testing.T) {
 	for _, partSize := range partSizes {
 		for _, size := range sizes {
 			md5Sumer := md5.New()
-			testKey := fmt.Sprintf("testRPutFileV2Key_%d_*", rand.Int())
+			testKey := fmt.Sprintf("testRPutFileV2Key_%d_*", r.Int())
 			tmpFile, err := ioutil.TempFile("", testKey)
 			if err != nil {
 				t.Error(err)
@@ -190,7 +190,8 @@ func TestPutWithRecoveryV2(t *testing.T) {
 	}
 	upToken := putPolicy.UploadToken(mac)
 
-	testKey := fmt.Sprintf("testRPutFileKey_%d", rand.Int())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	testKey := fmt.Sprintf("testRPutFileKey_%d", r.Int())
 	dirName, err := ioutil.TempDir("", "")
 	if err != nil {
 		t.Fatal(err)
@@ -208,7 +209,6 @@ func TestPutWithRecoveryV2(t *testing.T) {
 	}
 	defer testFile.Close()
 
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	size := int64(4 * (1 << blockBits))
 	io.CopyN(testFile, r, size)
 

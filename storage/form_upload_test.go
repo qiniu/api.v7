@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestFormUploadPutFile(t *testing.T) {
@@ -25,7 +26,8 @@ func TestFormUploadPutFile(t *testing.T) {
 	defer os.Remove(testLocalFile.Name())
 
 	upToken := putPolicy.UploadToken(mac)
-	testKey := fmt.Sprintf("testPutFileKey_%d", rand.Int())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	testKey := fmt.Sprintf("testPutFileKey_%d", r.Int())
 
 	err = formUploader.PutFile(ctx, &putRet, upToken, testKey, testLocalFile.Name(), nil)
 	if err != nil {

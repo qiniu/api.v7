@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"testing"
+	"time"
 )
 
 var (
@@ -21,7 +22,8 @@ func TestBase64Uploader(t *testing.T) {
 		DeleteAfterDays: 7,
 	}
 	upToken := putPolicy.UploadToken(mac)
-	testKey := fmt.Sprintf("testPutFileKey_%d", rand.Int())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	testKey := fmt.Sprintf("testPutFileKey_%d", r.Int())
 
 	extra := Base64PutExtra{}
 	extra.MimeType = "image/png"

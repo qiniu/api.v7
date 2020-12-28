@@ -223,7 +223,8 @@ func TestChangeMime(t *testing.T) {
 }
 
 func TestChangeType(t *testing.T) {
-	toChangeKey := fmt.Sprintf("%s_changeType_%d", testKey, rand.Int())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	toChangeKey := fmt.Sprintf("%s_changeType_%d", testKey, r.Int())
 	bucketManager.Copy(testBucket, testKey, testBucket, toChangeKey, true)
 	fileType := 1
 	err := bucketManager.ChangeType(testBucket, toChangeKey, fileType)
@@ -239,7 +240,8 @@ func TestChangeType(t *testing.T) {
 }
 
 func TestRestoreAr(t *testing.T) {
-	toRestoreArKey := fmt.Sprintf("%s_RestoreAr_%d", testKey, rand.Int())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	toRestoreArKey := fmt.Sprintf("%s_RestoreAr_%d", testKey, r.Int())
 	bucketManager.Copy(testBucket, testKey, testBucket, toRestoreArKey, true)
 	fileType := 2
 	err := bucketManager.ChangeType(testBucket, toRestoreArKey, fileType)

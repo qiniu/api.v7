@@ -1,0 +1,65 @@
+on: [push]
+name: Run Test Cases
+jobs:
+  old-go:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          path: src/github.com/qiniu/api.v7
+          ref: ${{ github.ref }}
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.10.8'
+      - name: Run cases
+        run: |
+          GOPATH=$GITHUB_WORKSPACE make test
+        working-directory: src/github.com/qiniu/api.v7
+        env:
+          accessKey: ${{ secrets.ACCESSKEY }}
+          secretKey: ${{ secrets.SECRETKEY }}
+          QINIU_KODO_TEST: '1'
+          QINIU_TEST_BUCKET: ${{ secrets.QINIU_TEST_BUCKET }}
+          QINIU_TEST_BUCKET_PRIVATE: ${{ secrets.QINIU_TEST_BUCKET_PRIVATE }}
+          QINIU_TEST_DOMAIN: ${{ secrets.QINIU_TEST_DOMAIN }}
+          QINIU_TEST_DOMAIN_PRIVATE: ${{ secrets.QINIU_TEST_DOMAIN_PRIVATE }}
+          QINIU_TEST_PIPELINE: ${{ secrets.QINIU_TEST_PIPELINE }}
+      - name: Upload coverage.txt
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f coverage.txt
+        working-directory: src/github.com/qiniu/api.v7
+  new-go:
+    needs: 'old-go'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        go_version: ['1.11.13', '1.12.8', '1.13.15', '1.14.12', '1.15.6']
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.ref }}
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go_version }}
+      - name: Run cases
+        run: |
+          make test
+        env:
+          accessKey: ${{ secrets.ACCESSKEY }}
+          secretKey: ${{ secrets.SECRETKEY }}
+          QINIU_KODO_TEST: '1'
+          QINIU_TEST_BUCKET: ${{ secrets.QINIU_TEST_BUCKET }}
+          QINIU_TEST_BUCKET_PRIVATE: ${{ secrets.QINIU_TEST_BUCKET_PRIVATE }}
+          QINIU_TEST_DOMAIN: ${{ secrets.QINIU_TEST_DOMAIN }}
+          QINIU_TEST_DOMAIN_PRIVATE: ${{ secrets.QINIU_TEST_DOMAIN_PRIVATE }}
+          QINIU_TEST_PIPELINE: ${{ secrets.QINIU_TEST_PIPELINE }}
+          GO111MODULE: 'on'
+      - name: Upload coverage.txt
+        run: |
+          bash <(curl -s https://codecov.io/bash) -f coverage.txt

@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 	"testing"
+	"time"
 )
 
 func TestWorkerCopy(t *testing.T) {
@@ -63,7 +64,8 @@ func TestWorkerUpload(t *testing.T) {
 		tasks <- func() {
 			defer wg.Done()
 
-			testKey := fmt.Sprintf("testPutFileKey_%d", rand.Int())
+			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+			testKey := fmt.Sprintf("testPutFileKey_%d", r.Int())
 			t.Logf("start to upload %s ...", testKey)
 
 			var putRet PutRet
