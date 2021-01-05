@@ -21,6 +21,7 @@ jobs:
           accessKey: ${{ secrets.ACCESSKEY }}
           secretKey: ${{ secrets.SECRETKEY }}
           QINIU_KODO_TEST: '1'
+          QINIU_SDK_DEBUG: 'true'
           QINIU_TEST_BUCKET: ${{ secrets.QINIU_TEST_BUCKET }}
           QINIU_TEST_BUCKET_PRIVATE: ${{ secrets.QINIU_TEST_BUCKET_PRIVATE }}
           QINIU_TEST_DOMAIN: ${{ secrets.QINIU_TEST_DOMAIN }}
@@ -54,6 +55,7 @@ jobs:
           accessKey: ${{ secrets.ACCESSKEY }}
           secretKey: ${{ secrets.SECRETKEY }}
           QINIU_KODO_TEST: '1'
+          QINIU_SDK_DEBUG: 'true'
           QINIU_TEST_BUCKET: ${{ secrets.QINIU_TEST_BUCKET }}
           QINIU_TEST_BUCKET_PRIVATE: ${{ secrets.QINIU_TEST_BUCKET_PRIVATE }}
           QINIU_TEST_DOMAIN: ${{ secrets.QINIU_TEST_DOMAIN }}

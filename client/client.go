@@ -188,7 +188,7 @@ func (r *ErrorInfo) ErrorDetail() string {
 
 func (r *ErrorInfo) Error() string {
 
-	return r.Err
+	return fmt.Sprintf("Err: %s, Reqid: %s", r.Err, r.Reqid)
 }
 
 func (r *ErrorInfo) RpcError() (code, errno int, key, err string) {
