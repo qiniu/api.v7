@@ -1,5 +1,9 @@
 # Changelog
 
+## 7.8.1 （2021-01-07）
+对象存储：
+* 本地缓存query查询空间对应域名信息
+
 ## 7.8.0 (2020-12-07)
 对象存储：
 * 新增[v2版分片上传](https://developer.qiniu.com/kodo/api/6364/multipartupload-interface)支持
