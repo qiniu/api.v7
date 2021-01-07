@@ -55,7 +55,6 @@ func TestPutWithoutSize(t *testing.T) {
 	sizes := []int64{
 		64,
 		1 << blockBits,
-		1 << blockBits,
 		(1 << blockBits) - 1,
 		(1 << blockBits) + 1,
 		(1 << (blockBits + 4)) + 1,
@@ -97,7 +96,6 @@ func TestPutWithSize(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	sizes := []int64{
 		64,
-		1 << blockBits,
 		1 << blockBits,
 		(1 << blockBits) - 1,
 		(1 << blockBits) + 1,

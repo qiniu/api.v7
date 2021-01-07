@@ -2,33 +2,38 @@ package storage
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/qiniu/api.v7/v7/auth"
 	"github.com/qiniu/api.v7/v7/client"
+	"golang.org/x/sync/singleflight"
 )
 
 // 存储所在的地区，例如华东，华南，华北
 // 每个存储区域可能有多个机房信息，每个机房可能有多个上传入口
 type Region struct {
 	// 上传入口
-	SrcUpHosts []string
+	SrcUpHosts []string `json:"src_up,omitempty"`
 
 	// 加速上传入口
-	CdnUpHosts []string
+	CdnUpHosts []string `json:"cdn_up,omitempty"`
 
 	// 获取文件信息入口
-	RsHost string
+	RsHost string `json:"rs,omitempty"`
 
 	// bucket列举入口
-	RsfHost string
+	RsfHost string `json:"rsf,omitempty"`
 
-	ApiHost string
+	ApiHost string `json:"api,omitempty"`
 
 	// 存储io 入口
-	IovipHost string
+	IovipHost string `json:"io,omitempty"`
 }
 
 type RegionID string
@@ -115,7 +120,7 @@ var (
 		},
 		RsHost:    "rs-z1.qbox.me",
 		RsfHost:   "rsf-z1.qbox.me",
-		ApiHost:   "api-z1.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-z1.qbox.me",
 	}
 	// regionHuanan 表示华南机房
@@ -132,7 +137,7 @@ var (
 		},
 		RsHost:    "rs-z2.qbox.me",
 		RsfHost:   "rsf-z2.qbox.me",
-		ApiHost:   "api-z2.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-z2.qbox.me",
 	}
 
@@ -146,7 +151,7 @@ var (
 		},
 		RsHost:    "rs-na0.qbox.me",
 		RsfHost:   "rsf-na0.qbox.me",
-		ApiHost:   "api-na0.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-na0.qbox.me",
 	}
 	// regionSingapore 表示新加坡机房
@@ -159,8 +164,21 @@ var (
 		},
 		RsHost:    "rs-as0.qbox.me",
 		RsfHost:   "rsf-as0.qbox.me",
-		ApiHost:   "api-as0.qiniu.com",
+		ApiHost:   "api.qiniu.com",
 		IovipHost: "iovip-as0.qbox.me",
+	}
+	// regionFogCnEast1 表示雾存储华东区
+	regionFogCnEast1 = Region{
+		SrcUpHosts: []string{
+			"up-fog-cn-east-1.qiniup.com",
+		},
+		CdnUpHosts: []string{
+			"upload-fog-cn-east-1.qiniup.com",
+		},
+		RsHost:    "rs-fog-cn-east-1.qbox.me",
+		RsfHost:   "rsf-fog-cn-east-1.qbox.me",
+		ApiHost:   "api.qiniu.com",
+		IovipHost: "iovip-fog-cn-east-1.qbox.me",
 	}
 )
 
@@ -171,6 +189,7 @@ const (
 	RIDHuanan       = RegionID("z2")
 	RIDNorthAmerica = RegionID("na0")
 	RIDSingapore    = RegionID("as0")
+	RIDFogCnEast1   = RegionID("fog-cn-east-1")
 )
 
 // regionMap 是RegionID到具体的Region的映射
@@ -180,6 +199,7 @@ var regionMap = map[RegionID]Region{
 	RIDHuabei:       regionHuabei,
 	RIDSingapore:    regionSingapore,
 	RIDNorthAmerica: regionNorthAmerica,
+	RIDFogCnEast1:   regionFogCnEast1,
 }
 
 // UcHost 为查询空间相关域名的API服务地址
@@ -199,64 +219,143 @@ type UcQueryUp struct {
 	Info   string   `json:"info,omitempty"`
 }
 
+type regionCacheValue struct {
+	Region   *Region   `json:"region"`
+	Deadline time.Time `json:"deadline"`
+}
+
+type regionCacheMap map[string]regionCacheValue
+
 var (
-	regionMutex sync.RWMutex
-	regionCache = make(map[string]*Region)
+	regionCachePath     = filepath.Join(os.TempDir(), "qiniu-golang-sdk", "query.cache.json")
+	regionCache         sync.Map
+	regionCacheLock     sync.RWMutex
+	regionCacheSyncLock sync.Mutex
+	regionCacheGroup    singleflight.Group
+	regionCacheLoaded   bool = false
 )
 
+func SetRegionCachePath(newPath string) {
+	regionCacheLock.Lock()
+	defer regionCacheLock.Unlock()
+
+	regionCachePath = newPath
+	regionCacheLoaded = false
+}
+
+func loadRegionCache() {
+	cacheFile, err := os.Open(regionCachePath)
+	if err != nil {
+		return
+	}
+	defer cacheFile.Close()
+
+	var cacheMap regionCacheMap
+	if err = json.NewDecoder(cacheFile).Decode(&cacheMap); err != nil {
+		return
+	}
+	for cacheKey, cacheValue := range cacheMap {
+		regionCache.Store(cacheKey, cacheValue)
+	}
+}
+
+func storeRegionCache() {
+	err := os.MkdirAll(filepath.Dir(regionCachePath), 0700)
+	if err != nil {
+		return
+	}
+
+	cacheFile, err := os.OpenFile(regionCachePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
+	if err != nil {
+		return
+	}
+	defer cacheFile.Close()
+
+	cacheMap := make(regionCacheMap)
+	regionCache.Range(func(cacheKey, cacheValue interface{}) bool {
+		cacheMap[cacheKey.(string)] = cacheValue.(regionCacheValue)
+		return true
+	})
+	if err = json.NewEncoder(cacheFile).Encode(cacheMap); err != nil {
+		return
+	}
+}
+
 // GetRegion 用来根据ak和bucket来获取空间相关的机房信息
-func GetRegion(ak, bucket string) (region *Region, err error) {
+func GetRegion(ak, bucket string) (*Region, error) {
+	regionCacheLock.RLock()
+	if regionCacheLoaded {
+		regionCacheLock.RUnlock()
+	} else {
+		regionCacheLock.RUnlock()
+		func() {
+			regionCacheLock.Lock()
+			defer regionCacheLock.Unlock()
+
+			if !regionCacheLoaded {
+				loadRegionCache()
+				regionCacheLoaded = true
+			}
+		}()
+	}
+
 	regionID := fmt.Sprintf("%s:%s", ak, bucket)
 	//check from cache
-	regionMutex.RLock()
-	if v, ok := regionCache[regionID]; ok {
-		region = v
-	}
-	regionMutex.RUnlock()
-	if region != nil {
-		return
+	if v, ok := regionCache.Load(regionID); ok && time.Now().Before(v.(regionCacheValue).Deadline) {
+		return v.(regionCacheValue).Region, nil
 	}
 
-	//query from server
-	reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
-	var ret UcQueryRet
-	ctx := context.TODO()
-	qErr := client.DefaultClient.CallWithForm(ctx, &ret, "GET", reqURL, nil, nil)
-	if qErr != nil {
-		err = fmt.Errorf("query region error, %s", qErr.Error())
-		return
-	}
+	newRegion, err, _ := regionCacheGroup.Do(regionID, func() (interface{}, error) {
+		reqURL := fmt.Sprintf("%s/v2/query?ak=%s&bucket=%s", UcHost, ak, bucket)
 
-	if len(ret.Io["src"]["main"]) <= 0 {
-		return nil, fmt.Errorf("empty io host list")
-	}
+		var ret UcQueryRet
+		err := client.DefaultClient.CallWithForm(context.Background(), &ret, "GET", reqURL, nil, nil)
+		if err != nil {
+			return nil, fmt.Errorf("query region error, %s", err.Error())
+		}
 
-	ioHost := ret.Io["src"]["main"][0]
-	srcUpHosts := ret.Up["src"].Main
-	if ret.Up["src"].Backup != nil {
-		srcUpHosts = append(srcUpHosts, ret.Up["src"].Backup...)
-	}
-	cdnUpHosts := ret.Up["acc"].Main
-	if ret.Up["acc"].Backup != nil {
-		cdnUpHosts = append(cdnUpHosts, ret.Up["acc"].Backup...)
-	}
+		if len(ret.Io["src"]["main"]) <= 0 {
+			return nil, fmt.Errorf("empty io host list")
+		}
 
-	region = &Region{
-		SrcUpHosts: srcUpHosts,
-		CdnUpHosts: cdnUpHosts,
-		IovipHost:  ioHost,
-		RsHost:     DefaultRsHost,
-		RsfHost:    DefaultRsfHost,
-		ApiHost:    DefaultAPIHost,
+		ioHost := ret.Io["src"]["main"][0]
+		srcUpHosts := ret.Up["src"].Main
+		if ret.Up["src"].Backup != nil {
+			srcUpHosts = append(srcUpHosts, ret.Up["src"].Backup...)
+		}
+		cdnUpHosts := ret.Up["acc"].Main
+		if ret.Up["acc"].Backup != nil {
+			cdnUpHosts = append(cdnUpHosts, ret.Up["acc"].Backup...)
+		}
+
+		region := &Region{
+			SrcUpHosts: srcUpHosts,
+			CdnUpHosts: cdnUpHosts,
+			IovipHost:  ioHost,
+			RsHost:     DefaultRsHost,
+			RsfHost:    DefaultRsfHost,
+			ApiHost:    DefaultAPIHost,
+		}
+
+		//set specific hosts if possible
+		setSpecificHosts(ioHost, region)
+		regionCache.Store(regionID, regionCacheValue{
+			Region:   region,
+			Deadline: time.Now().Add(time.Duration(ret.TTL) * time.Second),
+		})
+
+		regionCacheSyncLock.Lock()
+		defer regionCacheSyncLock.Unlock()
+
+		storeRegionCache()
+		return region, nil
+	})
+
+	if err != nil {
+		return nil, err
+	} else {
+		return newRegion.(*Region), nil
 	}
-
-	//set specific hosts if possible
-	setSpecificHosts(ioHost, region)
-
-	regionMutex.Lock()
-	regionCache[regionID] = region
-	regionMutex.Unlock()
-	return
 }
 
 func regionFromHost(ioHost string) (Region, bool) {

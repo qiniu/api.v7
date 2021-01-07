@@ -23,7 +23,8 @@ env:
     - QINIU_TEST_DOMAIN_PRIVATE=gosdk.qiniudn.com
     - QINIU_TEST_PIPELINE=sdktest
 install:
-  go get github.com/qiniu/x
+  - go get github.com/qiniu/x
+  - go get golang.org/x/sync/singleflight
 
 script:
   - travis_wait 50 make test
