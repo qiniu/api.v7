@@ -17,7 +17,7 @@ github.com/qiniu/api.v7 (Qiniu Go SDK v7.x)
 在您的项目中的 `go.mod` 文件内添加这行代码
 
 ```
-require github.com/qiniu/api.v7/v7 v7.8.0
+require github.com/qiniu/api.v7/v7 v7.8.1
 ```
 
 并且在项目中使用 `"github.com/qiniu/api.v7/v7"` 引用 Qiniu Go SDK。
