@@ -71,9 +71,13 @@ func newRequest(ctx context.Context, method, reqUrl string, headers http.Header,
 	}
 	if DebugMode {
 		trace := &httptrace.ClientTrace{
+			// 如果 ConnectStart GotConn 都没有显示，很可能是 DNS 失败
+			ConnectStart: func(network, addr string) {
+				log.Debug(fmt.Sprintf("ConnectStart Network: %s, Remote ip:%s, URL: %s", network, addr, req.URL))
+			},
 			GotConn: func(connInfo httptrace.GotConnInfo) {
 				remoteAddr := connInfo.Conn.RemoteAddr()
-				log.Debug(fmt.Sprintf("Network: %s, Remote ip:%s, URL: %s", remoteAddr.Network(), remoteAddr.String(), req.URL))
+				log.Debug(fmt.Sprintf("GotConn Network: %s, Remote ip:%s, URL: %s", remoteAddr.Network(), remoteAddr.String(), req.URL))
 			},
 		}
 		req = req.WithContext(httptrace.WithClientTrace(req.Context(), trace))
