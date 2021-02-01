@@ -25,6 +25,7 @@ env:
 install:
   - go get github.com/qiniu/x
   - go get golang.org/x/sync/singleflight
+  - go get github.com/gookit/color
 
 script:
   - travis_wait 50 make test
